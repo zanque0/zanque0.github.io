@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stopwatch</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    #display {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+    button {
+      font-size: 1em;
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stopwatch</h1>
+  <div id="display">00:00:00.00</div>
+  <button id="startBtn">Start</button>
+  <button id="stopBtn">Stop</button>
+  <button id="resetBtn">Reset</button>
+
+  <script>
+    let startTime = null;
+    let elapsedTime = 0;
+    let timerInterval = null;
+
+    const display = document.getElementById("display");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function formatTime(ms) {
+      const totalCentiseconds = Math.floor(ms / 10);
+      const hours = String(Math.floor(totalCentiseconds / 360000)).padStart(2, "0");
+      const minutes = String(Math.floor((totalCentiseconds % 360000) / 6000)).padStart(2, "0");
+      const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, "0");
+      const centiseconds = String(totalCentiseconds % 100).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}.${centiseconds}`;
+    }
+
+    function updateDisplay() {
+      const currentTime = Date.now();
+      elapsedTime += currentTime - startTime;
+      startTime = currentTime;
+      display.textContent = formatTime(elapsedTime);
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (!timerInterval) {
+        startTime = Date.now();
+        timerInterval = setInterval(updateDisplay, 10); // Update every 10ms for 1/100 second precision
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        resetBtn.disabled = false;
+      }
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      elapsedTime = 0;
+      display.textContent = "00:00:00.00";
+      clearInterval(timerInterval);
+      timerInterval = null;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    });
+
+    stopBtn.disabled = true;
+    resetBtn.disabled = true;
+  </script>
+</body>
+</html>
