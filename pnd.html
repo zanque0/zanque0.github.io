@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="선납이연 계산기 - 예금, 적금, 선납이연 100%, 200%의 이자를 비교 계산합니다.">
+    <title>선납이연 계산기</title>
+    <style>
+        body {
+            font-family: 'Nanum Gothic', Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .button button:hover {
+            background-color: #45a049;
+        }
+        .result-table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        .result-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            color: #333;
+        }
+        .result-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .result-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .result-table th, .result-table td {
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>선납이연 계산기</h1>
+        <div class="input-group">
+            <label for="balance">보유금액:</label>
+            <input type="number" id="balance" aria-label="보유금액" required>
+        </div>
+        <div class="input-group">
+            <label for="depositRate">예금이율 (%):</label>
+            <input type="number" id="depositRate" step="0.01" aria-label="예금이율" required>
+        </div>
+        <div class="input-group">
+            <label for="savingRate">적금이율 (%):</label>
+            <input type="number" id="savingRate" step="0.01" aria-label="적금이율" required>
+        </div>
+        <div class="input-group">
+            <label for="loanRate">대출이율 (%):</label>
+            <input type="number" id="loanRate" step="0.01" aria-label="대출이율" required>
+        </div>
+        <div class="button">
+            <button onclick="calculateDeferral()">계산하기</button>
+        </div>
+        <table class="result-table" id="resultTable">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>예금</th>
+                    <th>적금</th>
+                    <th>선납이연100%</th>
+                    <th>선납이연200%</th>
+                    <th>비고</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>세전이자</td>
+                    <td id="beforeTaxDeposit"></td>
+                    <td id="beforeTaxSaving"></td>
+                    <td id="beforeTaxSaving100"></td>
+                    <td id="beforeTaxSaving200"></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>세후이자</td>
+                    <td id="afterTaxDeposit"></td>
+                    <td id="afterTaxSaving"></td>
+                    <td id="afterTaxSaving100"></td>
+                    <td id="afterTaxSaving200"></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>대출이자</td>
+                    <td id="loanInterestDeposit"></td>
+                    <td id="loanInterestSaving"></td>
+                    <td id="loanInterestSaving100"></td>
+                    <td id="loanInterestSaving200"></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>차액</td>
+                    <td id="netProfitDeposit"></td>
+                    <td id="netProfitSaving"></td>
+                    <td id="netProfitSaving100"></td>
+                    <td id="netProfitSaving200"></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>예금대비 금리</td>
+                    <td id="netRateDeposit"></td>
+                    <td id="netRateSaving"></td>
+                    <td id="netRateSaving100"></td>
+                    <td id="netRateSaving200"></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function calculateDeferral() {
+            const balance = parseFloat(document.getElementById('balance').value);
+            const depositRate = parseFloat(document.getElementById('depositRate').value);
+            const savingRate = parseFloat(document.getElementById('savingRate').value);
+            const loanRate = parseFloat(document.getElementById('loanRate').value);
+
+            if (isNaN(balance) || isNaN(depositRate) || isNaN(savingRate) || isNaN(loanRate)) {
+                alert('모든 값을 올바르게 입력해 주세요.');
+                return;
+            }
+
+            const taxRate = 0.154;
+            const results = calculateInterests(balance, depositRate, savingRate, loanRate, taxRate);
+
+            updateResultTable(results);
+        }
+
+        function calculateInterests(balance, depositRate, savingRate, loanRate, taxRate) {
+            const beforeTaxDeposit = balance * (depositRate / 100);
+            const beforeTaxSaving = balance * (savingRate / 100) * (13/24);
+            const beforeTaxSaving100 = balance * (savingRate / 100) * (6/12 + 1/12 * 6/12 + 1/12 * 5/365);
+            const beforeTaxSaving200 = balance * 2 * (savingRate / 100) * (6/12 + 1/12 * 6/12 + 5/12 * 1/365);
+
+            const afterTaxDeposit = beforeTaxDeposit * (1 - taxRate);
+            const afterTaxSaving = beforeTaxSaving * (1 - taxRate);
+            const afterTaxSaving100 = beforeTaxSaving100 * (1 - taxRate);
+            const afterTaxSaving200 = beforeTaxSaving200 * (1 - taxRate);
+
+            const loanInterestDeposit = 0;
+            const loanInterestSaving = 0;
+            const loanInterestSaving100 = balance * (loanRate / 100) * (1/12 * 6/12 + 5/12 * 1/365);
+            const loanInterestSaving200 = balance * 2 * (loanRate / 100) * (1/12 * 6/12 + 5/12 * 1/365);
+
+            const netProfitDeposit = afterTaxDeposit - loanInterestDeposit;
+            const netProfitSaving = afterTaxSaving - loanInterestSaving - afterTaxDeposit;
+            const netProfitSaving100 = afterTaxSaving100 - loanInterestSaving100 - afterTaxDeposit;
+            const netProfitSaving200 = afterTaxSaving200 - loanInterestSaving200 - afterTaxDeposit;
+
+            const netRateDeposit = (netProfitDeposit / balance) * 100;
+            const netRateSaving = (netProfitSaving / balance) * 100;
+            const netRateSaving100 = (netProfitSaving100 / balance) * 100;
+            const netRateSaving200 = (netProfitSaving200 / balance) * 100;
+
+            return {
+                beforeTaxDeposit, beforeTaxSaving, beforeTaxSaving100, beforeTaxSaving200,
+                afterTaxDeposit, afterTaxSaving, afterTaxSaving100, afterTaxSaving200,
+                loanInterestDeposit, loanInterestSaving, loanInterestSaving100, loanInterestSaving200,
+                netProfitDeposit, netProfitSaving, netProfitSaving100, netProfitSaving200,
+                netRateDeposit, netRateSaving, netRateSaving100, netRateSaving200
+            };
+        }
+
+        function updateResultTable(results) {
+            for (const [key, value] of Object.entries(results)) {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = value.toFixed(2);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
