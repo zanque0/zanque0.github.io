@@ -1,90 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stopwatch</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-    }
-    #display {
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
-    button {
-      font-size: 1em;
-      padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시민 개발자와 AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+        }
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            text-decoration: none;
+            color: #333;
+            margin: 0 15px;
+            font-size: 18px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        h2 {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-  <h1>Stopwatch</h1>
-  <div id="display">00:00:00.00</div>
-  <button id="startBtn">Start</button>
-  <button id="stopBtn">Stop</button>
-  <button id="resetBtn">Reset</button>
-
-  <script>
-    let startTime = null;
-    let elapsedTime = 0;
-    let timerInterval = null;
-
-    const display = document.getElementById("display");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const resetBtn = document.getElementById("resetBtn");
-
-    function formatTime(ms) {
-      const totalCentiseconds = Math.floor(ms / 10);
-      const hours = String(Math.floor(totalCentiseconds / 360000)).padStart(2, "0");
-      const minutes = String(Math.floor((totalCentiseconds % 360000) / 6000)).padStart(2, "0");
-      const seconds = String(Math.floor((totalCentiseconds % 6000) / 100)).padStart(2, "0");
-      const centiseconds = String(totalCentiseconds % 100).padStart(2, "0");
-      return `${hours}:${minutes}:${seconds}.${centiseconds}`;
-    }
-
-    function updateDisplay() {
-      const currentTime = Date.now();
-      elapsedTime += currentTime - startTime;
-      startTime = currentTime;
-      display.textContent = formatTime(elapsedTime);
-    }
-
-    startBtn.addEventListener("click", () => {
-      if (!timerInterval) {
-        startTime = Date.now();
-        timerInterval = setInterval(updateDisplay, 10); // Update every 10ms for 1/100 second precision
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-        resetBtn.disabled = false;
-      }
-    });
-
-    stopBtn.addEventListener("click", () => {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-      }
-    });
-
-    resetBtn.addEventListener("click", () => {
-      elapsedTime = 0;
-      display.textContent = "00:00:00.00";
-      clearInterval(timerInterval);
-      timerInterval = null;
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-    });
-
-    stopBtn.disabled = true;
-    resetBtn.disabled = true;
-  </script>
+    <header>
+        시민 개발자와 AI 활용
+    </header>
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a href="citizen_dev_ai.html">시민 개발자</a>
+    </nav>
+    <div class="container">
+        <h2>시민 개발자란?</h2>
+        <p>시민 개발자는 전문적인 프로그래밍 지식 없이도 다양한 도구와 플랫폼을 활용하여 애플리케이션이나 서비스를 개발하는 사람들을 의미합니다.</p>
+        
+        <h2>AI의 도움으로 가능한 프로젝트</h2>
+        <p>AI 기술을 활용하면 프로그래밍 경험이 적은 사람도 쉽고 빠르게 프로젝트를 진행할 수 있습니다. 예를 들면:</p>
+        <ul>
+            <li>AI 기반 데이터 분석 및 시각화</li>
+            <li>노코드/로우코드 플랫폼을 활용한 웹앱 개발</li>
+            <li>챗봇이나 자동화된 응답 시스템 구축</li>
+            <li>이미지 및 음성 인식 AI 활용</li>
+        </ul>
+        <p>앞으로 다양한 AI 도구를 활용하여 창의적인 프로젝트를 함께 시도해 봅시다!</p>
+    </div>
 </body>
 </html>
