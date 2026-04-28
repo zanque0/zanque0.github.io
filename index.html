@@ -709,7 +709,7 @@ function processUploads(){
   Promise.all(tasks).then(messages=>{
     rebuildDerivedData();
     renderAll();
-    status.textContent=messages.join(' / ') + '되었습니다.';
+    status.textContent=messages.join(' / ') + '되었습니다.'; showTab('dashboard');
     }).catch(err=>{
     status.textContent=err.message || '파일 처리 중 오류가 발생했습니다.'; showTab('dashboard');
     });
