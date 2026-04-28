@@ -156,12 +156,11 @@
     <div class="card">
         <h2>데이터 처리 요약</h2>
         <div class="kpi-grid">
-          <div class="stat"><div class="label">일간 입장인원</div><div class="value" id="dailyCount">0</div></div>
-          <div class="stat"><div class="label">예약자 수</div><div class="value" id="reservationCount">0</div></div>
-          <div class="stat"><div class="label">출력 대상</div><div class="value" id="printTargetCount">0</div></div>
-          <div class="stat"><div class="label">최다 입장 시간대</div><div class="value" id="peakHour" style="font-size:20px">-</div></div>
+          <div class="stat"><div class="label">데이터 기준일</div><div class="value" id="reportBaseDate" style="font-size:20px">-</div></div>
+  <div class="stat"><div class="label">일간 입장인원</div><div class="value" id="dailyCount">0</div></div>
+  <div class="stat"><div class="label">최다 입장 시간대</div><div class="value" id="peakHour" style="font-size:20px">-</div></div>
+  <div class="stat"><div class="label">최다 입장 시간대(차순위)</div><div class="value" id="secondPeakHour" style="font-size:20px">-</div></div>
         </div>
-        <div class="small" id="reportBaseDate" style="margin-top:12px">데이터 기준일: -</div>
       </div>
     </div>
     <div class="card no-print" style="margin-top:16px">
@@ -504,12 +503,15 @@ function getProgramDate(rows){ return rows[0]?.['예약일'] || ''; }
 function getTabletSlot(value){ const m=String(value||'').match(/#\s*(\d+)/); const n=m?Number(m[1]):NaN; return Number.isInteger(n)&&n>=1&&n<=5?n:null; }
 function groupedRows(rows){ const grouped={}; rows.forEach(r=>{ const key=r['프로그램시작시간']||r['프로그램 시작 시간']||''; if(!grouped[key]) grouped[key]=[]; grouped[key].push(r); }); return Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])); }
 function renderKpis(){
+  document.getElementById('reportBaseDate').textContent=formatReportDate(getEntryBaseDate()) || '-';
   document.getElementById('dailyCount').textContent=appState.entryRows.length||0;
-  document.getElementById('reservationCount').textContent=appState.reservationRows.length||0;
-  document.getElementById('printTargetCount').textContent=(appState.park.length+appState.ai.length+appState.tablet.length)||0;
-  const peak=[...appState.hourly].sort((a,b)=>b.입장인원-a.입장인원)[0];
+
+  const sortedPeaks=[...appState.hourly].sort((a,b)=>b.입장인원-a.입장인원);
+  const peak=sortedPeaks[0];
+  const secondPeak=sortedPeaks[1];
+
   document.getElementById('peakHour').textContent=peak ? `${peak.입장시간} / ${peak.입장인원}명` : '-';
-  document.getElementById('reportBaseDate').textContent=`데이터 기준일: ${formatReportDate(getEntryBaseDate()) || '-'}`;
+  document.getElementById('secondPeakHour').textContent=secondPeak ? `${secondPeak.입장시간} / ${secondPeak.입장인원}명` : '-';
 }
 function renderChart(){
   const ctx=document.getElementById('hourlyChart'); if(chart) chart.destroy();
