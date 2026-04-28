@@ -574,30 +574,20 @@ function renderDashboardReportPreview(){
   if(!wrap) return;
 
   wrap.innerHTML = `
-      <div class="card">
-        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-          <h2>파크골프 출력 양식</h2>
-          <button class="btn ghost no-print" onclick="printFormattedReport('park')">인쇄</button>
-        </div>
-        <div class="report-format">${buildParkFormatHtml(appState.park)}</div>
-      </div>
-    
-      <div class="card">
-        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-          <h2>AI 바둑 오목 출력 양식</h2>
-          <button class="btn ghost no-print" onclick="printFormattedReport('ai')">인쇄</button>
-        </div>
-        <div class="report-format">${buildAiFormatHtml(appState.ai)}</div>
-      </div>
-    
-      <div class="card">
-        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-          <h2>태블릿(OTT) 출력 양식</h2>
-          <button class="btn ghost no-print" onclick="printFormattedReport('tablet')">인쇄</button>
-        </div>
-        <div class="report-format">${buildTabletFormatHtml(appState.tablet)}</div>
-      </div>
-    `;
+    <div class="card">
+      <h2>파크골프 출력 양식</h2>
+      <div class="report-format">${buildParkFormatHtml(appState.park)}</div>
+    </div>
+    <div class="card">
+      <h2>AI 바둑 오목 출력 양식</h2>
+      <div class="report-format">${buildAiFormatHtml(appState.ai)}</div>
+    </div>
+    <div class="card">
+      <h2>태블릿(OTT) 출력 양식</h2>
+      <div class="report-format">${buildTabletFormatHtml(appState.tablet)}</div>
+    </div>
+  `;
+}
 function buildTabletFormatHtml(rows){
   const groupedMap=new Map(); groupedRows(rows).forEach(([time,items])=>{ const key=normalizeTimeRange(time).split('~')[0]; groupedMap.set(key,items); });
   const date=getProgramDate(rows); let html='<div class="print-sheet" id="tabletPrintArea"><table class="sheet tablet-sheet" id="tabletFormattedTable"><colgroup><col class="col-time"><col class="col-name-1"><col class="col-phone-1"><col class="col-name-2"><col class="col-phone-2"><col class="col-name-3"><col class="col-phone-3"><col class="col-name-4"><col class="col-phone-4"><col class="col-name-5"><col class="col-phone-5"><col class="col-note"></colgroup><tbody>';
