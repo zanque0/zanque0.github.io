@@ -1,0 +1,762 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>은평센터 통합 운영 포털</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --line:#e5e7eb;
+      --text:#111827;
+      --muted:#6b7280;
+      --accent:#2563eb;
+      --accent-soft:#dbeafe;
+      --ok:#15803d;
+      --ok-soft:#dcfce7;
+      --warn:#d97706;
+      --warn-soft:#fef3c7;
+      --danger:#dc2626;
+      --danger-soft:#fee2e2;
+      --shadow:0 10px 30px rgba(15,23,42,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1440px;margin:0 auto;padding:22px}
+    .header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}
+    h1{margin:0;font-size:30px;letter-spacing:-.03em}
+    h2{margin:0 0 12px;font-size:19px;letter-spacing:-.02em}
+    h3{margin:0 0 8px;font-size:15px}
+    .sub{margin-top:6px;color:var(--muted);line-height:1.5}
+    .clock-box{text-align:right;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:white;border-radius:20px;padding:16px 18px;min-width:280px;box-shadow:var(--shadow)}
+    .clock-time{font-size:34px;font-weight:800;letter-spacing:.02em}
+    .clock-date{font-size:13px;opacity:.86;margin-top:4px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
+    .tab{border:1px solid var(--line);background:#fff;color:var(--text);padding:10px 14px;border-radius:999px;cursor:pointer;font-weight:700}
+    .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .section{display:none}.section.active{display:block}
+    .grid{display:grid;gap:16px}
+    .grid.top{grid-template-columns:1fr 2fr}
+    .grid.two{grid-template-columns:1fr 1fr}
+    .grid.three{grid-template-columns:repeat(3,1fr)}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+    .muted{color:var(--muted)}
+    .small{font-size:12px;color:var(--muted);line-height:1.55}
+    .btn,button,a.dl{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;background:var(--accent);color:#fff;padding:10px 14px;border-radius:13px;text-decoration:none;font-weight:800;cursor:pointer}
+    .btn.secondary{background:#eef2ff;color:#1e3a8a}.btn.ghost{background:#f3f4f6;color:#111827}.btn.danger{background:var(--danger)}.btn.ok{background:var(--ok)}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input[type=file], input[type=time], input[type=text], select{width:100%;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--text)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:7px;font-weight:700}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .stat{border:1px solid var(--line);border-radius:18px;padding:15px;background:#fbfdff}
+    .stat .label{font-size:12px;color:var(--muted);margin-bottom:7px}.stat .value{font-size:28px;font-weight:900;letter-spacing:-.03em}
+    .next-alarm{display:grid;gap:10px;background:linear-gradient(135deg,#eff6ff,#fff);border:1px solid #bfdbfe;border-radius:20px;padding:18px}
+    .next-time{font-size:46px;font-weight:900;letter-spacing:-.04em;color:#1d4ed8}
+    .next-title{font-size:19px;font-weight:900}.countdown{display:inline-flex;width:max-content;border-radius:999px;padding:6px 10px;background:var(--accent-soft);color:#1d4ed8;font-weight:900}
+    .badge{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;white-space:nowrap}
+    .badge.ready{background:var(--ok-soft);color:var(--ok)}.badge.issue{background:var(--danger-soft);color:var(--danger)}
+    .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.download-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .table-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}.report-format{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px}
+    .print-sheet{width:100%;max-width:210mm;margin:0 auto;background:#fff}.sheet{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;word-break:keep-all}.sheet th,.sheet td{border:1px solid #444;padding:10px 8px;text-align:center;vertical-align:middle;font-weight:600;line-height:1.4;font-size:17px}.sheet .title{background:#dbe5f1;font-size:22px;font-weight:900;padding:12px 10px}.sheet .meta{background:#eef3f8;text-align:left;font-size:16px;font-weight:500;padding:10px 12px}.sheet .note{background:#fff;text-align:left;font-size:14px;font-weight:500;line-height:1.65;padding:12px}.sheet .head{background:#ece4c9}.sheet .time{background:#f3ecd4;white-space:nowrap}.sheet .blank{background:#f8f8f8}.sheet .left{text-align:left}.sheet .big{font-size:18px;font-weight:900;padding:10px 12px}
+    .sheet.park-sheet col.col-time{width:17%}.sheet.park-sheet col.col-name{width:20%}.sheet.park-sheet col.col-phone{width:48%}.sheet.park-sheet col.col-note{width:15%}
+    .sheet.ai-sheet col.col-time{width:12%}.sheet.ai-sheet col.col-name-a{width:12%}.sheet.ai-sheet col.col-phone-a{width:27%}.sheet.ai-sheet col.col-name-b{width:12%}.sheet.ai-sheet col.col-phone-b{width:27%}.sheet.ai-sheet col.col-note{width:10%}
+    .sheet.tablet-sheet col.col-time{width:8%}.sheet.tablet-sheet col.col-name-1,.sheet.tablet-sheet col.col-name-2,.sheet.tablet-sheet col.col-name-3,.sheet.tablet-sheet col.col-name-4,.sheet.tablet-sheet col.col-name-5{width:6%}.sheet.tablet-sheet col.col-phone-1,.sheet.tablet-sheet col.col-phone-2,.sheet.tablet-sheet col.col-phone-3,.sheet.tablet-sheet col.col-phone-4,.sheet.tablet-sheet col.col-phone-5{width:9%}.sheet.tablet-sheet col.col-note{width:12%}
+    .alarm-list{display:grid;gap:10px}.alarm-item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}.alarm-time{font-weight:900;font-size:18px}.alarm-title{font-weight:800}.alarm-sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .overlay{position:fixed;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}.overlay.show{display:flex}.modal{width:min(760px,100%);border-radius:28px;background:radial-gradient(600px 300px at 10% 0%,rgba(37,99,235,.22),transparent 60%),#fff;padding:28px;box-shadow:0 30px 100px rgba(0,0,0,.35)}.modal h1{margin:0;font-size:44px}.modal-time{font-size:80px;font-weight:900;color:#1d4ed8;letter-spacing:-.05em}.modal-msg{font-size:18px;color:#475569;margin:10px 0 20px}
+    @media (max-width:1080px){.grid.top,.grid.two,.upload-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column}.clock-box{text-align:left;width:100%}}
+    @media (max-width:680px){.wrap{padding:14px}.kpi-grid,.grid.three,.download-grid{grid-template-columns:1fr}.clock-time{font-size:28px}.next-time{font-size:38px}.table-grid{grid-template-columns:1fr}.modal-time{font-size:56px}}
+
+    /* Lottery draw / ladder tab */
+    .lottery-card{background:linear-gradient(135deg,#ffffff,#f0fdf4);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+    .lottery-header{text-align:center;margin-bottom:14px}
+    .lottery-header h2{font-size:24px;margin-bottom:6px;color:#14532d}
+    .lottery-header .small{max-width:680px;margin:0 auto}
+    .lottery-controls{text-align:center;margin-bottom:16px}
+    .lottery-stepper{display:flex;justify-content:center;gap:10px;margin:10px 0}
+    .lottery-count{font-size:22px;font-weight:900;color:#14532d}
+    .lottery-wrap{overflow-x:auto;padding:16px;border-radius:20px;background:linear-gradient(#f8fafc,#f0fdf4);border:1px solid #dbe7d1}
+    .lottery-ladder{position:relative;margin:auto;min-height:470px;transition:transform .4s ease}
+    .lottery-person-row,.lottery-result-row{position:absolute;left:0;right:0;height:58px}
+    .lottery-person-row{top:0}.lottery-result-row{bottom:0}
+    .lottery-person,.lottery-result-box{position:absolute;transform:translateX(-50%);text-align:center;font-weight:900}
+    .lottery-person{top:0;color:#14532d;cursor:pointer;border-radius:14px;padding:4px 8px;transition:background .2s,transform .2s}
+    .lottery-person:hover{background:#dcfce7;transform:translateX(-50%) translateY(-2px)}
+    .lottery-person .ball{display:block;font-size:27px;margin-bottom:2px}
+    .lottery-result-box{bottom:0;min-width:72px;padding:8px 10px;border-radius:14px;background:#e2e8f0;border:2px solid #cbd5e1;font-size:13px;transition:left .45s cubic-bezier(.2,.8,.2,1),transform .45s ease,background .2s}
+    .lottery-result-box.win{background:#bbf7d0;border-color:#22c55e;color:#166534}
+    .lottery-result-box.lose{background:#fecaca;border-color:#ef4444;color:#991b1b}
+    .lottery-lines{position:absolute;top:64px;left:0;right:0;height:340px}
+    .lottery-v-line{position:absolute;top:0;bottom:0;width:4px;background:#86efac;border-radius:999px;transform:translateX(-50%)}
+    .lottery-h-line{position:absolute;height:4px;background:#38bdf8;border-radius:999px;transform:translateY(-50%)}
+    .lottery-h-line::after{content:'🏌️';position:absolute;right:50%;top:-24px;transform:translateX(50%);font-size:20px;opacity:.8}
+    .lottery-shuffle-effect{animation:lotterySwing .65s ease}
+    @keyframes lotterySwing{0%,100%{transform:rotate(0)}25%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}75%{transform:rotate(-.7deg)}}
+    .lottery-buttons{text-align:center;margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .lottery-reset{position:fixed;bottom:22px;right:22px;z-index:9999;border:none;border-radius:50%;width:74px;height:74px;font-size:25px;display:block;background:#111827;color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.28);padding:0}
+    .lottery-reset::after{content:'새로하기';display:block;font-size:10px;margin-top:2px}
+    .lottery-note{text-align:center;color:#475569;font-weight:700;margin-top:14px;min-height:24px}
+    @media(max-width:640px){.lottery-ladder{min-width:720px}.lottery-wrap{padding:12px}.lottery-header h2{font-size:22px}}
+
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <h1>서울디지털동행플라자 은평센터 통합 운영 포털</h1>
+      <div class="sub">알람 운영, 입장내역 처리, 예약자 명단 정리, 출력 양식 생성을 한 화면에서 처리합니다.</div>
+    </div>
+    <div class="clock-box">
+      <div class="clock-time" id="clockTime">--:--:--</div>
+      <div class="clock-date" id="clockDate">----</div>
+    </div>
+  </div>
+
+  <div class="tabs no-print">
+    <button class="tab active" data-tab="dashboard">대시보드</button>
+    <button class="tab" data-tab="upload">전일 입장 기록</button>
+    <button class="tab" data-tab="reports">예약자 명단</button>
+    <button class="tab" data-tab="alarms">알람 설정</button>
+    <button class="tab" data-tab="lottery">사다리 추첨</button>
+  </div>
+
+  <section id="dashboard" class="section active">
+    <div class="grid top">
+      <div class="next-alarm">
+        <h2>다음 알람</h2>
+        <div class="next-time" id="nextAlarmTime">--:--</div>
+        <div class="next-title" id="nextAlarmTitle">예정된 알림 없음</div>
+        <div class="countdown" id="nextAlarmCountdown">-</div>
+        <div class="toolbar no-print">
+          <button class="btn secondary" onclick="testAlarm()">알람 테스트</button>
+          <button class="btn ghost" onclick="addSnooze(5)">5분 뒤 다시</button>
+        </div>
+        <div class="small">기존 제공 알람 파일의 기본 시간대를 동일하게 적용했습니다.</div>
+      </div>
+      <div class="card">
+        <h2>데이터 처리 요약</h2>
+        <div class="kpi-grid">
+          <div class="stat"><div class="label">일간 입장인원</div><div class="value" id="dailyCount">0</div></div>
+          <div class="stat"><div class="label">예약자 수</div><div class="value" id="reservationCount">0</div></div>
+          <div class="stat"><div class="label">출력 대상</div><div class="value" id="printTargetCount">0</div></div>
+          <div class="stat"><div class="label">최다 입장 시간대</div><div class="value" id="peakHour" style="font-size:20px">-</div></div>
+        </div>
+        <div class="small" id="reportBaseDate" style="margin-top:12px">데이터 기준일: -</div>
+      </div>
+    </div>
+
+    <div class="grid two" style="margin-top:16px">
+      <div class="card">
+        <h2>알람 목록</h2>
+        <div class="alarm-list" id="alarmListDashboard"></div>
+      </div>
+      <div class="card">
+        <h2>시간대별 입장 그래프</h2>
+        <canvas id="hourlyChart" height="135"></canvas>
+        <div class="small" style="margin-top:10px">입장내역 파일이 없으면 그래프는 비어 있습니다.</div>
+      </div>
+    </div>
+
+    <div class="card no-print" style="margin-top:16px">
+      <h2>빠른 이동</h2>
+      <div class="toolbar">
+        <button class="btn ghost" onclick="showTab('reports'); scrollToReport('parkFormatWrap')">파크골프 양식</button>
+        <button class="btn ghost" onclick="showTab('reports'); scrollToReport('aiFormatWrap')">AI 바둑 양식</button>
+        <button class="btn ghost" onclick="showTab('reports'); scrollToReport('tabletFormatWrap')">태블릿 양식</button>
+      </div>
+      <div id="statusMessage" class="small" style="margin-top:12px;color:var(--ok)">샘플 데이터가 로드되었습니다.</div>
+    </div>
+  </section>
+
+  <section id="upload" class="section">
+    <div class="card">
+      <h2>전일 입장 기록</h2>
+      <div class="upload-grid" style="grid-template-columns:1fr">
+        <div><label>입장내역 엑셀 / CSV</label><input id="entryFile" type="file" accept=".xlsx,.xls,.csv" /></div>
+      </div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn" onclick="processUploads()">입장내역 처리하기</button>
+        <button class="btn secondary" onclick="loadSample()">샘플 데이터 다시 불러오기</button>
+        <button class="btn ghost" onclick="clearDataOnly()">처리 데이터 초기화</button>
+        <button class="btn ghost" onclick="showTab('dashboard')">대시보드 보기</button>
+      </div>
+      <div class="download-grid" style="margin-top:12px;grid-template-columns:1fr">
+        <a id="downloadEntry" class="dl" href="#" download="processed_입장내역.xlsx">입장내역 결과물 다운로드</a>
+      </div>
+      <div class="small" style="margin-top:12px">
+        입장내역 파일은 입장일자 컬럼이 필요합니다. 처리 후 전일 입장 기록 결과물을 다운로드할 수 있습니다.
+      </div>
+    </div>
+  </section>
+
+  <section id="reports" class="section">
+    <div class="card" style="margin-bottom:16px">
+      <h2>예약자 명단</h2>
+      <div class="upload-grid" style="grid-template-columns:1fr">
+        <div><label>예약자 명단 엑셀 / CSV</label><input id="reservationFile" type="file" accept=".xlsx,.xls,.csv" /></div>
+      </div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn" onclick="processUploads()">예약자 명단 처리하기</button>
+        <button class="btn secondary" onclick="loadSample()">샘플 데이터 다시 불러오기</button>
+        <button class="btn ghost" onclick="clearDataOnly()">처리 데이터 초기화</button>
+      </div>
+      <div class="download-grid" style="margin-top:12px;grid-template-columns:1fr">
+        <a id="downloadReservation" class="dl" href="#" download="processed_예약자명단.xlsx">예약자 명단 결과물 다운로드</a>
+      </div>
+      <div class="small" style="margin-top:12px">
+        예약자 명단 파일은 예약 상태 / 프로그램명 / 프로그램 시작 시간 컬럼이 필요합니다. 처리 후 아래 출력 양식이 갱신됩니다.
+      </div>
+    </div>
+    <div class="table-grid">
+      <div class="card" id="parkFormatWrapCard">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>파크골프 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('park')">인쇄</button></div>
+        <div id="parkFormatWrap" class="report-format"></div>
+      </div>
+      <div class="card" id="aiFormatWrapCard">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>AI 바둑 오목 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('ai')">인쇄</button></div>
+        <div id="aiFormatWrap" class="report-format"></div>
+      </div>
+      <div class="card" id="tabletFormatWrapCard">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>태블릿(OTT) 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('tablet')">인쇄</button></div>
+        <div id="tabletFormatWrap" class="report-format"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="alarms" class="section">
+    <div class="grid two">
+      <div class="card">
+        <h2>수동 알람 추가</h2>
+        <div class="grid two">
+          <div><label>시간</label><input type="time" id="manualAlarmTime" /></div>
+          <div><label>알람명</label><input type="text" id="manualAlarmLabel" placeholder="예: 현장 추첨" /></div>
+        </div>
+        <div class="toolbar" style="margin-top:12px">
+          <button class="btn" onclick="addManualAlarm()">추가</button>
+          <button class="btn secondary" onclick="restoreDefaultAlarms()">기본 알람 복구</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>알람 옵션</h2>
+        <label><input type="checkbox" id="soundToggle" checked /> 소리 사용</label>
+        <label><input type="checkbox" id="vibrateToggle" checked /> 진동 사용</label>
+        <div class="small">브라우저 정책상 소리는 사용자가 페이지를 한 번 클릭한 뒤 안정적으로 동작합니다.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>알람 목록</h2>
+      <div class="alarm-list" id="alarmList"></div>
+    </div>
+  </section>
+
+  <section id="lottery" class="section">
+    <div class="lottery-card">
+      <div class="lottery-header">
+        <h2>⛳ 파크골프 사다리타기</h2>
+        <div class="small">상단 번호는 그대로 두고, 섞기를 누르면 하단 당첨/꽝 위치가 랜덤으로 바뀝니다. 하단에는 당첨/꽝만 먼저 보이고, 번호를 누르거나 결과 확인을 누르면 번호가 함께 공개됩니다.</div>
+      </div>
+
+      <section class="lottery-controls">
+        <div>참가 인원: <span id="lotteryPeople" class="lottery-count">9</span>명</div>
+        <div class="lottery-stepper">
+          <button class="btn ok" id="lotteryMinus" type="button">-</button>
+          <button class="btn ok" id="lotteryPlus" type="button">+</button>
+        </div>
+        <div class="small">※ 기본 9명, 최대 20명 / 항상 8명 당첨</div>
+      </section>
+
+      <section class="lottery-wrap">
+        <div id="lotteryLadder" class="lottery-ladder"></div>
+      </section>
+
+      <section class="lottery-buttons">
+        <button class="btn ok" id="lotteryShuffle" type="button">섞기</button>
+        <button class="btn secondary" id="lotteryReveal" type="button">결과 확인</button>
+      </section>
+
+      <p id="lotteryResult" class="lottery-note"></p>
+    </div>
+    <button id="lotteryClear" class="lottery-reset" type="button">🔄</button>
+  </section>
+
+</div>
+
+<div class="overlay" id="alarmOverlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h1 id="alarmModalTitle">⏰ 알람</h1>
+    <div class="modal-time" id="alarmModalTime">--:--</div>
+    <div class="modal-msg" id="alarmModalMessage">운영 알림입니다.</div>
+    <div class="toolbar" style="justify-content:flex-end">
+      <button class="btn ghost" onclick="addSnooze(5); hideAlarmPopup();">5분 후 다시</button>
+      <button class="btn danger" onclick="hideAlarmPopup()">끄기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'eunpyeong_ops_portal_v2';
+const DEFAULT_ALARMS = [
+  { time: '09:15', label: '파크골프(1차)', enabled: true },
+  { time: '11:25', label: '파크골프(2차)', enabled: true },
+  { time: '13:35', label: '파크골프(3차)', enabled: true },
+  { time: '15:35', label: '파크골프(4차)', enabled: true },
+  { time: '10:58', label: '현장추첨(오전)', enabled: true },
+  { time: '14:58', label: '현장추첨(오후)', enabled: true }
+];
+const allowedPrograms = ['AI 바둑 오목','파크골프 (숙련자용, 주 2회까지 예약 가능)','파크골프 (초보자용, 주 2회까지 예약 가능)','태블릿(OTT) #1','태블릿(OTT) #2','태블릿(OTT) #3','태블릿(OTT) #4','태블릿(OTT) #5'];
+const DEFAULT_TABLET_TIMES = ['09:00~10:30','10:30~12:00','12:00~13:30','13:30~15:00','15:00~16:30'];
+const WEEKDAY_LABELS = ['일','월','화','수','목','금','토'];
+const sampleData = {
+  hourly: [
+    {입장시간:'09:00',입장인원:60},{입장시간:'10:00',입장인원:18},{입장시간:'11:00',입장인원:10},{입장시간:'12:00',입장인원:9},
+    {입장시간:'13:00',입장인원:16},{입장시간:'14:00',입장인원:13},{입장시간:'15:00',입장인원:9},{입장시간:'16:00',입장인원:8},
+    {입장시간:'17:00',입장인원:4},{입장시간:'18:00',입장인원:1},{입장시간:'19:00',입장인원:1},{입장시간:'20:00',입장인원:1},{입장시간:'21:00',입장인원:2}
+  ],
+  park: [
+    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'이현순',연락처:'4985'},
+    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'경규태',연락처:'4550'},
+    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'이정수',연락처:'1863'},
+    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'문정화',연락처:'4800'},
+    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'금영례',연락처:'1587'},
+    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'박수옥',연락처:'6461'},
+    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'김용임',연락처:'5824'},
+    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'신현순',연락처:'3398'}
+  ],
+  ai: [
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'9:00~10:30',예약자명:'신숭걸',연락처:'4137'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'9:00~10:30',예약자명:'이영주',연락처:'1717'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'10:30~12:00',예약자명:'장강수',연락처:'0986'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'10:30~12:00',예약자명:'김현태',연락처:'3761'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'12:00~13:30',예약자명:'강기일',연락처:'0088'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'12:00~13:30',예약자명:'현지혜',연락처:'5988'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'13:30~15:00',예약자명:'고완군',연락처:'5221'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'13:30~15:00',예약자명:'김성주',연락처:'0986'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'15:00~16:30',예약자명:'허종필',연락처:'4478'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'15:00~16:30',예약자명:'이재전',연락처:'8347'}
+  ],
+  tablet: [
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'09:00~10:30',예약자명:'김민수',연락처:'1101'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'09:00~10:30',예약자명:'박지영',연락처:'1102'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'09:00~10:30',예약자명:'이수진',연락처:'1103'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'09:00~10:30',예약자명:'최동현',연락처:'1104'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'09:00~10:30',예약자명:'정다은',연락처:'1105'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'10:30~12:00',예약자명:'강유진',연락처:'2201'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'10:30~12:00',예약자명:'오세훈',연락처:'2202'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'10:30~12:00',예약자명:'한지민',연락처:'2203'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'10:30~12:00',예약자명:'송하늘',연락처:'2204'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'10:30~12:00',예약자명:'윤태호',연락처:'2205'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'12:00~13:30',예약자명:'임지우',연락처:'3301'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'12:00~13:30',예약자명:'배소연',연락처:'3302'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'12:00~13:30',예약자명:'문서준',연락처:'3303'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'12:00~13:30',예약자명:'조수빈',연락처:'3304'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'12:00~13:30',예약자명:'유하준',연락처:'3305'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'13:30~15:00',예약자명:'백서윤',연락처:'4401'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'13:30~15:00',예약자명:'노지훈',연락처:'4402'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'13:30~15:00',예약자명:'서채원',연락처:'4403'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'13:30~15:00',예약자명:'신재민',연락처:'4404'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'13:30~15:00',예약자명:'류은별',연락처:'4405'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'15:00~16:30',예약자명:'차민규',연락처:'5501'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'15:00~16:30',예약자명:'고은서',연락처:'5502'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'15:00~16:30',예약자명:'장도윤',연락처:'5503'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'15:00~16:30',예약자명:'홍다인',연락처:'5504'},
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'15:00~16:30',예약자명:'남시우',연락처:'5505'}
+  ]
+};
+let appState = { entryRows: [], reservationRows: [], hourly: [], park: [], ai: [], tablet: [], alarms: [], settings: {sound:true, vibrate:true} };
+let chart = null;
+let lastTriggered = {};
+let audioCtx = null;
+let beepInterval = null;
+
+const pad2 = v => String(v).padStart(2,'0');
+const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+const escapeHtml = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+const fmtHMS = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+const fmtHM = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+const dateKey = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+function last4(value){ if(value===undefined||value===null) return ''; const digits=String(value).replace(/\D/g,''); return digits ? digits.slice(-4) : ''; }
+function normalizeTime(v){
+  if(v===undefined || v===null || v==='') return '';
+  if(typeof v === 'number'){ const total=Math.round(v*24*60); return pad2(Math.floor(total/60))+':'+pad2(total%60); }
+  const raw=String(v).trim();
+  const colon=raw.match(/^(\d{1,2}):(\d{2})$/); if(colon) return pad2(colon[1])+':'+colon[2];
+  const hm=raw.match(/^(\d{1,2})시(?:(\d{1,2})분)?$/); if(hm) return pad2(hm[1])+':'+pad2(hm[2]||0);
+  return raw;
+}
+function normalizeTimeRange(v){
+  if(v===undefined || v===null || v==='') return '';
+  if(typeof v === 'number') return normalizeTime(v);
+  const compact=String(v).trim().replace(/\s+/g,'');
+  const match=compact.match(/(\d{1,2}:\d{2}|\d{1,2}시\d{0,2}분?)[~-](\d{1,2}:\d{2}|\d{1,2}시\d{0,2}분?)/);
+  if(match) return `${normalizeTime(match[1])}~${normalizeTime(match[2])}`;
+  const single=compact.match(/(\d{1,2}:\d{2}|\d{1,2}시\d{0,2}분?)/);
+  if(single) return normalizeTime(single[1]);
+  return compact;
+}
+function normalizeProgramKey(value){ return String(value||'').replace(/\s+/g,' ').replace(/태블릿\s*\(\s*OTT\s*\)/gi,'태블릿(OTT)').replace(/\s*#\s*/g,' #').trim(); }
+function parseDateHour(v){ const m=String(v||'').trim().match(/(\d{1,2}):(\d{2})/); return m ? pad2(m[1])+':00' : ''; }
+function normalizeDateString(value){
+  const raw=String(value||'').trim(); if(!raw) return '';
+  const normalized=raw.replace(/[./]/g,'-');
+  const match=normalized.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if(match) return `${match[1]}-${pad2(match[2])}-${pad2(match[3])}`;
+  const d=new Date(raw); if(Number.isNaN(d.getTime())) return ''; return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+}
+function formatReportDate(value){ const n=normalizeDateString(value); if(!n) return ''; const [y,m,d]=n.split('-').map(Number); const dt=new Date(y,m-1,d); return `${y}.${m}.${d}.(${WEEKDAY_LABELS[dt.getDay()]})`; }
+function timeToMinutes(hm){ const [h,m]=normalizeTime(hm).split(':').map(Number); return h*60+m; }
+function nowMinutes(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({alarms:appState.alarms, settings:appState.settings})); }
+function loadSaved(){ try{ const raw=localStorage.getItem(STORAGE_KEY); if(raw){ const saved=JSON.parse(raw); appState.alarms=saved.alarms||[]; appState.settings=saved.settings||{sound:true,vibrate:true}; } }catch{} }
+function makeDefaultAlarms(){ return DEFAULT_ALARMS.map(a=>({ id:uid(), ...a, source:'default' })); }
+function restoreDefaultAlarms(){ appState.alarms = makeDefaultAlarms(); saveState(); renderAlarms(); renderNextAlarm(); }
+
+function sheetToJson(file, callback){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const data=new Uint8Array(e.target.result);
+    const wb=XLSX.read(data,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    callback(XLSX.utils.sheet_to_json(ws,{defval:''}));
+  };
+  reader.readAsArrayBuffer(file);
+}
+function validateEntryColumns(entryRowsRaw){
+  const entryColumns=new Set((entryRowsRaw[0]&&Object.keys(entryRowsRaw[0]))||[]);
+  if(!entryColumns.has('입장일자')) throw new Error('입장내역 파일에는 입장일자 컬럼이 필요합니다.');
+}
+function validateReservationColumns(resRowsRaw){
+  const reservationColumns=new Set((resRowsRaw[0]&&Object.keys(resRowsRaw[0]))||[]);
+  if(!reservationColumns.has('예약 상태') || !reservationColumns.has('프로그램명') || !reservationColumns.has('프로그램 시작 시간')){
+    throw new Error('예약자 명단에는 예약 상태, 프로그램명, 프로그램 시작 시간 컬럼이 필요합니다.');
+  }
+}
+function sanitizeEntryRows(rows){ return rows.map(r=>({ ...r, 연락처:last4(r['연락처']||r['전화번호']||'') })); }
+function sanitizeReservationRows(rows){
+  const allowedProgramSet=new Set(allowedPrograms.map(normalizeProgramKey));
+  return rows.map(r=>({
+    ...r,
+    프로그램명:normalizeProgramKey(r['프로그램명']||''),
+    연락처:last4(r['연락처']||r['전화번호']||''),
+    이메일:'',
+    '프로그램 시작 시간':normalizeTimeRange(r['프로그램 시작 시간'])
+  })).filter(r=>String(r['예약 상태']||'').trim()==='정상').filter(r=>allowedProgramSet.has(String(r['프로그램명']||'')));
+}
+function mapper(r){ return {예약일:r['예약일']||'',프로그램명:r['프로그램명']||'',프로그램시작시간:r['프로그램 시작 시간']||'',예약자명:r['예약자명']||'',연락처:r['연락처']||''}; }
+function rebuildDerivedData(){
+  const hourlyMap=new Map();
+  appState.entryRows.forEach(r=>{ const hour=parseDateHour(r['입장일자']); if(hour) hourlyMap.set(hour,(hourlyMap.get(hour)||0)+1); });
+  appState.hourly=[...hourlyMap.entries()].map(([입장시간,입장인원])=>({입장시간,입장인원})).sort((a,b)=>a.입장시간.localeCompare(b.입장시간));
+  const resSorted=[...appState.reservationRows].sort((a,b)=>String(a['프로그램 시작 시간']||'').localeCompare(String(b['프로그램 시작 시간']||'')) || String(a['예약자명']||'').localeCompare(String(b['예약자명']||'')));
+  appState.reservationRows=resSorted;
+  appState.park=resSorted.filter(r=>String(r['프로그램명']).includes('파크골프')).map(mapper);
+  appState.ai=resSorted.filter(r=>String(r['프로그램명']).includes('AI 바둑 오목')).map(mapper);
+  appState.tablet=resSorted.filter(r=>String(r['프로그램명']).includes('태블릿')).map(mapper);
+}
+function getEntryBaseDate(){
+  for(const row of appState.entryRows||[]){ const raw=String(row['입장일자']||'').trim(); const part=raw.includes(' ')?raw.split(' ')[0]:raw.split('T')[0]; const n=normalizeDateString(part); if(n) return n; }
+  return '';
+}
+function getProgramDate(rows){ return rows[0]?.['예약일'] || ''; }
+function getTabletSlot(value){ const m=String(value||'').match(/#\s*(\d+)/); const n=m?Number(m[1]):NaN; return Number.isInteger(n)&&n>=1&&n<=5?n:null; }
+function groupedRows(rows){ const grouped={}; rows.forEach(r=>{ const key=r['프로그램시작시간']||r['프로그램 시작 시간']||''; if(!grouped[key]) grouped[key]=[]; grouped[key].push(r); }); return Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])); }
+function renderKpis(){
+  document.getElementById('dailyCount').textContent=appState.entryRows.length||0;
+  document.getElementById('reservationCount').textContent=appState.reservationRows.length||0;
+  document.getElementById('printTargetCount').textContent=(appState.park.length+appState.ai.length+appState.tablet.length)||0;
+  const peak=[...appState.hourly].sort((a,b)=>b.입장인원-a.입장인원)[0];
+  document.getElementById('peakHour').textContent=peak ? `${peak.입장시간} / ${peak.입장인원}명` : '-';
+  document.getElementById('reportBaseDate').textContent=`데이터 기준일: ${formatReportDate(getEntryBaseDate()) || '-'}`;
+}
+function renderChart(){
+  const ctx=document.getElementById('hourlyChart'); if(chart) chart.destroy();
+  chart=new Chart(ctx,{type:'line',data:{labels:appState.hourly.map(x=>x.입장시간),datasets:[{label:'시간대별 입장인원(명)',data:appState.hourly.map(x=>x.입장인원),tension:.25,fill:false}]},options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+}
+function setDownloadLink(anchorId,rows,filename){
+  const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'data');
+  const array=XLSX.write(wb,{bookType:'xlsx',type:'array'}); const blob=new Blob([array],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob); const a=document.getElementById(anchorId); a.href=url; a.download=filename;
+}
+function renderAll(){ renderKpis(); renderChart(); renderFormattedReports(); renderAlarms(); renderNextAlarm(); setDownloadLink('downloadEntry',appState.entryRows,'processed_입장내역.xlsx'); setDownloadLink('downloadReservation',appState.reservationRows,'processed_예약자명단.xlsx'); }
+
+function buildParkFormatHtml(rows){
+  const date=getProgramDate(rows); const amTime='09:20'; const pmTime='13:40';
+  const amRows=rows.filter(r=>normalizeTimeRange(r['프로그램시작시간']||'').split('~')[0]===amTime);
+  const pmRows=rows.filter(r=>normalizeTimeRange(r['프로그램시작시간']||'').split('~')[0]===pmTime);
+  const amData=amRows.slice(0,4); const pmData=pmRows.slice(0,4); const amOverflow=amRows.length>4; const pmOverflow=pmRows.length>4;
+  let html='<div class="print-sheet" id="parkPrintArea"><table class="sheet park-sheet" id="parkFormattedTable"><colgroup><col class="col-time"><col class="col-name"><col class="col-phone"><col class="col-note"></colgroup><tbody>';
+  html+=`<tr><td colspan="4" class="left big">${escapeHtml(date)}</td></tr>`;
+  html+='<tr><td colspan="4" class="title">파크골프 온라인 예약 및 신청 명단</td></tr>';
+  html+='<tr><td colspan="4" class="meta left">이용시간 : 오전 9시20분 ~ 오후 3시30분</td></tr>';
+  html+='<tr><td colspan="4" class="note">- 센터 입장등록(QR입력)을 하지 않으신 분은 현장이용을 신청 하실 수 없습니다.<br>- 기재하신 성명을 지우고 다른 사람의 이름을 기재한 경우 무효처리합니다.<br>- 체험예약으로 게임을 하신 분들은 현장 이용 명단을 기재하지 않습니다.<br>- 예약 접수는 <span style="color:#d00">1일 1회로 제한</span>됩니다.<br></td></tr>';
+  html+='<tr><th class="head">구분</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">비고</th></tr>';
+  for(let i=0;i<4;i++){ const r=amData[i]||{}; html+=`<tr><td class="time">${amTime}</td><td>${escapeHtml(r['예약자명']||'')}</td><td>${escapeHtml(r['연락처']||'')}</td><td>${i===0&&amOverflow?'초과 인원 있음':''}</td></tr>`; }
+  for(let i=0;i<4;i++){ const r=pmData[i]||{}; html+=`<tr><td class="time">${pmTime}</td><td>${escapeHtml(r['예약자명']||'')}</td><td>${escapeHtml(r['연락처']||'')}</td><td>${i===0&&pmOverflow?'초과 인원 있음':''}</td></tr>`; }
+  return html+='</tbody></table></div>';
+}
+function buildAiFormatHtml(rows){
+  const date=getProgramDate(rows); const fixedTimes=['09:00','10:30','12:00','13:30','15:00']; const dataMap={};
+  rows.forEach(r=>{ const key=normalizeTimeRange(r['프로그램시작시간']||'').split('~')[0]; if(!dataMap[key]) dataMap[key]=[]; dataMap[key].push(r); });
+  let html='<div class="print-sheet" id="aiPrintArea"><table class="sheet ai-sheet" id="aiFormattedTable"><colgroup><col class="col-time"><col class="col-name-a"><col class="col-phone-a"><col class="col-name-b"><col class="col-phone-b"><col class="col-note"></colgroup><tbody>';
+  html+=`<tr><td colspan="6" class="left big">${escapeHtml(date)}</td></tr>`;
+  html+='<tr><td colspan="6" class="title">AI 바둑 온라인 예약 및 신청 명단</td></tr>';
+  html+='<tr><td colspan="6" class="note">- 센터 입장등록(QR입력)을 하지 않으신 분은 현장이용을 신청 하실 수 없습니다.<br>- 기재하신 성명을 지우고 다른 사람의 이름을 기재한 경우 무효처리합니다.<br>- 체험예약으로 게임을 하신 분들은 현장 이용 명단을 기재하지 않습니다.<br>- 이용시간중에 가급적 자리비움을 자제해주시기 바랍니다.<br>- 예약 접수는 <span style="color:#d00">1일 1회로 제한</span>됩니다.</td></tr>';
+  html+='<tr><th rowspan="2" class="head">구분</th><th colspan="2" class="head">A</th><th colspan="2" class="head">B</th><th rowspan="2" class="head">비고</th></tr>';
+  html+='<tr><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th></tr>';
+  fixedTimes.forEach(time=>{ const items=dataMap[time]||[]; const a=items[0]||{}; const b=items[1]||{}; const overflow=items.length>2; html+=`<tr><td class="time">${time}</td><td>${escapeHtml(a['예약자명']||'')}</td><td>${escapeHtml(a['연락처']||'')}</td><td>${escapeHtml(b['예약자명']||'')}</td><td>${escapeHtml(b['연락처']||'')}</td><td class="blank">${overflow?'초과 인원 있음':''}</td></tr>`; });
+  return html+='</tbody></table></div>';
+}
+function buildTabletFormatHtml(rows){
+  const groupedMap=new Map(); groupedRows(rows).forEach(([time,items])=>{ const key=normalizeTimeRange(time).split('~')[0]; groupedMap.set(key,items); });
+  const date=getProgramDate(rows); let html='<div class="print-sheet" id="tabletPrintArea"><table class="sheet tablet-sheet" id="tabletFormattedTable"><colgroup><col class="col-time"><col class="col-name-1"><col class="col-phone-1"><col class="col-name-2"><col class="col-phone-2"><col class="col-name-3"><col class="col-phone-3"><col class="col-name-4"><col class="col-phone-4"><col class="col-name-5"><col class="col-phone-5"><col class="col-note"></colgroup><tbody>';
+  html+=`<tr><td colspan="12" class="left big">${escapeHtml(date)}</td></tr>`;
+  html+='<tr><td colspan="12" class="title">태블릿(OTT) 온라인 예약 및 신청 명단</td></tr>';
+  html+='<tr><td colspan="12" class="note">- 센터 입장등록(QR입력)을 하지 않으신 분은 현장이용을 신청 하실 수 없습니다.<br>- 기재하신 성명을 지우고 다른 사람의 이름을 기재한 경우 "무효" 처리합니다.<br>- 체험 예약으로 게임을 하신 분들은 현장 이용 명단을 기재하지 않습니다.<br>- 이용 시간 중에 가급적 자리비움을 자제해주시기 바랍니다.</td></tr>';
+  html+='<tr><th rowspan="2" class="head">구분</th><th colspan="2" class="head">1</th><th colspan="2" class="head">2</th><th colspan="2" class="head">3</th><th colspan="2" class="head">4</th><th colspan="2" class="head">5</th><th rowspan="2" class="head">비고</th></tr>';
+  html+='<tr><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th></tr>';
+  DEFAULT_TABLET_TIMES.forEach(time=>{ const key=normalizeTimeRange(time).split('~')[0]; const items=groupedMap.get(key)||[]; const slotMap={1:{},2:{},3:{},4:{},5:{}}; items.forEach(item=>{ const slot=getTabletSlot(item['프로그램명']); if(slot&&!slotMap[slot]['예약자명']) slotMap[slot]=item; }); html+=`<tr><td class="time">${escapeHtml(time)}</td>${[1,2,3,4,5].map(n=>`<td>${escapeHtml(slotMap[n]['예약자명']||'')}</td><td>${escapeHtml(slotMap[n]['연락처']||'')}</td>`).join('')}<td class="blank"></td></tr>`; });
+  return html+='</tbody></table></div>';
+}
+function renderFormattedReports(){ document.getElementById('parkFormatWrap').innerHTML=buildParkFormatHtml(appState.park); document.getElementById('aiFormatWrap').innerHTML=buildAiFormatHtml(appState.ai); document.getElementById('tabletFormatWrap').innerHTML=buildTabletFormatHtml(appState.tablet); }
+function printFormattedReport(kind){
+  const config={
+    park:{areaId:'parkPrintArea',title:'파크골프 양식 인쇄 창을 열었습니다.',pageSize:'A4 portrait',bodyWidth:'190mm'},
+    ai:{areaId:'aiPrintArea',title:'AI 바둑 오목 양식 인쇄 창을 열었습니다.',pageSize:'A4 portrait',bodyWidth:'190mm'},
+    tablet:{areaId:'tabletPrintArea',title:'태블릿(OTT) 양식 인쇄 창을 열었습니다. 인쇄 설정에서 방향이 가로(A4 landscape)인지 한 번 더 확인해 주세요.',pageSize:'A4 landscape',bodyWidth:'277mm'}
+  }[kind]; if(!config) return;
+  const area=document.getElementById(config.areaId); const win=window.open('','_blank','width=1200,height=900'); if(!win){ document.getElementById('statusMessage').textContent='팝업이 차단되어 인쇄 창을 열지 못했습니다.'; return; }
+  const style=`<style>@page{size:${config.pageSize};margin:10mm}html,body{margin:0;padding:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;color:#111827;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:${config.bodyWidth};margin:0 auto}.print-sheet{width:100%;margin:0 auto}table.sheet{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;word-break:keep-all}.sheet th,.sheet td{border:1px solid #444;padding:8px 6px;text-align:center;vertical-align:middle;font-weight:600;line-height:1.4;font-size:${kind==='tablet'?'14px':'17px'}}.sheet .title{background:#dbe5f1;font-size:${kind==='tablet'?'20px':'22px'};font-weight:800;padding:12px 8px}.sheet .meta{background:#eef3f8;text-align:left;font-size:${kind==='tablet'?'14px':'16px'};font-weight:500;padding:10px 12px}.sheet .note{background:#fff;text-align:left;font-size:${kind==='tablet'?'12px':'14px'};font-weight:500;line-height:1.6;padding:12px}.sheet .head{background:#ece4c9}.sheet .time{background:#f3ecd4;white-space:nowrap}.sheet .blank{background:#f8f8f8}.sheet .left{text-align:left}.sheet .big{font-size:18px;font-weight:800;padding:10px 12px}.sheet.park-sheet col.col-time{width:17%}.sheet.park-sheet col.col-name{width:20%}.sheet.park-sheet col.col-phone{width:48%}.sheet.park-sheet col.col-note{width:15%}.sheet.ai-sheet col.col-time{width:12%}.sheet.ai-sheet col.col-name-a{width:12%}.sheet.ai-sheet col.col-phone-a{width:27%}.sheet.ai-sheet col.col-name-b{width:12%}.sheet.ai-sheet col.col-phone-b{width:27%}.sheet.ai-sheet col.col-note{width:10%}.sheet.tablet-sheet col.col-time{width:8%}.sheet.tablet-sheet col.col-name-1,.sheet.tablet-sheet col.col-name-2,.sheet.tablet-sheet col.col-name-3,.sheet.tablet-sheet col.col-name-4,.sheet.tablet-sheet col.col-name-5{width:6%}.sheet.tablet-sheet col.col-phone-1,.sheet.tablet-sheet col.col-phone-2,.sheet.tablet-sheet col.col-phone-3,.sheet.tablet-sheet col.col-phone-4,.sheet.tablet-sheet col.col-phone-5{width:9%}.sheet.tablet-sheet col.col-note{width:12%}</style>`;
+  const printGuide=kind==='tablet'?`<div style="width:${config.bodyWidth};margin:0 auto 8px;padding:8px 10px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;line-height:1.5;">인쇄 설정에서 용지 방향이 가로(A4 landscape)로 표시되는지 확인해 주세요.</div>`:'';
+  win.document.open(); win.document.write('<!doctype html><html lang="ko"><head><meta charset="UTF-8"><title>출력</title>'+style+'</head><body>'+printGuide+area.outerHTML+'</body></html>'); win.document.close();
+  setTimeout(()=>{win.focus();win.print();},150); document.getElementById('statusMessage').textContent=config.title;
+}
+
+function renderAlarms(){
+  const html = buildAlarmListHtml();
+  document.getElementById('alarmList').innerHTML = html;
+  document.getElementById('alarmListDashboard').innerHTML = html;
+}
+function buildAlarmListHtml(){
+  const alarms=[...appState.alarms].sort((a,b)=>a.time.localeCompare(b.time));
+  if(!alarms.length) return '<div class="small">알람이 없습니다. 기본 알람을 복구하거나 수동 알람을 추가하세요.</div>';
+  return alarms.map(a=>`<div class="alarm-item"><div><div class="alarm-time">${escapeHtml(a.time)}</div><div class="alarm-title">${escapeHtml(a.label)}</div><div class="alarm-sub">${a.source==='default'?'기본 제공 알람':a.source==='snooze'?'스누즈':'수동'} · ${a.enabled?'ON':'OFF'}</div></div><div class="toolbar"><button class="btn ghost" onclick="toggleAlarm('${a.id}')">${a.enabled?'끄기':'켜기'}</button><button class="btn danger" onclick="deleteAlarm('${a.id}')">삭제</button></div></div>`).join('');
+}
+function addManualAlarm(){ const time=document.getElementById('manualAlarmTime').value; const label=document.getElementById('manualAlarmLabel').value.trim()||'수동 알람'; if(!time){ alert('알람 시간을 선택해 주세요.'); return; } appState.alarms.push({id:uid(),time,label,enabled:true,source:'manual'}); document.getElementById('manualAlarmLabel').value=''; saveState(); renderAlarms(); renderNextAlarm(); }
+function toggleAlarm(id){ const a=appState.alarms.find(x=>x.id===id); if(a){ a.enabled=!a.enabled; saveState(); renderAlarms(); renderNextAlarm(); } }
+function deleteAlarm(id){ appState.alarms=appState.alarms.filter(a=>a.id!==id); saveState(); renderAlarms(); renderNextAlarm(); }
+function addSnooze(min){ const d=new Date(); d.setMinutes(d.getMinutes()+min); appState.alarms.push({id:uid(),time:fmtHM(d),label:`스누즈(${min}분)`,enabled:true,source:'snooze',once:true}); saveState(); renderAlarms(); renderNextAlarm(); }
+function getNextAlarm(){
+  const n=nowMinutes(); const enabled=appState.alarms.filter(a=>a.enabled).sort((a,b)=>a.time.localeCompare(b.time));
+  return enabled.find(a=>timeToMinutes(a.time)>=n) || enabled[0] || null;
+}
+function renderNextAlarm(){
+  const a=getNextAlarm();
+  if(!a){ document.getElementById('nextAlarmTime').textContent='--:--'; document.getElementById('nextAlarmTitle').textContent='예정된 알림 없음'; document.getElementById('nextAlarmCountdown').textContent='-'; return; }
+  document.getElementById('nextAlarmTime').textContent=a.time; document.getElementById('nextAlarmTitle').textContent=a.label;
+  let diff=timeToMinutes(a.time)-nowMinutes(); if(diff<0) diff+=24*60;
+  document.getElementById('nextAlarmCountdown').textContent=diff===0?'곧 울림':`${diff}분 후`;
+}
+function checkAlarms(){
+  const now=new Date(); const hm=fmtHM(now); const key=dateKey(now);
+  appState.alarms.forEach(a=>{ if(!a.enabled || a.time!==hm) return; const triggerKey=`${a.id}:${key}`; if(lastTriggered[triggerKey]) return; lastTriggered[triggerKey]=true; showAlarmPopup(a); if(a.once){ a.enabled=false; saveState(); renderAlarms(); } });
+}
+function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume().catch(()=>{}); }
+function playBeepLoop(){ if(!appState.settings.sound) return; ensureAudio(); const once=()=>{ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.value=880; g.gain.value=.0001; o.connect(g); g.connect(audioCtx.destination); const now=audioCtx.currentTime; g.gain.setValueAtTime(.0001,now); g.gain.exponentialRampToValueAtTime(.25,now+.02); g.gain.exponentialRampToValueAtTime(.0001,now+.25); o.start(now); o.stop(now+.26); }; once(); beepInterval=setInterval(once,650); }
+function stopBeepLoop(){ if(beepInterval) clearInterval(beepInterval); beepInterval=null; }
+function showAlarmPopup(a){ document.getElementById('alarmModalTitle').textContent='⏰ '+a.label; document.getElementById('alarmModalTime').textContent=a.time; document.getElementById('alarmModalMessage').textContent=a.once?'1회 알람입니다.':'매일 반복 알람입니다.'; document.getElementById('alarmOverlay').classList.add('show'); stopBeepLoop(); playBeepLoop(); if(appState.settings.vibrate && 'vibrate' in navigator) navigator.vibrate([300,200,300,200,600]); }
+function hideAlarmPopup(){ document.getElementById('alarmOverlay').classList.remove('show'); stopBeepLoop(); if('vibrate' in navigator) navigator.vibrate(0); }
+function testAlarm(){ showAlarmPopup({time:fmtHM(new Date()),label:'테스트 알람',source:'manual',once:true}); }
+
+function processUploads(){
+  const status=document.getElementById('statusMessage'); const entryFile=document.getElementById('entryFile').files[0]; const reservationFile=document.getElementById('reservationFile').files[0];
+  if(!entryFile && !reservationFile){ status.textContent='처리할 입장내역 또는 예약자 명단 파일을 업로드해 주세요.'; showTab('dashboard'); return; }
+  const tasks=[];
+  if(entryFile){
+    tasks.push(new Promise((resolve,reject)=>sheetToJson(entryFile, rows=>{ try{ validateEntryColumns(rows); appState.entryRows=sanitizeEntryRows(rows); resolve('입장내역 처리 완료'); }catch(e){ reject(e); } })));
+  }
+  if(reservationFile){
+    tasks.push(new Promise((resolve,reject)=>sheetToJson(reservationFile, rows=>{ try{ validateReservationColumns(rows); appState.reservationRows=sanitizeReservationRows(rows); resolve('예약자 명단 처리 완료'); }catch(e){ reject(e); } })));
+  }
+  Promise.all(tasks).then(messages=>{
+    rebuildDerivedData(); renderAll(); status.textContent=messages.join(' / ') + '되었습니다.'; showTab('dashboard');
+  }).catch(err=>{ status.textContent=err.message || '파일 처리 중 오류가 발생했습니다.'; showTab('dashboard'); });
+}
+function loadSample(){
+  const sampleReservationRows=sanitizeReservationRows(sampleData.park.concat(sampleData.ai).concat(sampleData.tablet).map(r=>({예약일:r['예약일'],프로그램명:r['프로그램명'],'프로그램 시작 시간':r['프로그램 시작 시간'],예약자명:r['예약자명'],연락처:r['연락처'],'예약 상태':'정상'})));
+  const sampleEntryRows=sampleData.hourly.flatMap(item=>Array.from({length:Number(item.입장인원||0)},(_,idx)=>({번호:`${item.입장시간}-${idx+1}`,입장일자:`2026-01-05 ${item.입장시간.replace(':00',':00:00')}`})));
+  appState.entryRows=sampleEntryRows; appState.reservationRows=sampleReservationRows; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='샘플 데이터가 로드되었습니다.';
+}
+function clearDataOnly(){ appState.entryRows=[]; appState.reservationRows=[]; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='처리 데이터가 초기화되었습니다. 알람은 유지됩니다.'; }
+
+function showTab(id){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id)); document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id)); }
+function scrollToReport(id){ setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}),80); }
+
+/* Lottery draw / ladder */
+const lotteryApp = (() => {
+  const MIN=9, MAX=20, WINNERS=8;
+  let people=9;
+  let results=[];
+  let shuffled=false;
+
+  const peopleEl=document.getElementById('lotteryPeople');
+  const ladderEl=document.getElementById('lotteryLadder');
+  const resultEl=document.getElementById('lotteryResult');
+  const clearBtn=document.getElementById('lotteryClear');
+  const minusBtn=document.getElementById('lotteryMinus');
+  const plusBtn=document.getElementById('lotteryPlus');
+
+  function getLayout(){
+    const gap=82;
+    const side=48;
+    const width=(people-1)*gap+side*2;
+    return {gap,side,width,height:470};
+  }
+  function shuffleArray(arr){
+    const copy=[...arr];
+    for(let i=copy.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [copy[i],copy[j]]=[copy[j],copy[i]];
+    }
+    return copy;
+  }
+  function makeResults(){
+    const arr=[];
+    for(let i=0;i<people;i++) arr.push(i<WINNERS ? '당첨' : '꽝');
+    return shuffleArray(arr);
+  }
+  function createRungs(){
+    const rungs=[];
+    const rowCount=Math.max(8,people+1);
+    const step=Math.floor(290/rowCount);
+    for(let start=0; start<people-1; start++){
+      const y=32 + Math.floor(Math.random()*288);
+      rungs.push({start,y});
+    }
+    for(let y=32;y<320;y+=step){
+      const start=Math.floor(Math.random()*(people-1));
+      rungs.push({start,y});
+    }
+    return rungs;
+  }
+  function render(){
+    if(!ladderEl) return;
+    const {gap,side,width,height}=getLayout();
+    peopleEl.textContent=people;
+    minusBtn.disabled=people<=MIN;
+    plusBtn.disabled=people>=MAX;
+    ladderEl.style.width=width+'px';
+    ladderEl.style.height=height+'px';
+    ladderEl.innerHTML='';
+
+    const personRow=document.createElement('div');
+    personRow.className='lottery-person-row';
+    const lineArea=document.createElement('div');
+    lineArea.className='lottery-lines';
+    const resultRow=document.createElement('div');
+    resultRow.className='lottery-result-row';
+
+    for(let i=0;i<people;i++){
+      const x=side+i*gap;
+
+      const person=document.createElement('div');
+      person.className='lottery-person';
+      person.style.left=x+'px';
+      person.innerHTML=`<span class="ball">⚪</span>${i+1}번`;
+      person.onclick=()=>revealOne(i);
+      personRow.appendChild(person);
+
+      const v=document.createElement('div');
+      v.className='lottery-v-line';
+      v.style.left=x+'px';
+      lineArea.appendChild(v);
+
+      const box=document.createElement('div');
+      box.className='lottery-result-box';
+      box.style.left=x+'px';
+      if(shuffled){
+        box.textContent=results[i];
+        box.className='lottery-result-box '+(results[i]==='당첨'?'win':'lose');
+      } else {
+        box.textContent='숨김';
+      }
+      resultRow.appendChild(box);
+    }
+
+    createRungs().forEach(({start,y})=>{
+      const h=document.createElement('div');
+      h.className='lottery-h-line';
+      h.style.left=(side+start*gap)+'px';
+      h.style.top=y+'px';
+      h.style.width=gap+'px';
+      lineArea.appendChild(h);
+    });
+
+    ladderEl.appendChild(personRow);
+    ladderEl.appendChild(lineArea);
+    ladderEl.appendChild(resultRow);
+  }
+  function shuffle(){
+    results=makeResults();
+    shuffled=true;
+    resultEl.textContent='하단 위치가 섞였습니다. 번호를 누르거나 결과 확인을 눌러주세요.';
+    render();
+    ladderEl.classList.remove('lottery-shuffle-effect');
+    void ladderEl.offsetWidth;
+    ladderEl.classList.add('lottery-shuffle-effect');
+  }
+  function reveal(){
+    if(!shuffled){
+      alert('먼저 섞기를 눌러주세요.');
+      return;
+    }
+    const boxes=document.querySelectorAll('.lottery-result-box');
+    const winners=[];
+    const losers=[];
+    results.forEach((r,i)=>{
+      const box=boxes[i];
+      box.className='lottery-result-box '+(r==='당첨'?'win':'lose');
+      box.textContent=`${r}(${i+1})`;
+      if(r==='당첨') winners.push(i+1);
+      else losers.push(i+1);
+    });
+    resultEl.textContent=`당첨: ${winners.join(', ')} / 꽝: ${losers.join(', ')}`;
+  }
+  function revealOne(i){
+    if(!shuffled){
+      alert('먼저 섞기를 눌러주세요.');
+      return;
+    }
+    const box=document.querySelectorAll('.lottery-result-box')[i];
+    const r=results[i];
+    box.className='lottery-result-box '+(r==='당첨'?'win':'lose');
+    box.textContent=`${r}(${i+1})`;
+    resultEl.textContent=`${i+1}번 결과: ${r}`;
+  }
+  function reset(){
+    shuffled=false;
+    results=[];
+    resultEl.textContent='';
+    render();
+  }
+  function init(){
+    minusBtn.onclick=()=>{people=Math.max(MIN,people-1);reset()};
+    plusBtn.onclick=()=>{people=Math.min(MAX,people+1);reset()};
+    document.getElementById('lotteryShuffle').onclick=shuffle;
+    document.getElementById('lotteryReveal').onclick=reveal;
+    clearBtn.onclick=reset;
+    render();
+  }
+  return {init, reset, shuffle, reveal};
+})();
+
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>showTab(btn.dataset.tab)));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideAlarmPopup(); });
+window.addEventListener('pointerdown',()=>{ if(appState.settings.sound) ensureAudio(); },{once:true});
+document.getElementById('soundToggle').addEventListener('change',e=>{ appState.settings.sound=e.target.checked; saveState(); if(e.target.checked) ensureAudio(); });
+document.getElementById('vibrateToggle').addEventListener('change',e=>{ appState.settings.vibrate=e.target.checked; saveState(); });
+function tick(){ const now=new Date(); document.getElementById('clockTime').textContent=fmtHMS(now); document.getElementById('clockDate').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${WEEKDAY_LABELS[now.getDay()]})`; checkAlarms(); renderNextAlarm(); }
+loadSaved(); if(!appState.alarms.length) appState.alarms=makeDefaultAlarms(); document.getElementById('soundToggle').checked=!!appState.settings.sound; document.getElementById('vibrateToggle').checked=!!appState.settings.vibrate; lotteryApp.init(); loadSample(); tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>
