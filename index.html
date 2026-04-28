@@ -128,10 +128,10 @@
 
   <div class="tabs no-print">
     <button class="tab active" data-tab="dashboard">대시보드</button>
-    <button class="tab" data-tab="upload">전일 입장 기록</button>
-    <button class="tab" data-tab="reports">예약자 명단</button>
+    <button class="tab" data-tab="upload">입장내역(입퇴장 내역) 등록</button>
+    <button class="tab" data-tab="reports">예약자 명단(예약자 리스트) 등록</button>
     <button class="tab" data-tab="alarms">알람 설정</button>
-    <button class="tab" data-tab="lottery">사다리 추첨</button>
+    <button class="tab" data-tab="lottery">파크골프 추첨</button>
   </div>
 
   <section id="dashboard" class="section active">
@@ -147,7 +147,13 @@
         </div>
         <div class="small">기존 제공 알람 파일의 기본 시간대를 동일하게 적용했습니다.</div>
       </div>
-      <div class="card">
+    <div class="card" style="margin-top:16px">
+      <h2>시간대별 입장 그래프</h2>
+      <canvas id="hourlyChart" height="135"></canvas>
+      <div class="small" style="margin-top:10px">입장내역 파일이 없으면 그래프는 비어 있습니다.</div>
+    </div>
+  
+    <div class="card">
         <h2>데이터 처리 요약</h2>
         <div class="kpi-grid">
           <div class="stat"><div class="label">일간 입장인원</div><div class="value" id="dailyCount">0</div></div>
@@ -158,13 +164,6 @@
         <div class="small" id="reportBaseDate" style="margin-top:12px">데이터 기준일: -</div>
       </div>
     </div>
-
-<div class="card" style="margin-top:16px">
-  <h2>시간대별 입장 그래프</h2>
-  <canvas id="hourlyChart" height="135"></canvas>
-  <div class="small" style="margin-top:10px">입장내역 파일이 없으면 그래프는 비어 있습니다.</div>
-</div>
-
     <div class="card no-print" style="margin-top:16px">
       <h2>빠른 이동</h2>
       <div class="toolbar">
@@ -181,7 +180,7 @@
     <div class="card">
       <h2>전일 입장 기록</h2>
       <div class="upload-grid" style="grid-template-columns:1fr">
-        <div><label>입장내역 엑셀 / CSV</label><input id="entryFile" type="file" accept=".xlsx,.xls,.csv" /></div>
+        <div><label>입장내역 파일 업로드 / 입장내역.xlsx</label><input id="entryFile" type="file" accept=".xlsx,.xls,.csv" /></div>
       </div>
       <div class="toolbar" style="margin-top:14px">
         <button class="btn" onclick="processUploads()">입장내역 처리하기</button>
@@ -202,7 +201,7 @@
     <div class="card" style="margin-bottom:16px">
       <h2>예약자 명단</h2>
       <div class="upload-grid" style="grid-template-columns:1fr">
-        <div><label>예약자 명단 엑셀 / CSV</label><input id="reservationFile" type="file" accept=".xlsx,.xls,.csv" /></div>
+        <div><label>예약자 명단 엑셀 / 은평센터 예약자 명단.xlsx</label><input id="reservationFile" type="file" accept=".xlsx,.xls,.csv" /></div>
       </div>
       <div class="toolbar" style="margin-top:14px">
         <button class="btn" onclick="processUploads()">예약자 명단 처리하기</button>
@@ -261,7 +260,7 @@
   <section id="lottery" class="section">
     <div class="lottery-card">
       <div class="lottery-header">
-        <h2>⛳ 파크골프 사다리타기</h2>
+        <h2>⛳ 파크골프 추첨(사다리타기)</h2>
         <div class="small">상단 번호는 그대로 두고, 섞기를 누르면 하단 당첨/꽝 위치가 랜덤으로 바뀝니다. 하단에는 당첨/꽝만 먼저 보이고, 번호를 누르거나 결과 확인을 누르면 번호가 함께 공개됩니다.</div>
       </div>
 
@@ -712,7 +711,7 @@ function processUploads(){
     renderAll();
     status.textContent=messages.join(' / ') + '되었습니다.';
     }).catch(err=>{
-    status.textContent=err.message || '파일 처리 중 오류가 발생했습니다.';
+    status.textContent=err.message || '파일 처리 중 오류가 발생했습니다.'; showTab('dashboard');
     });
 }
 function loadSample(){
