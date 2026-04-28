@@ -698,11 +698,12 @@ const lotteryApp = (() => {
   const MIN=9, MAX=20, WINNERS=8;
   let people=9;
   let results=[];
+  let ladderRungs=[];
   let shuffled=false;
   let resultNonce='';
   let resultChecksum='';
   let openedIndexes=new Set();
-
+  
   const peopleEl=document.getElementById('lotteryPeople');
   const ladderEl=document.getElementById('lotteryLadder');
   const resultEl=document.getElementById('lotteryResult');
@@ -774,6 +775,10 @@ const lotteryApp = (() => {
     }
     return rungs;
   }
+  function ensureRungs(){
+  if(!ladderRungs.length) ladderRungs=createRungs();
+  return ladderRungs;
+  }
   function render(){
     if(!ladderEl) return;
     const {gap,side,width,height}=getLayout();
@@ -824,7 +829,7 @@ const lotteryApp = (() => {
       resultRow.appendChild(box);
     }
 
-    createRungs().forEach(({start,y})=>{
+    ensureRungs().forEach(({start,y})=>{
       const h=document.createElement('div');
       h.className='lottery-h-line';
       h.style.left=(side+start*gap)+'px';
@@ -837,6 +842,7 @@ const lotteryApp = (() => {
   }
   async function shuffle(){
     results=makeResults();
+    ladderRungs=createRungs();
     shuffled=true;
     openedIndexes.clear();
     await sealResults();
@@ -883,6 +889,7 @@ const lotteryApp = (() => {
   function reset(){
     shuffled=false;
     results=[];
+    ladderRungs=createRungs();
     resultNonce='';
     resultChecksum='';
     openedIndexes.clear();
@@ -895,6 +902,7 @@ const lotteryApp = (() => {
     document.getElementById('lotteryShuffle').onclick=shuffle;
     document.getElementById('lotteryReveal').onclick=reveal;
     clearBtn.onclick=reset;
+    ladderRungs=createRungs();
     render();
   }
   return {init, reset, shuffle, reveal};
