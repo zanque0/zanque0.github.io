@@ -82,6 +82,7 @@
     .lottery-person-row,.lottery-result-row{position:absolute;left:0;right:0;height:58px}
     .lottery-person-row{top:0}.lottery-result-row{bottom:0}
     .lottery-person,.lottery-result-box{position:absolute;transform:translateX(-50%);text-align:center;font-weight:900}
+    .lottery-person{background:transparent;color:#14532d;padding:4px 8px;border:0;border-radius:14px}
     .lottery-person{top:0;color:#14532d;cursor:pointer;border-radius:14px;padding:4px 8px;transition:background .2s,transform .2s}
     .lottery-person:hover{background:#dcfce7;transform:translateX(-50%) translateY(-2px)}
     .lottery-person .ball{display:block;font-size:27px;margin-bottom:2px}
@@ -297,7 +298,11 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'eunpyeong_ops_portal_v2';
+const STORAGE_KEY = 'eunpyeong_ops_portal_v2_session';
+const STATE_STORAGE = window.sessionStorage; // 공용 PC 보호: 브라우저 종료 시 알람 설정 휘발
+const downloadUrls = new Map();
+const MAX_ALARM_LABEL_LENGTH = 40;
+const MAX_UPLOAD_ROWS = 20000;
 const DEFAULT_ALARMS = [
   { time: '09:15', label: '파크골프(1차)', enabled: true },
   { time: '11:25', label: '파크골프(2차)', enabled: true },
@@ -374,6 +379,12 @@ let beepInterval = null;
 const pad2 = v => String(v).padStart(2,'0');
 const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
 const escapeHtml = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+const sanitizePlainText = (value, max=120) => String(value??'')
+  .replace(/[\u0000-\u001f\u007f]/g,'')
+  .replace(/[<>`]/g,'')
+  .trim()
+  .slice(0,max);
+function setText(id, value){ const el=document.getElementById(id); if(el) el.textContent=String(value??''); }
 const fmtHMS = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 const fmtHM = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 const dateKey = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
@@ -407,8 +418,33 @@ function normalizeDateString(value){
 function formatReportDate(value){ const n=normalizeDateString(value); if(!n) return ''; const [y,m,d]=n.split('-').map(Number); const dt=new Date(y,m-1,d); return `${y}.${m}.${d}.(${WEEKDAY_LABELS[dt.getDay()]})`; }
 function timeToMinutes(hm){ const [h,m]=normalizeTime(hm).split(':').map(Number); return h*60+m; }
 function nowMinutes(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify({alarms:appState.alarms, settings:appState.settings})); }
-function loadSaved(){ try{ const raw=localStorage.getItem(STORAGE_KEY); if(raw){ const saved=JSON.parse(raw); appState.alarms=saved.alarms||[]; appState.settings=saved.settings||{sound:true,vibrate:true}; } }catch{} }
+function saveState(){
+  const safeAlarms = appState.alarms.map(a=>({
+    id:String(a.id||uid()),
+    time:normalizeTime(a.time),
+    label:sanitizePlainText(a.label||'알람', MAX_ALARM_LABEL_LENGTH),
+    enabled:!!a.enabled,
+    source:['default','manual','snooze'].includes(a.source)?a.source:'manual',
+    once:!!a.once
+  })).filter(a=>/^\d{2}:\d{2}$/.test(a.time));
+  STATE_STORAGE.setItem(STORAGE_KEY, JSON.stringify({alarms:safeAlarms, settings:{sound:!!appState.settings.sound, vibrate:!!appState.settings.vibrate}}));
+}
+function loadSaved(){
+  try{
+    const raw=STATE_STORAGE.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const saved=JSON.parse(raw);
+    appState.alarms=(saved.alarms||[]).map(a=>({
+      id:String(a.id||uid()),
+      time:normalizeTime(a.time),
+      label:sanitizePlainText(a.label||'알람', MAX_ALARM_LABEL_LENGTH),
+      enabled:!!a.enabled,
+      source:['default','manual','snooze'].includes(a.source)?a.source:'manual',
+      once:!!a.once
+    })).filter(a=>/^\d{2}:\d{2}$/.test(a.time));
+    appState.settings={sound:!!saved.settings?.sound, vibrate:!!saved.settings?.vibrate};
+  }catch{ appState.alarms=[]; appState.settings={sound:true,vibrate:true}; }
+}
 function makeDefaultAlarms(){ return DEFAULT_ALARMS.map(a=>({ id:uid(), ...a, source:'default' })); }
 function restoreDefaultAlarms(){ appState.alarms = makeDefaultAlarms(); saveState(); renderAlarms(); renderNextAlarm(); }
 
@@ -418,7 +454,9 @@ function sheetToJson(file, callback){
     const data=new Uint8Array(e.target.result);
     const wb=XLSX.read(data,{type:'array'});
     const ws=wb.Sheets[wb.SheetNames[0]];
-    callback(XLSX.utils.sheet_to_json(ws,{defval:''}));
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    if(rows.length > MAX_UPLOAD_ROWS) throw new Error(`업로드 행이 너무 많습니다. 최대 ${MAX_UPLOAD_ROWS.toLocaleString()}행까지 처리합니다.`);
+    callback(rows);
   };
   reader.readAsArrayBuffer(file);
 }
@@ -443,7 +481,7 @@ function sanitizeReservationRows(rows){
     '프로그램 시작 시간':normalizeTimeRange(r['프로그램 시작 시간'])
   })).filter(r=>String(r['예약 상태']||'').trim()==='정상').filter(r=>allowedProgramSet.has(String(r['프로그램명']||'')));
 }
-function mapper(r){ return {예약일:r['예약일']||'',프로그램명:r['프로그램명']||'',프로그램시작시간:r['프로그램 시작 시간']||'',예약자명:r['예약자명']||'',연락처:r['연락처']||''}; }
+function mapper(r){ return {예약일:r['예약일']||'',프로그램명:r['프로그램명']||'',프로그램시작시간:r['프로그램 시작 시간']||'',예약자명:sanitizePlainText(r['예약자명']||'', 50),연락처:r['연락처']||''}; }
 function rebuildDerivedData(){
   const hourlyMap=new Map();
   appState.entryRows.forEach(r=>{ const hour=parseDateHour(r['입장일자']); if(hour) hourlyMap.set(hour,(hourlyMap.get(hour)||0)+1); });
@@ -474,11 +512,24 @@ function renderChart(){
   chart=new Chart(ctx,{type:'line',data:{labels:appState.hourly.map(x=>x.입장시간),datasets:[{label:'시간대별 입장인원(명)',data:appState.hourly.map(x=>x.입장인원),tension:.25,fill:false}]},options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
 }
 function setDownloadLink(anchorId,rows,filename){
-  const ws=XLSX.utils.json_to_sheet(rows); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'data');
-  const array=XLSX.write(wb,{bookType:'xlsx',type:'array'}); const blob=new Blob([array],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  const url=URL.createObjectURL(blob); const a=document.getElementById(anchorId); a.href=url; a.download=filename;
+  const a=document.getElementById(anchorId);
+  if(!a) return;
+  const prev=downloadUrls.get(anchorId);
+  if(prev) URL.revokeObjectURL(prev);
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'data');
+  const array=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  const blob=new Blob([array],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);
+  downloadUrls.set(anchorId,url);
+  a.href=url;
+  a.download=filename;
 }
-function renderAll(){ renderKpis(); renderChart(); renderFormattedReports(); renderAlarms(); renderNextAlarm(); setDownloadLink('downloadEntry',appState.entryRows,'processed_입장내역.xlsx'); setDownloadLink('downloadReservation',appState.reservationRows,'processed_예약자명단.xlsx'); }
+function renderDashboard(){ renderKpis(); renderChart(); renderNextAlarm(); }
+function renderReports(){ renderFormattedReports(); }
+function renderDownloads(){ setDownloadLink('downloadEntry',appState.entryRows,'processed_입장내역.xlsx'); setDownloadLink('downloadReservation',appState.reservationRows,'processed_예약자명단.xlsx'); }
+function renderAll(){ renderDashboard(); renderReports(); renderAlarms(); renderDownloads(); }
 
 function buildParkFormatHtml(rows){
   const date=getProgramDate(rows); const amTime='09:20'; const pmTime='13:40';
@@ -533,19 +584,69 @@ function printFormattedReport(kind){
 }
 
 function renderAlarms(){
-  const html = buildAlarmListHtml();
-  document.getElementById('alarmList').innerHTML = html;
-  document.getElementById('alarmListDashboard').innerHTML = html;
+  renderAlarmContainer(document.getElementById('alarmList'));
+  renderAlarmContainer(document.getElementById('alarmListDashboard'));
 }
-function buildAlarmListHtml(){
+function renderAlarmContainer(container){
+  if(!container) return;
+  container.textContent='';
   const alarms=[...appState.alarms].sort((a,b)=>a.time.localeCompare(b.time));
-  if(!alarms.length) return '<div class="small">알람이 없습니다. 기본 알람을 복구하거나 수동 알람을 추가하세요.</div>';
-  return alarms.map(a=>`<div class="alarm-item"><div><div class="alarm-time">${escapeHtml(a.time)}</div><div class="alarm-title">${escapeHtml(a.label)}</div><div class="alarm-sub">${a.source==='default'?'기본 제공 알람':a.source==='snooze'?'스누즈':'수동'} · ${a.enabled?'ON':'OFF'}</div></div><div class="toolbar"><button class="btn ghost" onclick="toggleAlarm('${a.id}')">${a.enabled?'끄기':'켜기'}</button><button class="btn danger" onclick="deleteAlarm('${a.id}')">삭제</button></div></div>`).join('');
+  if(!alarms.length){
+    const empty=document.createElement('div');
+    empty.className='small';
+    empty.textContent='알람이 없습니다. 기본 알람을 복구하거나 수동 알람을 추가하세요.';
+    container.appendChild(empty);
+    return;
+  }
+  const frag=document.createDocumentFragment();
+  alarms.forEach(a=>{
+    const item=document.createElement('div');
+    item.className='alarm-item';
+
+    const info=document.createElement('div');
+    const time=document.createElement('div');
+    time.className='alarm-time';
+    time.textContent=a.time;
+    const title=document.createElement('div');
+    title.className='alarm-title';
+    title.textContent=sanitizePlainText(a.label, MAX_ALARM_LABEL_LENGTH);
+    const sub=document.createElement('div');
+    sub.className='alarm-sub';
+    sub.textContent=`${a.source==='default'?'기본 제공 알람':a.source==='snooze'?'스누즈':'수동'} · ${a.enabled?'ON':'OFF'}`;
+    info.append(time,title,sub);
+
+    const toolbar=document.createElement('div');
+    toolbar.className='toolbar';
+    const toggle=document.createElement('button');
+    toggle.className='btn ghost';
+    toggle.type='button';
+    toggle.textContent=a.enabled?'끄기':'켜기';
+    toggle.addEventListener('click',()=>toggleAlarm(a.id));
+    const del=document.createElement('button');
+    del.className='btn danger';
+    del.type='button';
+    del.textContent='삭제';
+    del.addEventListener('click',()=>deleteAlarm(a.id));
+    toolbar.append(toggle,del);
+
+    item.append(info,toolbar);
+    frag.appendChild(item);
+  });
+  container.appendChild(frag);
 }
-function addManualAlarm(){ const time=document.getElementById('manualAlarmTime').value; const label=document.getElementById('manualAlarmLabel').value.trim()||'수동 알람'; if(!time){ alert('알람 시간을 선택해 주세요.'); return; } appState.alarms.push({id:uid(),time,label,enabled:true,source:'manual'}); document.getElementById('manualAlarmLabel').value=''; saveState(); renderAlarms(); renderNextAlarm(); }
+function addManualAlarm(){
+  const time=normalizeTime(document.getElementById('manualAlarmTime').value);
+  const label=sanitizePlainText(document.getElementById('manualAlarmLabel').value, MAX_ALARM_LABEL_LENGTH)||'수동 알람';
+  if(!/^\d{2}:\d{2}$/.test(time)){ alert('알람 시간을 선택해 주세요.'); return; }
+  appState.alarms.push({id:uid(),time,label,enabled:true,source:'manual'});
+  document.getElementById('manualAlarmLabel').value='';
+  saveState();
+  renderAlarms();
+  renderNextAlarm();
+}
 function toggleAlarm(id){ const a=appState.alarms.find(x=>x.id===id); if(a){ a.enabled=!a.enabled; saveState(); renderAlarms(); renderNextAlarm(); } }
 function deleteAlarm(id){ appState.alarms=appState.alarms.filter(a=>a.id!==id); saveState(); renderAlarms(); renderNextAlarm(); }
-function addSnooze(min){ const d=new Date(); d.setMinutes(d.getMinutes()+min); appState.alarms.push({id:uid(),time:fmtHM(d),label:`스누즈(${min}분)`,enabled:true,source:'snooze',once:true}); saveState(); renderAlarms(); renderNextAlarm(); }
+function addSnooze(min){ const d=new Date(); d.setMinutes(d.getMinutes()+min); appState.alarms.push({id:uid(),time:fmtHM(d),label:sanitizePlainText(`스누즈(${min}분)`, MAX_ALARM_LABEL_LENGTH),enabled:true,source:'snooze',once:true}); saveState(); renderAlarms(); renderNextAlarm(); }
 function getNextAlarm(){
   const n=nowMinutes(); const enabled=appState.alarms.filter(a=>a.enabled).sort((a,b)=>a.time.localeCompare(b.time));
   return enabled.find(a=>timeToMinutes(a.time)>=n) || enabled[0] || null;
@@ -598,6 +699,9 @@ const lotteryApp = (() => {
   let people=9;
   let results=[];
   let shuffled=false;
+  let resultNonce='';
+  let resultChecksum='';
+  let openedIndexes=new Set();
 
   const peopleEl=document.getElementById('lotteryPeople');
   const ladderEl=document.getElementById('lotteryLadder');
@@ -625,6 +729,37 @@ const lotteryApp = (() => {
     for(let i=0;i<people;i++) arr.push(i<WINNERS ? '당첨' : '꽝');
     return shuffleArray(arr);
   }
+  function createNonce(){
+    const bytes=new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  async function sha256(text){
+    if(!crypto?.subtle) return legacyHash(text);
+    const data=new TextEncoder().encode(text);
+    const hash=await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  function legacyHash(text){
+    let h=2166136261;
+    for(let i=0;i<text.length;i++){
+      h^=text.charCodeAt(i);
+      h=Math.imul(h,16777619);
+    }
+    return String(h>>>0);
+  }
+  function resultPayload(){
+    return JSON.stringify({people,winners:WINNERS,nonce:resultNonce,results});
+  }
+  async function sealResults(){
+    resultNonce=createNonce();
+    resultChecksum=await sha256(resultPayload());
+  }
+  async function verifyResults(){
+    if(!shuffled || !resultChecksum) return false;
+    const current=await sha256(resultPayload());
+    return current===resultChecksum;
+  }
   function createRungs(){
     const rungs=[];
     const rowCount=Math.max(8,people+1);
@@ -647,7 +782,7 @@ const lotteryApp = (() => {
     plusBtn.disabled=people>=MAX;
     ladderEl.style.width=width+'px';
     ladderEl.style.height=height+'px';
-    ladderEl.innerHTML='';
+    ladderEl.textContent='';
 
     const personRow=document.createElement('div');
     personRow.className='lottery-person-row';
@@ -659,11 +794,15 @@ const lotteryApp = (() => {
     for(let i=0;i<people;i++){
       const x=side+i*gap;
 
-      const person=document.createElement('div');
+      const person=document.createElement('button');
+      person.type='button';
       person.className='lottery-person';
       person.style.left=x+'px';
-      person.innerHTML=`<span class="ball">⚪</span>${i+1}번`;
-      person.onclick=()=>revealOne(i);
+      const ball=document.createElement('span');
+      ball.className='ball';
+      ball.textContent='⚪';
+      person.append(ball, document.createTextNode(`${i+1}번`));
+      person.addEventListener('click',()=>revealOne(i));
       personRow.appendChild(person);
 
       const v=document.createElement('div');
@@ -675,8 +814,10 @@ const lotteryApp = (() => {
       box.className='lottery-result-box';
       box.style.left=x+'px';
       if(shuffled){
-        box.textContent=results[i];
-        box.className='lottery-result-box '+(results[i]==='당첨'?'win':'lose');
+        const isOpened=openedIndexes.has(i);
+        const value=results[i];
+        box.className='lottery-result-box '+(value==='당첨'?'win':'lose');
+        box.textContent=isOpened ? `${value}(${i+1})` : value;
       } else {
         box.textContent='숨김';
       }
@@ -692,50 +833,59 @@ const lotteryApp = (() => {
       lineArea.appendChild(h);
     });
 
-    ladderEl.appendChild(personRow);
-    ladderEl.appendChild(lineArea);
-    ladderEl.appendChild(resultRow);
+    ladderEl.append(personRow,lineArea,resultRow);
   }
-  function shuffle(){
+  async function shuffle(){
     results=makeResults();
     shuffled=true;
+    openedIndexes.clear();
+    await sealResults();
     resultEl.textContent='하단 위치가 섞였습니다. 번호를 누르거나 결과 확인을 눌러주세요.';
     render();
     ladderEl.classList.remove('lottery-shuffle-effect');
     void ladderEl.offsetWidth;
     ladderEl.classList.add('lottery-shuffle-effect');
   }
-  function reveal(){
+  async function reveal(){
     if(!shuffled){
       alert('먼저 섞기를 눌러주세요.');
       return;
     }
-    const boxes=document.querySelectorAll('.lottery-result-box');
+    if(!(await verifyResults())){
+      alert('추첨 데이터가 변경된 것으로 감지되어 결과를 공개할 수 없습니다. 새로하기 후 다시 섞어주세요.');
+      reset();
+      return;
+    }
     const winners=[];
     const losers=[];
     results.forEach((r,i)=>{
-      const box=boxes[i];
-      box.className='lottery-result-box '+(r==='당첨'?'win':'lose');
-      box.textContent=`${r}(${i+1})`;
+      openedIndexes.add(i);
       if(r==='당첨') winners.push(i+1);
       else losers.push(i+1);
     });
+    render();
     resultEl.textContent=`당첨: ${winners.join(', ')} / 꽝: ${losers.join(', ')}`;
   }
-  function revealOne(i){
+  async function revealOne(i){
     if(!shuffled){
       alert('먼저 섞기를 눌러주세요.');
       return;
     }
-    const box=document.querySelectorAll('.lottery-result-box')[i];
-    const r=results[i];
-    box.className='lottery-result-box '+(r==='당첨'?'win':'lose');
-    box.textContent=`${r}(${i+1})`;
-    resultEl.textContent=`${i+1}번 결과: ${r}`;
+    if(!(await verifyResults())){
+      alert('추첨 데이터가 변경된 것으로 감지되어 결과를 공개할 수 없습니다. 새로하기 후 다시 섞어주세요.');
+      reset();
+      return;
+    }
+    openedIndexes.add(i);
+    render();
+    resultEl.textContent=`${i+1}번 결과: ${results[i]}`;
   }
   function reset(){
     shuffled=false;
     results=[];
+    resultNonce='';
+    resultChecksum='';
+    openedIndexes.clear();
     resultEl.textContent='';
     render();
   }
@@ -755,8 +905,26 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideAlarmPopup(); 
 window.addEventListener('pointerdown',()=>{ if(appState.settings.sound) ensureAudio(); },{once:true});
 document.getElementById('soundToggle').addEventListener('change',e=>{ appState.settings.sound=e.target.checked; saveState(); if(e.target.checked) ensureAudio(); });
 document.getElementById('vibrateToggle').addEventListener('change',e=>{ appState.settings.vibrate=e.target.checked; saveState(); });
-function tick(){ const now=new Date(); document.getElementById('clockTime').textContent=fmtHMS(now); document.getElementById('clockDate').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${WEEKDAY_LABELS[now.getDay()]})`; checkAlarms(); renderNextAlarm(); }
-loadSaved(); if(!appState.alarms.length) appState.alarms=makeDefaultAlarms(); document.getElementById('soundToggle').checked=!!appState.settings.sound; document.getElementById('vibrateToggle').checked=!!appState.settings.vibrate; lotteryApp.init(); loadSample(); tick(); setInterval(tick,1000);
+function tick(){
+  const now=new Date();
+  setText('clockTime', fmtHMS(now));
+  setText('clockDate', `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${WEEKDAY_LABELS[now.getDay()]})`);
+  checkAlarms();
+  renderNextAlarm();
+}
+let tickTimer=null;
+function scheduleTick(){
+  if(tickTimer) clearTimeout(tickTimer);
+  const delay=document.hidden ? 60000 : 1000;
+  tickTimer=setTimeout(()=>{
+    if(document.hidden) tick();
+    else requestAnimationFrame(tick);
+    scheduleTick();
+  }, delay);
+}
+document.addEventListener('visibilitychange',()=>{ tick(); scheduleTick(); });
+window.addEventListener('beforeunload',()=>{ downloadUrls.forEach(url=>URL.revokeObjectURL(url)); });
+loadSaved(); if(!appState.alarms.length) appState.alarms=makeDefaultAlarms(); document.getElementById('soundToggle').checked=!!appState.settings.sound; document.getElementById('vibrateToggle').checked=!!appState.settings.vibrate; lotteryApp.init(); loadSample(); tick(); scheduleTick();
 </script>
 </body>
 </html>
