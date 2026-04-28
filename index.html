@@ -1,6 +1,16 @@
 <!doctype html>
 <html lang="ko">
 <head>
+    <!--
+    Copyright (c) 2026 zanque
+    All rights reserved.
+
+    Author: zanque
+    Contact: zanque0@gmail.com
+
+    본 파일 및 관련 로직의 저작권은 zanque에게 있으며,
+    무단 수정, 배포, 재사용을 금지합니다.
+  -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>은평센터 통합 운영 포털</title>
@@ -694,6 +704,7 @@ function showTab(id){ document.querySelectorAll('.section').forEach(s=>s.classLi
 function scrollToReport(id){ setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}),80); }
 
 /* Lottery draw / ladder */
+/* © 2026 zanque | zanque0@gmail.com */
 const lotteryApp = (() => {
   const MIN=9, MAX=20, WINNERS=8;
   let people=9;
