@@ -159,17 +159,11 @@
       </div>
     </div>
 
-    <div class="grid two" style="margin-top:16px">
-      <div class="card">
-        <h2>알람 목록</h2>
-        <div class="alarm-list" id="alarmListDashboard"></div>
-      </div>
-      <div class="card">
-        <h2>시간대별 입장 그래프</h2>
-        <canvas id="hourlyChart" height="135"></canvas>
-        <div class="small" style="margin-top:10px">입장내역 파일이 없으면 그래프는 비어 있습니다.</div>
-      </div>
-    </div>
+<div class="card" style="margin-top:16px">
+  <h2>시간대별 입장 그래프</h2>
+  <canvas id="hourlyChart" height="135"></canvas>
+  <div class="small" style="margin-top:10px">입장내역 파일이 없으면 그래프는 비어 있습니다.</div>
+</div>
 
     <div class="card no-print" style="margin-top:16px">
       <h2>빠른 이동</h2>
@@ -179,6 +173,7 @@
         <button class="btn ghost" onclick="showTab('reports'); scrollToReport('tabletFormatWrap')">태블릿 양식</button>
       </div>
       <div id="statusMessage" class="small" style="margin-top:12px;color:var(--ok)">샘플 데이터가 로드되었습니다.</div>
+      <div id="dashboardReportPreview" class="table-grid" style="margin-top:16px"></div>
     </div>
   </section>
 
@@ -536,7 +531,12 @@ function setDownloadLink(anchorId,rows,filename){
   a.href=url;
   a.download=filename;
 }
-function renderDashboard(){ renderKpis(); renderChart(); renderNextAlarm(); }
+function renderDashboard(){
+  renderKpis();
+  renderChart();
+  renderNextAlarm();
+  renderDashboardReportPreview();
+}
 function renderReports(){ renderFormattedReports(); }
 function renderDownloads(){ setDownloadLink('downloadEntry',appState.entryRows,'processed_입장내역.xlsx'); setDownloadLink('downloadReservation',appState.reservationRows,'processed_예약자명단.xlsx'); }
 function renderAll(){ renderDashboard(); renderReports(); renderAlarms(); renderDownloads(); }
@@ -568,6 +568,25 @@ function buildAiFormatHtml(rows){
   fixedTimes.forEach(time=>{ const items=dataMap[time]||[]; const a=items[0]||{}; const b=items[1]||{}; const overflow=items.length>2; html+=`<tr><td class="time">${time}</td><td>${escapeHtml(a['예약자명']||'')}</td><td>${escapeHtml(a['연락처']||'')}</td><td>${escapeHtml(b['예약자명']||'')}</td><td>${escapeHtml(b['연락처']||'')}</td><td class="blank">${overflow?'초과 인원 있음':''}</td></tr>`; });
   return html+='</tbody></table></div>';
 }
+function renderDashboardReportPreview(){
+  const wrap=document.getElementById('dashboardReportPreview');
+  if(!wrap) return;
+
+  wrap.innerHTML = `
+    <div class="card">
+      <h2>파크골프 출력 양식</h2>
+      <div class="report-format">${buildParkFormatHtml(appState.park)}</div>
+    </div>
+    <div class="card">
+      <h2>AI 바둑 오목 출력 양식</h2>
+      <div class="report-format">${buildAiFormatHtml(appState.ai)}</div>
+    </div>
+    <div class="card">
+      <h2>태블릿(OTT) 출력 양식</h2>
+      <div class="report-format">${buildTabletFormatHtml(appState.tablet)}</div>
+    </div>
+  `;
+}
 function buildTabletFormatHtml(rows){
   const groupedMap=new Map(); groupedRows(rows).forEach(([time,items])=>{ const key=normalizeTimeRange(time).split('~')[0]; groupedMap.set(key,items); });
   const date=getProgramDate(rows); let html='<div class="print-sheet" id="tabletPrintArea"><table class="sheet tablet-sheet" id="tabletFormattedTable"><colgroup><col class="col-time"><col class="col-name-1"><col class="col-phone-1"><col class="col-name-2"><col class="col-phone-2"><col class="col-name-3"><col class="col-phone-3"><col class="col-name-4"><col class="col-phone-4"><col class="col-name-5"><col class="col-phone-5"><col class="col-note"></colgroup><tbody>';
@@ -595,7 +614,6 @@ function printFormattedReport(kind){
 
 function renderAlarms(){
   renderAlarmContainer(document.getElementById('alarmList'));
-  renderAlarmContainer(document.getElementById('alarmListDashboard'));
 }
 function renderAlarmContainer(container){
   if(!container) return;
@@ -681,7 +699,7 @@ function testAlarm(){ showAlarmPopup({time:fmtHM(new Date()),label:'테스트 �
 
 function processUploads(){
   const status=document.getElementById('statusMessage'); const entryFile=document.getElementById('entryFile').files[0]; const reservationFile=document.getElementById('reservationFile').files[0];
-  if(!entryFile && !reservationFile){ status.textContent='처리할 입장내역 또는 예약자 명단 파일을 업로드해 주세요.'; showTab('dashboard'); return; }
+  if(!entryFile && !reservationFile){ status.textContent='처리할 입장내역 또는 예약자 명단 파일을 업로드해 주세요.'; return; }
   const tasks=[];
   if(entryFile){
     tasks.push(new Promise((resolve,reject)=>sheetToJson(entryFile, rows=>{ try{ validateEntryColumns(rows); appState.entryRows=sanitizeEntryRows(rows); resolve('입장내역 처리 완료'); }catch(e){ reject(e); } })));
@@ -690,8 +708,12 @@ function processUploads(){
     tasks.push(new Promise((resolve,reject)=>sheetToJson(reservationFile, rows=>{ try{ validateReservationColumns(rows); appState.reservationRows=sanitizeReservationRows(rows); resolve('예약자 명단 처리 완료'); }catch(e){ reject(e); } })));
   }
   Promise.all(tasks).then(messages=>{
-    rebuildDerivedData(); renderAll(); status.textContent=messages.join(' / ') + '되었습니다.'; showTab('dashboard');
-  }).catch(err=>{ status.textContent=err.message || '파일 처리 중 오류가 발생했습니다.'; showTab('dashboard'); });
+    rebuildDerivedData();
+    renderAll();
+    status.textContent=messages.join(' / ') + '되었습니다.';
+    }).catch(err=>{
+    status.textContent=err.message || '파일 처리 중 오류가 발생했습니다.';
+    });
 }
 function loadSample(){
   const sampleReservationRows=sanitizeReservationRows(sampleData.park.concat(sampleData.ai).concat(sampleData.tablet).map(r=>({예약일:r['예약일'],프로그램명:r['프로그램명'],'프로그램 시작 시간':r['프로그램 시작 시간'],예약자명:r['예약자명'],연락처:r['연락처'],'예약 상태':'정상'})));
