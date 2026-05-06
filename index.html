@@ -555,7 +555,7 @@ function buildParkFormatHtml(rows){
   html+='<tr><th class="head">구분</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">비고</th></tr>';
   for(let i=0;i<4;i++){ const r=amData[i]||{}; html+=`<tr><td class="time">${amTime}</td><td>${escapeHtml(r['예약자명']||'')}</td><td>${escapeHtml(r['연락처']||'')}</td><td>${i===0&&amOverflow?'초과 인원 있음':''}</td></tr>`; }
   for(let i=0;i<4;i++){ const r=pmData[i]||{}; html+=`<tr><td class="time">${pmTime}</td><td>${escapeHtml(r['예약자명']||'')}</td><td>${escapeHtml(r['연락처']||'')}</td><td>${i===0&&pmOverflow?'초과 인원 있음':''}</td></tr>`; }
-  html+='<tr><td colspan="6" class="meta left"><br><span style="color:#d00; font-weight:bold;">- 본인 확인을 위해, 신분증을 지참해주세요.<br>- 예약자 확인이 불가능한 경우 예약이 취소될 수 있습니다.(이름, 전화번호 이상 등)</span></td></tr>';
+  html+='<tr><td colspan="6" class="note"><span style="color:#d00; font-weight:bold;">- 본인 확인을 위해, 신분증을 지참해주세요.<br>- 예약자 확인이 불가능한 경우 예약이 취소될 수 있습니다.</span><br> 예시) <br> ①이름 없음<br>  ②이름 w<br>  ③전화번호 없음<br>  ④6개월간 방문이력 없음 등</td></tr>';
   return html+='</tbody></table></div>';
 }
 function buildAiFormatHtml(rows){
