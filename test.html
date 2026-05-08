@@ -111,14 +111,24 @@
     .lottery-note{text-align:center;color:#475569;font-weight:700;margin-top:14px;min-height:24px}
     @media(max-width:640px){.lottery-ladder{min-width:720px}.lottery-wrap{padding:12px}.lottery-header h2{font-size:22px}}
 
+    .lottery-person.active{background:#fef3c7;box-shadow:0 0 0 5px rgba(250,204,21,.35);color:#92400e}
+    .lottery-result-box.revealed{box-shadow:0 0 0 5px rgba(250,204,21,.35);transform:translateX(-50%) scale(1.05)}
+    .lottery-trace-segment{position:absolute;z-index:6;border-radius:999px;background:linear-gradient(90deg,#2563eb,#22c55e,#facc15);box-shadow:0 0 14px rgba(37,99,235,.55);opacity:0;animation:lotteryTrace .42s ease forwards}
+    .lottery-trace-segment.vertical{width:8px;transform:translateX(-50%)}
+    .lottery-trace-segment.horizontal{height:8px;transform:translateY(-50%)}
+    .lottery-runner{position:absolute;z-index:8;font-size:28px;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 8px rgba(15,23,42,.25));animation:lotteryRunnerPulse .7s ease-in-out infinite alternate}
+    @keyframes lotteryTrace{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:blur(0)}}
+    @keyframes lotteryRunnerPulse{from{transform:translate(-50%,-50%) scale(.92)}to{transform:translate(-50%,-50%) scale(1.08)}}
 
     /* Board tab */
-    .board-card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
-    .board-frame-wrap{width:100%;height:calc(100vh - 210px);min-height:620px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff}
-    .board-frame{width:100%;height:100%;border:0;display:block}
-    .board-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
-    @media(max-width:680px){.board-frame-wrap{height:calc(100vh - 190px);min-height:520px}}
-
+    .board-card{display:flex; flex-direction:column; gap:16px;}
+    .board-notice{background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:14px; border-radius:14px; font-weight:800; text-align:center; position:sticky; top:0; z-index:10;}
+    .board-header h2{margin-bottom:6px;}
+    .board-frame-wrap{width:100%; border:1px solid var(--line); border-radius:18px; overflow:hidden; background:#fff; -webkit-overflow-scrolling:touch;}
+    .board-frame{width:100%; height:80vh; min-height:700px; border:0; background:#fff;}
+    .board-actions{display:flex; justify-content:flex-end;}
+    .board-guide{text-align:right;}
+          
   </style>
 </head>
 <body>
@@ -280,7 +290,7 @@
         </div>
         <div class="small">※ 기본 9명, 최대 20명 / 항상 8명 당첨</div>
       </section>
-
+        
       <section class="lottery-wrap">
         <div id="lotteryLadder" class="lottery-ladder"></div>
       </section>
@@ -295,28 +305,23 @@
     <button id="lotteryClear" class="lottery-reset" type="button">🔄</button>
   </section>
 
-  <section id="board" class="section">
-    <div class="board-card">
-      <div class="board-actions">
-        <div>
-          <h2>게시판</h2>
-          <div class="small">Padlet 게시판을 이 화면 안에서 바로 확인하고 작성할 수 있습니다.</div>
+    <section id="board" class="section">
+        <div class="card board-card">
+        <div class="board-notice">⚠ 개인정보(전화번호, 이메일 주소) 입력 금지 / 요청사항은 피드백을 위해 실명을 사용해주세요.    </div>
+        <div class="board-header">
+          <h2>센터 게시판</h2>
+              <p class="small">        자유롭게 의견을 남길 수 있습니다.        부적절한 게시물은 관리자 검토 후 삭제될 수 있습니다.      </p>
         </div>
-        <a class="btn secondary" href="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
-      </div>
-      <div class="board-frame-wrap">
-        <iframe
-          class="board-frame"
-          src="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7"
-          title="게시판 Padlet"
-          loading="lazy"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allow="clipboard-write; camera; microphone; geolocation; fullscreen"
-        ></iframe>
-      </div>
-    </div>
-  </section>
-
+        <div class="board-frame-wrap">
+          <iframe src="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" class="board-frame" allow="camera;microphone;display-capture;clipboard-write" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="은평센터 게시판"></iframe>
+        </div>
+    
+        <div class="board-actions">
+          <a href="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" target="_blank" rel="noopener noreferrer" class="btn secondary">새 창으로 열기</a>
+        </div>
+        <div class="small board-guide">※ 게시글은 월 1회 이상 백업 및 내보내기를 권장합니다.</div>
+      </div>        
+      </section>
 </div>
 
 <div class="overlay" id="alarmOverlay" role="dialog" aria-modal="true">
@@ -773,14 +778,18 @@ function scrollToReport(id){ setTimeout(()=>document.getElementById(id)?.scrollI
 /* © 2026 zanque | zanque0@gmail.com */
 const lotteryApp = (() => {
   const MIN=9, MAX=20, WINNERS=8;
+  const LINE_HEIGHT=340;
   let people=9;
-  let results=[];
+  let bottomResults=[];
   let ladderRungs=[];
   let shuffled=false;
   let resultNonce='';
   let resultChecksum='';
-  let openedIndexes=new Set();
-  
+  let openedTops=new Set();
+  let selectedTop=null;
+  let activePath=[];
+  let pathTimer=null;
+
   const peopleEl=document.getElementById('lotteryPeople');
   const ladderEl=document.getElementById('lotteryLadder');
   const resultEl=document.getElementById('lotteryResult');
@@ -792,25 +801,37 @@ const lotteryApp = (() => {
     const gap=82;
     const side=48;
     const width=(people-1)*gap+side*2;
-    return {gap,side,width,height:470};
+    return {gap,side,width,height:470,lineTop:64,lineHeight:LINE_HEIGHT};
+  }
+  function secureRandomInt(max){
+    if(max<=0) return 0;
+    if(crypto?.getRandomValues){
+      const bytes=new Uint32Array(1);
+      crypto.getRandomValues(bytes);
+      return bytes[0] % max;
+    }
+    return Math.floor(Math.random()*max);
   }
   function shuffleArray(arr){
     const copy=[...arr];
     for(let i=copy.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
+      const j=secureRandomInt(i+1);
       [copy[i],copy[j]]=[copy[j],copy[i]];
     }
     return copy;
   }
-  function makeResults(){
+  function makeBottomResults(){
     const arr=[];
     for(let i=0;i<people;i++) arr.push(i<WINNERS ? '당첨' : '꽝');
     return shuffleArray(arr);
   }
   function createNonce(){
-    const bytes=new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    if(crypto?.getRandomValues){
+      const bytes=new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    return String(Date.now()) + Math.random().toString(16).slice(2);
   }
   async function sha256(text){
     if(!crypto?.subtle) return legacyHash(text);
@@ -827,7 +848,7 @@ const lotteryApp = (() => {
     return String(h>>>0);
   }
   function resultPayload(){
-    return JSON.stringify({people,winners:WINNERS,nonce:resultNonce,results});
+    return JSON.stringify({people,winners:WINNERS,nonce:resultNonce,bottomResults,ladderRungs});
   }
   async function sealResults(){
     resultNonce=createNonce();
@@ -840,53 +861,103 @@ const lotteryApp = (() => {
   }
   function createRungs(){
     const rungs=[];
-    const usedYByStart = Array.from({ length: people - 1 }, () => new Set());
+    const rowCount=Math.max(8, Math.min(14, people+2));
+    const usableTop=34;
+    const usableBottom=310;
+    const step=(usableBottom-usableTop)/(rowCount-1);
 
-    function pickY(start){
-      let y;
-      let guard = 0;
-      do {
-        y = 28 + Math.floor(Math.random() * 292);
-        guard++;
-      } while (
-        guard < 80 &&
-        [...usedYByStart[start]].some(prev => Math.abs(prev - y) < 26)
-      );
-      usedYByStart[start].add(y);
-      return y;
+    for(let row=0; row<rowCount; row++){
+      const y=Math.round(usableTop + row*step + secureRandomInt(13)-6);
+      const starts=[...Array(people-1)].map((_,i)=>i);
+      const count=secureRandomInt(people>12 ? 3 : 2) + 1;
+      const chosen=[];
+      while(starts.length && chosen.length<count){
+        const idx=secureRandomInt(starts.length);
+        const start=starts.splice(idx,1)[0];
+        if(chosen.some(v=>Math.abs(v-start)<=1)) continue;
+        chosen.push(start);
+      }
+      chosen.forEach(start=>rungs.push({start,y}));
     }
 
-  // 핵심: 모든 인접 세로줄 구간마다 가로줄 1개 이상 보장
-    for(let start = 0; start < people - 1; start++){
-      rungs.push({ start, y: pickY(start) });
-    }
-
-  // 추가 가로줄
-    const extraCount = Math.max(people + 1, 10);
-    for(let i = 0; i < extraCount; i++){
-      const start = Math.floor(Math.random() * (people - 1));
-      rungs.push({ start, y: pickY(start) });
-    }
-
-    return rungs.sort((a,b) => a.y - b.y);
+    return rungs.sort((a,b)=>a.y-b.y || a.start-b.start);
   }
-  /*function createRungs(){
-    const rungs=[];
-    const rowCount=Math.max(8,people+1);
-    const step=Math.floor(290/rowCount);
-    for(let start=0; start<people-1; start++){
-      const y=32 + Math.floor(Math.random()*288);
-      rungs.push({start,y});
-    }
-    for(let y=32;y<320;y+=step){
-      const start=Math.floor(Math.random()*(people-1));
-      rungs.push({start,y});
-    }
-    return rungs;
-  }*/
   function ensureRungs(){
-  if(!ladderRungs.length) ladderRungs=createRungs();
-  return ladderRungs;
+    if(!ladderRungs.length) ladderRungs=createRungs();
+    return ladderRungs;
+  }
+  function computePath(topIndex){
+    const {gap,side}=getLayout();
+    const rungs=ensureRungs().slice().sort((a,b)=>a.y-b.y || a.start-b.start);
+    let col=topIndex;
+    let currentY=0;
+    const segments=[];
+
+    rungs.forEach(({start,y})=>{
+      if(start===col || start===col-1){
+        const fromX=side+col*gap;
+        if(y>currentY){
+          segments.push({type:'vertical',x:fromX,y1:currentY,y2:y});
+        }
+        if(start===col){
+          segments.push({type:'horizontal',x1:fromX,x2:fromX+gap,y});
+          col+=1;
+        } else {
+          segments.push({type:'horizontal',x1:fromX-gap,x2:fromX,y});
+          col-=1;
+        }
+        currentY=y;
+      }
+    });
+
+    const finalX=side+col*gap;
+    if(LINE_HEIGHT>currentY){
+      segments.push({type:'vertical',x:finalX,y1:currentY,y2:LINE_HEIGHT});
+    }
+
+    return {endCol:col,segments};
+  }
+  function topNumberForBottom(bottomIndex){
+    for(let top=0; top<people; top++){
+      if(computePath(top).endCol===bottomIndex) return top+1;
+    }
+    return '';
+  }
+  function renderTrace(lineArea){
+    if(selectedTop===null || !activePath.length) return;
+    const frag=document.createDocumentFragment();
+
+    activePath.forEach((seg,idx)=>{
+      const el=document.createElement('div');
+      el.className='lottery-trace-segment '+(seg.type==='vertical'?'vertical':'horizontal');
+      el.style.animationDelay=(idx*.12)+'s';
+
+      if(seg.type==='vertical'){
+        el.style.left=seg.x+'px';
+        el.style.top=Math.min(seg.y1,seg.y2)+'px';
+        el.style.height=Math.max(4, Math.abs(seg.y2-seg.y1))+'px';
+      } else {
+        el.style.left=Math.min(seg.x1,seg.x2)+'px';
+        el.style.top=seg.y+'px';
+        el.style.width=Math.max(4, Math.abs(seg.x2-seg.x1))+'px';
+      }
+      frag.appendChild(el);
+    });
+
+    const last=activePath[activePath.length-1];
+    const runner=document.createElement('div');
+    runner.className='lottery-runner';
+    runner.textContent='🏌️';
+    runner.style.animationDelay=(activePath.length*.12)+'s';
+    if(last.type==='vertical'){
+      runner.style.left=last.x+'px';
+      runner.style.top=last.y2+'px';
+    } else {
+      runner.style.left=last.x2+'px';
+      runner.style.top=last.y+'px';
+    }
+    frag.appendChild(runner);
+    lineArea.appendChild(frag);
   }
   function render(){
     if(!ladderEl) return;
@@ -910,7 +981,7 @@ const lotteryApp = (() => {
 
       const person=document.createElement('button');
       person.type='button';
-      person.className='lottery-person';
+      person.className='lottery-person'+(selectedTop===i?' active':'');
       person.style.left=x+'px';
       const ball=document.createElement('span');
       ball.className='ball';
@@ -923,19 +994,6 @@ const lotteryApp = (() => {
       v.className='lottery-v-line';
       v.style.left=x+'px';
       lineArea.appendChild(v);
-
-      const box=document.createElement('div');
-      box.className='lottery-result-box';
-      box.style.left=x+'px';
-      if(shuffled){
-        const isOpened=openedIndexes.has(i);
-        const value=results[i];
-        box.className='lottery-result-box '+(value==='당첨'?'win':'lose');
-        box.textContent=isOpened ? `${value}(${i+1})` : value;
-      } else {
-        box.textContent='숨김';
-      }
-      resultRow.appendChild(box);
     }
 
     ensureRungs().forEach(({start,y})=>{
@@ -947,15 +1005,38 @@ const lotteryApp = (() => {
       lineArea.appendChild(h);
     });
 
+    renderTrace(lineArea);
+
+    for(let bottom=0; bottom<people; bottom++){
+      const x=side+bottom*gap;
+      const box=document.createElement('div');
+      box.className='lottery-result-box';
+      box.style.left=x+'px';
+
+      if(shuffled){
+        const value=bottomResults[bottom];
+        const arrivedTop=topNumberForBottom(bottom);
+        const isOpened=openedTops.has(arrivedTop-1);
+        const selectedEnd=selectedTop!==null ? computePath(selectedTop).endCol : null;
+        box.className='lottery-result-box '+(value==='당첨'?'win':'lose')+(selectedEnd===bottom?' revealed':'');
+        box.textContent=isOpened ? `${arrivedTop}번 ${value}` : value;
+      } else {
+        box.textContent='숨김';
+      }
+      resultRow.appendChild(box);
+    }
+
     ladderEl.append(personRow,lineArea,resultRow);
   }
   async function shuffle(){
-    results=makeResults();
+    bottomResults=makeBottomResults();
     ladderRungs=createRungs();
     shuffled=true;
-    openedIndexes.clear();
+    openedTops.clear();
+    selectedTop=null;
+    activePath=[];
     await sealResults();
-    resultEl.textContent='하단 위치가 섞였습니다. 번호를 누르거나 결과 확인을 눌러주세요.';
+    resultEl.textContent='하단 위치가 섞였습니다. 번호를 누르면 사다리 경로를 따라 결과가 공개됩니다.';
     render();
     ladderEl.classList.remove('lottery-shuffle-effect');
     void ladderEl.offsetWidth;
@@ -971,15 +1052,19 @@ const lotteryApp = (() => {
       reset();
       return;
     }
+    for(let i=0;i<people;i++) openedTops.add(i);
+    selectedTop=null;
+    activePath=[];
+    render();
+
     const winners=[];
     const losers=[];
-    results.forEach((r,i)=>{
-      openedIndexes.add(i);
-      if(r==='당첨') winners.push(i+1);
-      else losers.push(i+1);
-    });
-    render();
-    resultEl.textContent=`당첨: ${winners.join(', ')} / 꽝: ${losers.join(', ')}`;
+    for(let top=0; top<people; top++){
+      const endCol=computePath(top).endCol;
+      if(bottomResults[endCol]==='당첨') winners.push(top+1);
+      else losers.push(top+1);
+    }
+    resultEl.textContent=`당첨 번호: ${winners.join(', ')} / 꽝 번호: ${losers.join(', ')}`;
   }
   async function revealOne(i){
     if(!shuffled){
@@ -991,17 +1076,29 @@ const lotteryApp = (() => {
       reset();
       return;
     }
-    openedIndexes.add(i);
+
+    const path=computePath(i);
+    selectedTop=i;
+    activePath=path.segments;
+    openedTops.add(i);
     render();
-    resultEl.textContent=`${i+1}번 결과: ${results[i]}`;
+
+    if(pathTimer) clearTimeout(pathTimer);
+    pathTimer=setTimeout(()=>{
+      const result=bottomResults[path.endCol];
+      resultEl.textContent=`${i+1}번 결과: ${result} / 도착 위치: 하단 ${path.endCol+1}번`;
+    }, Math.max(350, activePath.length*120+420));
   }
   function reset(){
     shuffled=false;
-    results=[];
+    bottomResults=[];
     ladderRungs=createRungs();
     resultNonce='';
     resultChecksum='';
-    openedIndexes.clear();
+    openedTops.clear();
+    selectedTop=null;
+    activePath=[];
+    if(pathTimer) clearTimeout(pathTimer);
     resultEl.textContent='';
     render();
   }
