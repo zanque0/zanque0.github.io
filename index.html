@@ -111,6 +111,14 @@
     .lottery-note{text-align:center;color:#475569;font-weight:700;margin-top:14px;min-height:24px}
     @media(max-width:640px){.lottery-ladder{min-width:720px}.lottery-wrap{padding:12px}.lottery-header h2{font-size:22px}}
 
+
+    /* Board tab */
+    .board-card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+    .board-frame-wrap{width:100%;height:calc(100vh - 210px);min-height:620px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff}
+    .board-frame{width:100%;height:100%;border:0;display:block}
+    .board-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+    @media(max-width:680px){.board-frame-wrap{height:calc(100vh - 190px);min-height:520px}}
+
   </style>
 </head>
 <body>
@@ -132,6 +140,7 @@
     <button class="tab" data-tab="reports">예약자 명단(예약자 리스트) 등록</button>
     <button class="tab" data-tab="alarms">알람 설정</button>
     <button class="tab" data-tab="lottery">파크골프 추첨</button>
+    <button class="tab" data-tab="board">게시판</button>
   </div>
 
   <section id="dashboard" class="section active">
@@ -284,6 +293,28 @@
       <p id="lotteryResult" class="lottery-note"></p>
     </div>
     <button id="lotteryClear" class="lottery-reset" type="button">🔄</button>
+  </section>
+
+  <section id="board" class="section">
+    <div class="board-card">
+      <div class="board-actions">
+        <div>
+          <h2>게시판</h2>
+          <div class="small">Padlet 게시판을 이 화면 안에서 바로 확인하고 작성할 수 있습니다.</div>
+        </div>
+        <a class="btn secondary" href="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" target="_blank" rel="noopener noreferrer">새 창으로 열기</a>
+      </div>
+      <div class="board-frame-wrap">
+        <iframe
+          class="board-frame"
+          src="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7"
+          title="게시판 Padlet"
+          loading="lazy"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allow="clipboard-write; camera; microphone; geolocation; fullscreen"
+        ></iframe>
+      </div>
+    </div>
   </section>
 
 </div>
@@ -809,6 +840,38 @@ const lotteryApp = (() => {
   }
   function createRungs(){
     const rungs=[];
+    const usedYByStart = Array.from({ length: people - 1 }, () => new Set());
+
+    function pickY(start){
+      let y;
+      let guard = 0;
+      do {
+        y = 28 + Math.floor(Math.random() * 292);
+        guard++;
+      } while (
+        guard < 80 &&
+        [...usedYByStart[start]].some(prev => Math.abs(prev - y) < 26)
+      );
+      usedYByStart[start].add(y);
+      return y;
+    }
+
+  // 핵심: 모든 인접 세로줄 구간마다 가로줄 1개 이상 보장
+    for(let start = 0; start < people - 1; start++){
+      rungs.push({ start, y: pickY(start) });
+    }
+
+  // 추가 가로줄
+    const extraCount = Math.max(people + 1, 10);
+    for(let i = 0; i < extraCount; i++){
+      const start = Math.floor(Math.random() * (people - 1));
+      rungs.push({ start, y: pickY(start) });
+    }
+
+    return rungs.sort((a,b) => a.y - b.y);
+  }
+  /*function createRungs(){
+    const rungs=[];
     const rowCount=Math.max(8,people+1);
     const step=Math.floor(290/rowCount);
     for(let start=0; start<people-1; start++){
@@ -820,7 +883,7 @@ const lotteryApp = (() => {
       rungs.push({start,y});
     }
     return rungs;
-  }
+  }*/
   function ensureRungs(){
   if(!ladderRungs.length) ladderRungs=createRungs();
   return ladderRungs;
