@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8급 한자시험 문제 생성기</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px; background: #f3f3f6; color: #111; font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif; }
+    .controls { max-width: 900px; margin: 0 auto 18px; padding: 18px; background: #fff; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.12); text-align: center; }
+    .controls h1 { margin: 0 0 12px; font-size: 22px; }
+    .controls input, .controls button { font-size: 15px; padding: 9px 12px; margin: 4px; border-radius: 8px; }
+    .controls input { border: 1px solid #bbb; }
+    .controls button { border: 0; background: #333; color: white; cursor: pointer; }
+    .controls button:hover { background: #000; }
+
+    .page { width: 210mm; min-height: 297mm; margin: 0 auto 10px; padding: 4mm 5mm 4mm; background: white; box-shadow: 0 0 8px rgba(0,0,0,.18); page-break-after: always; position: relative; }
+    .top-line { margin: 0 auto 4px; padding: 0 2mm; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .exam-band { margin: 0 0 8mm; display: grid; grid-template-columns: 44mm 1fr 52mm; border: 2px solid #111; min-height: 28mm; }
+    .grade-box { display: flex; align-items: center; justify-content: center; gap: 6px; border-right: 2px solid #111; font-size: 36px; font-weight: 800; }
+    .grade-mark { width: 18px; height: 18px; border: 5px solid #2a76d2; border-radius: 3px; transform: rotate(45deg); }
+    .exam-info { display: flex; flex-direction: column; justify-content: center; gap: 8px; font-size: 18px; line-height: 1.5; padding: 6px 10mm; background: #fff; border-right: 2px solid #111; }
+    .exam-meta { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; text-align: center; }
+    .date-line, .name-line { display: inline-block; border-bottom: 1.5px solid #111; vertical-align: baseline; }
+    .date-line { width: 20mm; margin: 0 3px; }
+    .name-line { min-width: 58mm; margin-left: 6px; }
+
+    .columns { display: grid; grid-template-columns: 1fr 1fr; column-gap: 6mm; }
+    .col:first-child { border-right: 1px dotted #999; padding-right: 5mm; }
+    .col:last-child { padding-left: 2mm; }
+    .section { margin-bottom: 6px; }
+    .section-title { font-size: 15px; line-height: 1.5; margin-bottom: 8px; word-break: keep-all; }
+    .small { font-size: 12px; }
+    .example, .choices-title { text-align: center; margin: 6px 0 5px; font-size: 14px; }
+    .choices { font-size: 14px; line-height: 1.65; margin: 0 0 7px; text-align: center; word-spacing: 7px; padding: 2px 0; }
+    .problems { font-size: 15px; line-height: 1.72; }
+    .problem { margin-bottom: 4px; min-height: 6.5mm; padding-bottom: 1mm; border-bottom: 1px dotted #ddd; }
+    .reading-passage { font-size: 16px; line-height: 2.35; border: 1px solid #ddd; padding: 6px 8px; margin-bottom: 7px; word-break: keep-all; }
+    .reading-item { display: inline-flex; margin-right: 9px; white-space: nowrap; align-items: baseline; gap: 2px; }
+    .reading-answer { display: inline-block; width: 34px; height: 18px; border-bottom: 1px solid #111; vertical-align: -2px; margin-left: 3px; }
+    .write-problem { min-height: 11mm; margin-bottom: 5px; }
+    .answer-line { height: 5mm; border-bottom: 1px solid #bbb; margin-top: 1mm; }
+    .hanja { font-family: "Batang", "MingLiU", "Noto Serif CJK KR", serif; }
+    .under { text-decoration: underline; text-underline-offset: 4px; }
+    .page-num { position: absolute; left: 0; right: 0; bottom: 6mm; text-align: center; font-size: 12px; }
+    .corner-next { position: absolute; right: 10mm; bottom: 6mm; font-weight: 700; font-size: 14px; }
+    .answer-page { display: none; }
+    .answer-title { text-align: center; font-size: 19px; border-top: 1.5px solid #222; border-bottom: 1.5px solid #222; padding: 6px; margin: 8px 0 0; }
+    .answer-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+    .answer-table th, .answer-table td { border: 1px solid #333; height: 9mm; text-align: center; padding: 1px 2px; word-break: keep-all; }
+    .answer-table th { height: 7mm; font-weight: normal; background: #f5f5f5; }
+    .answer-table .num { width: 7%; }
+    .answer-table .ans { width: 18%; }
+
+    @page { size: A4 portrait; margin: 8mm; }
+    @media print {
+      html, body { width: auto; margin: 0; padding: 0; background: white; }
+      .controls { display: none !important; }
+      .page { width: 194mm; min-height: 281mm; margin: 0; padding: 0; box-shadow: none; page-break-after: always; break-after: page; }
+      .page:last-child { page-break-after: auto; break-after: auto; }
+      .answer-page { display: none !important; }
+      .page-num { bottom: 0; }
+      .corner-next { bottom: 0; right: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <h1>8급 한자시험 문제 생성기</h1>
+    <label>제목 <input id="examNo" value="8급 한자 연습 시험" style="width:180px"></label>
+    <button onclick="makeExam()">새 문제 만들기</button>
+    <button onclick="toggleAnswers()">정답지 보이기/숨기기</button>
+    <button onclick="window.print()">문제지 인쇄하기</button>
+  </div>
+
+  <div id="examRoot"></div>
+
+  <script>
+    const hanjaData = [
+      {h:'敎', t:'가르칠', s:'교'}, {h:'校', t:'학교', s:'교'}, {h:'九', t:'아홉', s:'구'}, {h:'國', t:'나라', s:'국'}, {h:'軍', t:'군사', s:'군'}, {h:'金', alt:'金', t:'쇠/성', s:'금'},
+      {h:'南', t:'남녘', s:'남'}, {h:'女', t:'여자', s:'녀'}, {h:'年', t:'해', s:'년'}, {h:'大', t:'큰', s:'대'}, {h:'東', t:'동녘', s:'동'}, {h:'六', t:'여섯', s:'육'},
+      {h:'萬', t:'일만', s:'만'}, {h:'母', t:'어미', s:'모'}, {h:'木', t:'나무', s:'목'}, {h:'門', t:'문', s:'문'}, {h:'民', t:'백성', s:'민'},
+      {h:'白', t:'흰', s:'백'}, {h:'父', t:'아비', s:'부'}, {h:'北', t:'북녘', s:'북'}, {h:'四', t:'넉', s:'사'}, {h:'山', t:'메', s:'산'}, {h:'三', t:'석', s:'삼'},
+      {h:'生', t:'날', s:'생'}, {h:'西', t:'서녘', s:'서'}, {h:'先', t:'먼저', s:'선'}, {h:'小', t:'작을', s:'소'}, {h:'水', t:'물', s:'수'}, {h:'室', t:'집/방', s:'실'}, {h:'十', t:'열', s:'십'},
+      {h:'五', t:'다섯', s:'오'}, {h:'王', t:'임금', s:'왕'}, {h:'外', t:'바깥', s:'외'}, {h:'月', t:'달', s:'월'}, {h:'二', t:'두', s:'이'}, {h:'人', t:'사람', s:'인'}, {h:'一', t:'한', s:'일'}, {h:'日', t:'날', s:'일'},
+      {h:'長', t:'긴', s:'장'}, {h:'弟', t:'아우', s:'제'}, {h:'中', t:'가운데', s:'중'}, {h:'靑', t:'푸를', s:'청'}, {h:'寸', t:'마디', s:'촌'}, {h:'七', t:'일곱', s:'칠'},
+      {h:'土', t:'흙', s:'토'}, {h:'八', t:'여덟', s:'팔'}, {h:'學', t:'배울', s:'학'}, {h:'韓', t:'한국/나라', s:'한'}, {h:'兄', t:'형', s:'형'}, {h:'火', t:'불', s:'화'}
+    ];
+
+    const readingSets = [
+      {title:'학교 행사', items:['學','校','年','五','月','父','母','兄','弟','先'], text:'우리 {{學}}{{校}}에서는 매 {{年}} {{五}}{{月}}에 가족 초청 행사를 엽니다. {{父}}{{母}}님과 {{兄}}{{弟}}가 함께 와서 {{先}}생님께 인사합니다.'},
+      {title:'현충일 이야기', items:['年','月','六','日','大','韓','民','國','軍','先'], text:'매 {{年}} 유 {{月}} {{六}}{{日}}은 현충일입니다. {{大}}{{韓}}{{民}}{{國}}을 위해 애쓴 {{軍}}인과 {{先}}열을 기억합니다.'},
+      {title:'가족 나들이', items:['父','母','兄','弟','女','山','水','木','白','靑'], text:'{{父}}{{母}}님과 {{兄}}{{弟}}, 그리고 {{女}}동생이 함께 {{山}}에 갔습니다. 맑은 {{水}}가 흐르고, 큰 {{木}} 위로 {{白}}구름과 {{靑}}하늘이 보였습니다.'},
+      {title:'방향과 자연', items:['東','西','南','北','山','水','火','土','木','日'], text:'{{東}}쪽에서 {{日}}이 뜨고 {{西}}쪽으로 집니다. 철새는 {{南}}쪽으로 날아가고, 찬 바람은 {{北}}쪽에서 붑니다. {{山}}과 {{水}}, {{火}}, {{土}}, {{木}}은 자연에서 볼 수 있습니다.'},
+      {title:'숫자 공부', items:['一','二','三','四','五','六','七','八','九','十'], text:'{{一}}부터 {{十}}까지 숫자를 배웠습니다. {{二}} 명씩 짝을 짓고, {{三}} 번 읽고, {{四}} 줄을 쓰고, {{五}} 분 쉬었습니다. 다시 {{六}}, {{七}}, {{八}}, {{九}}를 차례로 말했습니다.'},
+      {title:'우리나라', items:['韓','國','王','民','軍','金','萬','白','靑','人'], text:'{{韓}}{{國}}의 옛 {{王}}은 {{民}}을 아끼고 {{軍}}을 살폈습니다. 축제 날에는 {{金}}빛 장식과 {{萬}}국기가 걸리고, {{白}}색과 {{靑}}색 옷을 입은 {{人}}들이 모였습니다.'},
+      {title:'교실 생활', items:['大','小','中','外','門','室','學','校','敎','生'], text:'{{學}}{{校}}의 {{大}}{{門}}을 지나 {{室}}로 들어갔습니다. {{敎}}실 {{中}}에서는 {{生}}들이 공부하고, {{外}}에서는 {{小}}리로 노는 친구들이 보였습니다.'},
+      {title:'시간과 하루', items:['年','月','日','一','二','三','四','五','六','七'], text:'새 {{Year}}이 시작되고 첫 {{月}}이 되었습니다. 어느 {{日}}, 우리는 {{一}} 시간 동안 책을 읽고 {{二}}, {{三}}, {{四}}, {{五}}, {{六}}, {{七}}까지 세어 보았습니다.'.replace('{{Year}}','{{年}}')},
+      {title:'집과 가족', items:['門','室','父','母','兄','弟','長','小','外','中'], text:'집 {{門}}을 열고 {{室}} {{中}}으로 들어갔습니다. {{父}}님과 {{母}}님, {{兄}}과 {{弟}}가 있었고, 긴 {{長}}막대와 {{小}}책상은 {{外}}쪽 창가에 놓여 있었습니다.'},
+      {title:'운동장', items:['八','九','十','人','大','小','山','水','火','木'], text:'운동장에 {{八}} 명, {{九}} 명, {{十}} 명씩 모였습니다. 많은 {{人}}이 {{大}}공과 {{小}}공으로 놀고, {{山}} 모양 놀이기구 옆 {{木}}그늘에서 {{水}}를 마셨습니다. 저녁에는 {{火}}빛도 보였습니다.'},
+      {title:'봄 소풍', items:['月','山','水','木','人','白','靑','東','日','小'], text:'봄 {{月}}, {{東}}쪽 하늘에서 {{日}}이 떠오르자 친구들과 {{山}}으로 소풍을 갔습니다. {{水}}가 흐르고 {{木}}이 우거진 길에서 {{人}}들이 {{白}}구름 아래 {{靑}}하늘을 보며 {{小}}리로 노래를 불렀습니다.'},
+      {title:'시장 구경', items:['父','母','人','門','外','金','白','木','水','大'], text:'{{父}}님과 {{母}}님을 따라 시장에 갔습니다. {{門}} {{外}}에는 많은 {{人}}이 있었고, {{金}}빛 간판과 {{白}}접시가 보였습니다. {{木}}상자 옆에서는 시원한 {{水}}를 팔고 있었고 아주 {{大}}단했습니다.'},
+      {title:'여름 방학', items:['年','月','日','山','水','火','木','人','先','生'], text:'{{年}} 여름 {{月}}이 되어 {{日}}마다 친구들과 놀았습니다. {{山}}에 올라 {{Water}}를 마시고, 밤에는 {{火}}놀이도 했습니다. {{先}}{{生}}님께서 심은 {{木}} 아래에서 많은 {{人}}이 쉬었습니다.'.replace('{{Water}}','{{水}}')},
+      {title:'교실 청소', items:['學','校','室','門','中','外','先','生','小','大'], text:'{{學}}{{校}} {{室}} 안을 깨끗하게 청소했습니다. {{門}}과 창문 {{外}}까지 닦고 {{中}}에 있는 책상을 정리했습니다. {{先}}{{生}}님께서는 {{小}}휴지도 줍고 {{大}}걸레도 잘 빨았다고 칭찬하셨습니다.'},
+      {title:'숲 체험', items:['山','木','水','土','火','白','靑','人','長','小'], text:'{{山}} 숲길에는 {{木}}이 많았습니다. {{人}}들은 {{水}}가 흐르는 곳에서 {{土}}를 만져 보았습니다. 저녁이 되자 {{火}}를 피우고 {{白}}별과 {{靑}}하늘을 보았습니다. 키가 {{長}} 형과 {{小}}동생도 함께했습니다.'},
+      {title:'우리 동네', items:['東','西','南','北','門','外','人','女','大','小'], text:'우리 동네 {{東}}쪽에는 학교가 있고 {{西}}쪽에는 공원이 있습니다. {{南}}쪽 {{門}} {{外}}에는 시장이 있고 {{北}}쪽 길에는 많은 {{人}}이 다닙니다. {{女}}아이들은 {{大}}공과 {{小}}공으로 놉니다.'},
+      {title:'명절 준비', items:['父','母','兄','弟','女','門','室','白','金','王'], text:'{{父}}님과 {{母}}님은 명절 음식을 준비하셨습니다. {{兄}}과 {{弟}}, 그리고 {{女}}동생은 {{室}}을 청소했습니다. {{門}} 앞에는 {{白}}등을 달고 {{金}}빛 장식을 놓았습니다. 옛날 {{王}} 이야기도 함께 들었습니다.'},
+      {title:'겨울 아침', items:['白','山','水','木','火','日','人','大','小','門'], text:'{{白}}눈이 내린 아침, {{山}}과 {{木}} 위가 모두 하얗게 변했습니다. 얼어 있는 {{水}} 옆에서 {{火}}를 피우자 {{日}}빛이 반짝였습니다. {{大}}장갑과 {{小}}모자를 쓴 {{人}}들이 {{門}} 밖으로 나왔습니다.'},
+      {title:'운동회', items:['學','校','人','大','小','一','二','三','先','生'], text:'{{學}}{{校}} 운동회 날, 많은 {{人}}이 운동장에 모였습니다. {{大}}공 굴리기와 {{小}}공 던지기를 했고 {{一}}, {{二}}, {{三}}등 친구들이 상을 받았습니다. {{先}}{{生}}님도 크게 웃으셨습니다.'},
+      {title:'바다 여행', items:['東','西','南','北','水','山','白','靑','人','日'], text:'{{南}}쪽 바다로 여행을 갔습니다. {{東}}쪽 하늘에서 {{日}}이 떠오르고 {{西}}쪽 바다에는 {{白}}배가 보였습니다. {{靑}}바다의 {{水}}결 옆 {{山}}에는 많은 {{人}}이 모여 있었고 {{北}}쪽에서는 시원한 바람이 불었습니다.'},
+      {title:'도서관', items:['學','生','室','門','中','外','先','木','小','長'], text:'{{學}}{{生}}들이 도서관 {{室}} {{中}}에서 책을 읽고 있습니다. {{門}} {{外}}에는 {{木}}이 자라고 있고 {{先}}생님은 {{小}}책과 {{長}}책을 정리하고 계십니다.'},
+      {title:'봄 운동장', items:['日','山','木','水','靑','白','人','女','兄','弟'], text:'{{日}}씨가 좋아 운동장에 나갔습니다. 멀리 {{山}}과 {{木}}이 보이고 {{水}}소리도 들렸습니다. {{靑}}하늘 아래 {{白}}구름이 떠 있었고 많은 {{人}}과 {{女}}학생들, {{兄}}, {{弟}}도 함께 뛰어놀았습니다.'},
+      {title:'시장 나들이', items:['父','母','金','白','木','門','外','人','大','小'], text:'{{父}}님과 {{母}}님을 따라 시장에 갔습니다. {{門}} {{外}}에는 많은 {{Person}}이 있었고 {{金}}빛 간판 아래 {{白}}그릇과 {{木}}장난감을 팔고 있었습니다. {{大}}가게 옆에는 {{小}}가게도 있었습니다.'.replace('{{Person}}','{{人}}')},
+      {title:'숫자 놀이', items:['一','二','三','四','五','六','七','八','九','十'], text:'{{一}}부터 {{十}}까지 숫자 놀이를 했습니다. {{二}}명씩 짝을 짓고 {{三}}번 박수를 쳤습니다. {{四}}걸음 앞으로 가고 {{五}}번 웃었습니다. 이어서 {{六}}, {{七}}, {{八}}, {{九}}를 차례로 말했습니다.'},
+      {title:'우리 집', items:['門','室','父','母','兄','弟','女','中','外','長'], text:'집 {{門}}을 열고 {{室}} 안으로 들어갔습니다. {{父}}님과 {{母}}님, {{兄}}과 {{弟}}, 그리고 {{女}}동생이 {{中}}에 모여 있었습니다. {{外}}에는 {{長}}우산이 세워져 있었습니다.'},
+      {title:'가을 산책', items:['山','木','水','白','靑','日','人','東','西','南'], text:'{{山}}길을 따라 산책했습니다. {{木}}잎이 흔들리고 {{水}}소리가 들렸습니다. {{白}}구름 아래 {{靑}}하늘이 펼쳐졌고 {{日}}빛이 따뜻했습니다. {{東}}쪽에서 온 {{人}}들과 {{西}}, {{南}}쪽 친구들도 함께 걸었습니다.'},
+      {title:'교실 발표', items:['學','校','敎','先','生','大','小','人','一','二'], text:'{{學}}{{校}} 발표 시간에 {{一}}번과 {{二}}번 친구가 앞에 나왔습니다. {{敎}}실의 {{人}}들이 조용히 들었고 {{先}}{{生}}님께서는 {{大}}목소리와 {{小}}목소리를 잘 조절했다고 칭찬하셨습니다.'}
+    ].map(set => ({ ...set, text: set.text.replace(/\{\{(Year|Water|White|Fire|Person)\}\}/g, m => ({'{{Year}}':'{{年}}','{{Water}}':'{{水}}','{{White}}':'{{白}}','{{Fire}}':'{{火}}','{{Person}}':'{{人}}'}[m])), items: set.items.map(h => ({h})) }));
+
+    const meaningSentencePool = [
+      ['木','<span class="under">나무</span> 한 그루를 마당에 심었습니다.'], ['小','동생의 손은 아직 <span class="under">작습니다</span>.'], ['軍','북소리를 듣고 <span class="under">군사</span>들이 모였습니다.'],
+      ['民','임금은 <span class="under">백성</span>을 아꼈습니다.'], ['九','제 발표 순서는 <span class="under">아홉</span> 번째입니다.'], ['兄','작은 <span class="under">형</span>에게 책을 전해 주었습니다.'],
+      ['敎','선생님께서 글을 <span class="under">가르치</span>십니다.'], ['國','우리 <span class="under">나라</span>의 꽃은 무궁화입니다.'], ['人','일할 <span class="under">사람</span>이 더 필요합니다.'],
+      ['白','하늘에 <span class="under">흰</span> 구름이 떠 있습니다.'], ['東','해가 뜨는 쪽은 <span class="under">동쪽</span>입니다.'], ['二','강아지 <span class="under">두</span> 마리가 뛰어갑니다.'],
+      ['土','삽으로 <span class="under">흙</span>을 파고 씨를 뿌렸습니다.'], ['五','사과 <span class="under">다섯</span> 개를 바구니에 담았습니다.'], ['外','지금 <span class="under">바깥</span>은 날씨가 춥습니다.'],
+      ['長','사람들이 <span class="under">길게</span> 줄을 섰습니다.'], ['門','교실 <span class="under">문</span>을 조용히 닫았습니다.'], ['父','<span class="under">아버지</span>와 함께 밥을 먹었습니다.'],
+      ['水','흐르는 <span class="under">물</span>에 손을 씻습니다.'], ['南','제비는 따뜻한 <span class="under">남쪽</span>으로 갑니다.'], ['靑','<span class="under">푸른</span> 바다가 보입니다.'],
+      ['先','친구보다 <span class="under">먼저</span> 약속 장소에 도착했습니다.'], ['火','방 안에 <span class="under">불</span>이 켜져 있습니다.'], ['王','신하들이 <span class="under">임금</span>께 절을 올렸습니다.'],
+      ['女','그 <span class="under">여자</span>아이는 책을 읽고 있습니다.'], ['七','집에서 <span class="under">일곱</span> 시에 출발했습니다.'], ['一','꽃씨 <span class="under">하나</span>를 심었습니다.'],
+      ['八','공책 <span class="under">여덟</span> 권을 샀습니다.'], ['山','가족과 <span class="under">산</span> 둘레길을 걸었습니다.'], ['室','이 <span class="under">방</span>은 햇볕이 잘 들어옵니다.'],
+      ['西','해가 <span class="under">서쪽</span>으로 집니다.'], ['六','물고기 <span class="under">여섯</span> 마리를 낚았습니다.'], ['中','여러 구슬 <span class="under">가운데</span> 하나를 골랐습니다.'],
+      ['年','지난 <span class="under">해</span>에는 키가 많이 자랐습니다.'], ['大','아빠 손은 내 손보다 훨씬 <span class="under">큽니다</span>.'], ['學','새로운 것을 <span class="under">배우는</span> 일은 즐겁습니다.'],
+      ['校','우리 <span class="under">학교</span>는 집에서 가깝습니다.'], ['月','밤하늘에 둥근 <span class="under">달</span>이 떴습니다.'], ['日','즐거운 <span class="under">날</span>에는 웃음이 많습니다.'],
+      ['四','종이 <span class="under">네</span> 장을 나누어 주었습니다.'], ['三','친구 <span class="under">세</span> 명이 함께 왔습니다.'], ['十','동전 <span class="under">열</span> 개를 모았습니다.'],
+      ['母','<span class="under">어머니</span>께 꽃을 드렸습니다.'], ['弟','어린 <span class="under">아우</span>가 공을 찼습니다.'], ['生','새싹이 <span class="under">나</span>기 시작했습니다.'],
+      ['北','지도에서 <span class="under">북쪽</span>을 찾았습니다.'], ['萬','운동장에 <span class="under">많은</span> 깃발이 걸렸습니다.'], ['寸','손가락 한 <span class="under">마디</span>만큼 자랐습니다.'],
+      ['金','반짝이는 <span class="under">금빛</span> 종이를 붙였습니다.']
+    ].map(([h, text]) => ({h, text}));
+
+    const circled = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+    let answers = [];
+    function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+    function byHanja(h) { return hanjaData.find(x => x.h === h || x.alt === h); }
+    function displayHanja(x) { return x.alt || x.h; }
+    function fullHunEum(x) { return `${x.t} ${x.s}`; }
+    function num(n) { return `[${n}]`; }
+    function pickUniqueByHanja(pool, n, usedSet) { const result = []; shuffle(pool).forEach(item => { if (result.length >= n) return; if (!usedSet.has(item.h) && byHanja(item.h)) { result.push(item); usedSet.add(item.h); } }); return result; }
+    function makeChoiceBlock(items, key) { return items.map((x, i) => `${circled[i]} <span class="hanja">${key(x)}</span>`).join(' &nbsp; '); }
+    function renderReadingPassage(set, startNo) { let current = startNo; let output = set.text; set.items.forEach(item => { const x = byHanja(item.h); const marked = `<span class="reading-item">[${current}] <span class="hanja">${displayHanja(x)}</span>(<span class="reading-answer"></span>)</span>`; output = output.replace(`{{${item.h}}}`, marked); current++; }); return output; }
+    function makeHeader() { const examTitle = document.getElementById('examNo').value || '8급 한자 연습 시험'; return `<div class="top-line"><span>${examTitle}</span><span>제작: zanque (zanque0@gmail.com)</span></div><div class="exam-band"><div class="grade-box"><span class="grade-mark"></span><span>8급</span></div><div class="exam-info"><div>날짜 : <span class="date-line"></span> 년 <span class="date-line"></span> 월 <span class="date-line"></span> 일</div><div>이름 : <span class="name-line"></span></div></div><div class="exam-meta"><div>총 50문항</div><div>제한 시간 50분</div></div></div>`; }
+    function sectionTitle(range, text) { return `<div class="section-title">[문제 ${range}] ${text}</div>`; }
+    function validateExamData() { const errors = []; const known = new Set(hanjaData.map(x => x.h)); hanjaData.forEach(x => { if (x.alt) known.add(x.alt); }); readingSets.forEach((set, idx) => { if (!Array.isArray(set.items) || set.items.length !== 10) errors.push(`readingSets[${idx}] ${set.title}: items가 10개가 아닙니다.`); const itemKeys = (set.items || []).map(x => x.h); const dupes = itemKeys.filter((h, i) => itemKeys.indexOf(h) !== i); if (dupes.length) errors.push(`readingSets[${idx}] ${set.title}: 중복 한자 ${[...new Set(dupes)].join(', ')}`); itemKeys.forEach(h => { if (!known.has(h)) errors.push(`readingSets[${idx}] ${set.title}: 8급 데이터에 없는 한자 ${h}`); if (!set.text.includes(`{{${h}}}`)) errors.push(`readingSets[${idx}] ${set.title}: 본문에 {{${h}}} 토큰이 없습니다.`); }); [...set.text.matchAll(/\{\{(.+?)\}\}/g)].map(m => m[1]).forEach(h => { if (!itemKeys.includes(h)) errors.push(`readingSets[${idx}] ${set.title}: items에 없는 본문 토큰 {{${h}}}`); }); }); meaningSentencePool.forEach((item, idx) => { if (!known.has(item.h)) errors.push(`meaningSentencePool[${idx}]: 8급 데이터에 없는 한자 ${item.h}`); if (!item.text.includes('class="under"')) errors.push(`meaningSentencePool[${idx}] ${item.h}: 밑줄 표시가 없습니다.`); }); if (errors.length) console.error('한자시험 생성기 데이터 오류: ' + errors.join(' / ')); else console.info('한자시험 생성기 데이터 검사 통과'); return errors; }
+    function buildExamModel() { const used = new Set(); const q1Set = shuffle(readingSets)[0]; q1Set.items.forEach(x => used.add(x.h)); const q2Choices = shuffle(hanjaData.filter(x => !used.has(x.h))).slice(0, 10); q2Choices.forEach(x => used.add(x.h)); const q3Sentences = pickUniqueByHanja(meaningSentencePool, 10, used); q3Sentences.forEach(x => used.add(x.h)); const q3Choices = shuffle(q3Sentences.map(x => byHanja(x.h)).filter(Boolean)); const remaining = shuffle(hanjaData.filter(x => !used.has(x.h))); return { q1Set, q2Choices, q3Sentences, q3Choices, q4: remaining.slice(0, 10), q5: remaining.slice(10, 14), q6: remaining.slice(14, 18), q7: remaining.slice(18, 20) }; }
+    function runTests(iterations = 500) { const errors = validateExamData(); if (errors.length) return false; for (let i = 0; i < iterations; i++) { const model = buildExamModel(); const all = [...model.q1Set.items.map(x => x.h), ...model.q2Choices.map(x => x.h), ...model.q3Sentences.map(x => x.h), ...model.q4.map(x => x.h), ...model.q5.map(x => x.h), ...model.q6.map(x => x.h), ...model.q7.map(x => x.h)]; if (all.length !== 50) throw new Error(`테스트 ${i}: 전체 문항 수가 ${all.length}개입니다.`); if (new Set(all).size !== 50) throw new Error(`테스트 ${i}: 한자 중복이 있습니다.`); if (model.q3Sentences.length !== 10 || model.q3Choices.length !== 10) throw new Error(`테스트 ${i}: 21~30번 구성이 잘못되었습니다.`); const rendered = renderReadingPassage(model.q1Set, 1); if (/\{\{.+?\}\}/.test(rendered)) throw new Error(`테스트 ${i}: 1~10번 토큰이 남아 있습니다.`); } console.info(`한자시험 생성기 ${iterations}회 테스트 통과`); return true; }
+    function makeExam() { if (!runTests(500)) { alert('문제 데이터 오류가 있습니다. 콘솔을 확인하세요.'); return; } answers = []; const root = document.getElementById('examRoot'); const model = buildExamModel(); let no = 1; let html = `<div class="page">${makeHeader()}<div class="columns"><div class="col">`;
+      html += `<section class="section">${sectionTitle('1-10', '다음 글의 <b>漢字</b><span class="small">한자</span> 옆 ( &nbsp; ) 안에 <b>讀音</b><span class="small">(독음: 읽는 소리)</span>을 쓰세요.')}`; html += `<div class="example">&lt;보기&gt; : <span class="hanja">漢</span>(&nbsp;한&nbsp;)</div>`; html += `<div class="reading-passage">${renderReadingPassage(model.q1Set, no)}</div>`; model.q1Set.items.forEach(item => { answers[no] = byHanja(item.h).s; no++; }); html += `</section>`;
+      const q2Problems = shuffle(model.q2Choices.map(x => ({hanja:x, prompt: Math.random() < .5 ? x.t.split('/')[0] : x.s}))); html += `<section class="section">${sectionTitle('11-20', '다음 訓(훈: 뜻)이나 音(음: 소리)에 알맞은 漢字를 &lt;보기&gt;에서 찾아 그 번호를 쓰세요.')}`; html += `<div class="choices-title">&lt;보기&gt;</div><div class="choices">${makeChoiceBlock(model.q2Choices, displayHanja)}</div><div class="problems">`; q2Problems.forEach(problem => { const idx = model.q2Choices.findIndex(x => x.h === problem.hanja.h); html += `<div class="problem">${num(no)} ${problem.prompt}</div>`; answers[no] = circled[idx]; no++; }); html += `</div></section></div><div class="col">`;
+      html += `<section class="section">${sectionTitle('21-30', '다음 밑줄 친 말에 해당하는 漢字를 &lt;보기&gt;에서 찾아 그 번호를 쓰세요.')}`; html += `<div class="choices-title">&lt;보기&gt;</div><div class="choices">${makeChoiceBlock(model.q3Choices, displayHanja)}</div><div class="problems">`; model.q3Sentences.forEach(item => { const idx = model.q3Choices.findIndex(x => x.h === item.h); html += `<div class="problem">${num(no)} ${item.text}</div>`; answers[no] = circled[idx]; no++; }); html += `</div></section></div></div><div class="page-num">- 1 -</div><div class="corner-next">&lt;계속&gt;</div></div>`;
+      html += `<div class="page">${makeHeader()}<div class="columns"><div class="col">`; html += `<section class="section">${sectionTitle('31-40', '다음 漢字의 訓(훈: 뜻)과 音(음: 소리)을 쓰세요.')}`; html += `<div class="example">&lt;보기&gt; <span class="hanja">漢</span> → 한나라 한</div><div class="problems">`; model.q4.forEach(x => { html += `<div class="problem write-problem">${num(no)} <span class="hanja" style="font-size:20px">${displayHanja(x)}</span><div class="answer-line"></div></div>`; answers[no] = fullHunEum(x); no++; }); html += `</div></section></div><div class="col">`;
+      html += `<section class="section">${sectionTitle('41-44', '다음 漢字의 訓(훈: 뜻)을 보기에서 찾아 그 번호를 쓰세요.')}`; const q5Choices = shuffle(model.q5.map(x => x.t.split('/')[0])); html += `<div class="choices-title">&lt;보기&gt;</div><div class="choices">${q5Choices.map((v,i)=>`${circled[i]} ${v}`).join(' &nbsp; ')}</div><div class="problems">`; shuffle(model.q5).forEach(x => { const idx = q5Choices.indexOf(x.t.split('/')[0]); html += `<div class="problem">${num(no)} <span class="hanja" style="font-size:20px">${displayHanja(x)}</span></div>`; answers[no] = circled[idx]; no++; }); html += `</div></section>`;
+      html += `<section class="section">${sectionTitle('45-48', '다음 漢字의 音(음: 소리)을 보기에서 찾아 그 번호를 쓰세요.')}`; const q6Choices = shuffle(model.q6.map(x => x.s)); html += `<div class="choices-title">&lt;보기&gt;</div><div class="choices">${q6Choices.map((v,i)=>`${circled[i]} ${v}`).join(' &nbsp; ')}</div><div class="problems">`; model.q6.forEach(x => { const idx = q6Choices.indexOf(x.s); html += `<div class="problem">${num(no)} <span class="hanja" style="font-size:20px">${displayHanja(x)}</span></div>`; answers[no] = circled[idx]; no++; }); html += `</div></section>`;
+      html += `<section class="section">${sectionTitle('49-50', '다음 漢字의 두 번째 획을 따라 써 보세요.')}`; html += `<div class="example">연한 글씨를 보고 두 번째 획을 진하게 따라 쓰세요.</div><div class="problems">`; model.q7.forEach(x => { html += `<div class="problem" style="margin-top:4px">${num(no)} <span class="hanja" style="font-size:52px;color:#bbb">${displayHanja(x)}</span> <span style="font-size:14px;color:#333">두 번째 획 따라 쓰기</span></div>`; answers[no] = '두 번째 획 따라 쓰기'; no++; }); html += `</div><div style="margin-top:6px;text-align:center;font-size:13px">♣ 수고하셨습니다.</div></section></div></div><div class="page-num">- 2 -</div><div class="corner-next">&lt;끝&gt;</div></div>`;
+      html += makeAnswerPages(); root.innerHTML = html; }
+    function makeAnswerPages() { function cell(i) { return `<td class="num">${i}</td><td class="ans">${answers[i] || ''}</td>`; } let body = ''; for (let r = 1; r <= 13; r++) { const nums = [r, r + 13, r + 26, r + 39].filter(n => n <= 50); body += '<tr>' + nums.map(cell).join('') + '</tr>'; } return `<div class="page answer-page" id="answerPage1">${makeHeader()}<h2 class="answer-title">8급 한자시험 정답지</h2><table class="answer-table"><tr><th>번호</th><th>정답</th><th>번호</th><th>정답</th><th>번호</th><th>정답</th><th>번호</th><th>정답</th></tr>${body}</table><div class="page-num">- 정답 -</div></div>`; }
+    function toggleAnswers() { document.querySelectorAll('.answer-page').forEach(p => { p.style.display = p.style.display === 'block' ? 'none' : 'block'; }); }
+    makeExam();
+  </script>
+</body>
+</html>
