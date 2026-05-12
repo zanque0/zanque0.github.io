@@ -1,3 +1,4 @@
+/* 260512 대시보드 개선 */
 <!doctype html>
 <html lang="ko">
 <head>
@@ -31,6 +32,10 @@
       --warn-soft:#fef3c7;
       --danger:#dc2626;
       --danger-soft:#fee2e2;
+      --purple:#7c3aed;
+      --purple-soft:#ede9fe;
+      --orange:#ea580c;
+      --orange-soft:#ffedd5;
       --shadow:0 10px 30px rgba(15,23,42,.06);
     }
     *{box-sizing:border-box}
@@ -63,13 +68,18 @@
     .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     .stat{border:1px solid var(--line);border-radius:18px;padding:15px;background:#fbfdff}
     .stat .label{font-size:12px;color:var(--muted);margin-bottom:7px}.stat .value{font-size:28px;font-weight:900;letter-spacing:-.03em}
+    .stat.blue{background:#eff6ff;border-color:#bfdbfe}.stat.red{background:#fff1f2;border-color:#fecdd3}.stat.green{background:#f0fdf4;border-color:#bbf7d0}.stat.purple{background:var(--purple-soft);border-color:#ddd6fe}.stat.orange{background:var(--orange-soft);border-color:#fed7aa}
+    .stat-note{font-size:11px;color:var(--muted);margin-top:4px;font-weight:700}
     .next-alarm{display:grid;gap:10px;background:linear-gradient(135deg,#eff6ff,#fff);border:1px solid #bfdbfe;border-radius:20px;padding:18px}
     .next-time{font-size:46px;font-weight:900;letter-spacing:-.04em;color:#1d4ed8}
     .next-title{font-size:19px;font-weight:900}.countdown{display:inline-flex;width:max-content;border-radius:999px;padding:6px 10px;background:var(--accent-soft);color:#1d4ed8;font-weight:900}
     .badge{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;white-space:nowrap}
-    .badge.ready{background:var(--ok-soft);color:var(--ok)}.badge.issue{background:var(--danger-soft);color:var(--danger)}
+    .badge.ready{background:var(--ok-soft);color:var(--ok)}.badge.issue{background:var(--danger-soft);color:var(--danger)}.badge.warn{background:var(--warn-soft);color:var(--warn)}
+    .toggle-card{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px}
+    .toggle-card input{width:auto;margin-top:3px}
     .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.download-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     .table-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}.report-format{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px}
+    .mini-summary{display:grid;grid-template-columns:1fr;gap:10px}.summary-row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:8px 0;font-size:13px}.summary-row:last-child{border-bottom:0}.summary-row b{font-weight:900}
     .print-sheet{width:100%;max-width:210mm;margin:0 auto;background:#fff}.sheet{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;word-break:keep-all}.sheet th,.sheet td{border:1px solid #444;padding:10px 8px;text-align:center;vertical-align:middle;font-weight:600;line-height:1.4;font-size:17px}.sheet .title{background:#dbe5f1;font-size:22px;font-weight:900;padding:12px 10px}.sheet .meta{background:#eef3f8;text-align:left;font-size:16px;font-weight:500;padding:10px 12px}.sheet .note{background:#fff;text-align:left;font-size:14px;font-weight:500;line-height:1.65;padding:12px}.sheet .head{background:#ece4c9}.sheet .time{background:#f3ecd4;white-space:nowrap}.sheet .blank{background:#f8f8f8}.sheet .left{text-align:left}.sheet .big{font-size:18px;font-weight:900;padding:10px 12px}
     .sheet.park-sheet col.col-time{width:17%}.sheet.park-sheet col.col-name{width:20%}.sheet.park-sheet col.col-phone{width:48%}.sheet.park-sheet col.col-note{width:15%}
     .sheet.ai-sheet col.col-time{width:12%}.sheet.ai-sheet col.col-name-a{width:12%}.sheet.ai-sheet col.col-phone-a{width:27%}.sheet.ai-sheet col.col-name-b{width:12%}.sheet.ai-sheet col.col-phone-b{width:27%}.sheet.ai-sheet col.col-note{width:10%}
@@ -128,7 +138,6 @@
     .board-frame{width:100%; height:80vh; min-height:700px; border:0; background:#fff;}
     .board-actions{display:flex; justify-content:flex-end;}
     .board-guide{text-align:right;}
-          
   </style>
 </head>
 <body>
@@ -136,7 +145,7 @@
   <div class="header">
     <div>
       <h1>서울디지털동행플라자 은평센터 통합 운영 포털</h1>
-      <div class="sub">알람 운영, 입장내역 처리, 예약자 명단 정리, 출력 양식 생성을 한 화면에서 처리합니다.</div>
+      <div class="sub">알람 운영, 입·퇴장 내역 처리, 예약자 명단 정리, 출력 양식 생성을 한 화면에서 처리합니다.</div>
     </div>
     <div class="clock-box">
       <div class="clock-time" id="clockTime">--:--:--</div>
@@ -166,22 +175,67 @@
         </div>
         <div class="small">기존 제공 알람 파일의 기본 시간대를 동일하게 적용했습니다.</div>
       </div>
-    <div class="card" style="margin-top:16px">
-      <h2>시간대별 입장 그래프</h2>
-      <canvas id="hourlyChart" height="135"></canvas>
-      <div class="small" style="margin-top:10px">입장내역 파일이 없으면 그래프는 비어 있습니다.</div>
-    </div>
-  
-    <div class="card">
-        <h2>데이터 처리 요약</h2>
+
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
+          <h2>입·퇴장 현황 대시보드</h2>
+          <label class="toggle-card no-print" style="margin:0">
+            <input type="checkbox" id="includeEstimatedExitToggle" checked />
+            <span>
+              <b>추정 퇴장 데이터 포함</b><br>
+              <span class="small">퇴장일자 없음, 21:00 임의퇴장, 오류 퇴장시각은 입장+2시간27분 또는 19:00으로 추정</span>
+            </span>
+          </label>
+        </div>
         <div class="kpi-grid">
-          <div class="stat"><div class="label">데이터 기준일</div><div class="value" id="reportBaseDate" style="font-size:20px">-</div></div>
-  <div class="stat"><div class="label">일간 입장인원</div><div class="value" id="dailyCount">0</div></div>
-  <div class="stat"><div class="label">최다 입장 시간대</div><div class="value" id="peakHour" style="font-size:20px">-</div></div>
-  <div class="stat"><div class="label">최다 입장 시간대(차순위)</div><div class="value" id="secondPeakHour" style="font-size:20px">-</div></div>
+          <div class="stat blue"><div class="label">총 입장 인원</div><div class="value" id="dailyCount">0</div><div class="stat-note">재입장 포함</div></div>
+          <div class="stat red"><div class="label">총 퇴장 인원</div><div class="value" id="totalExitCount">0</div><div class="stat-note" id="exitCountNote">실제+추정</div></div>
+          <div class="stat green"><div class="label">현재 체류 인원(추정)</div><div class="value" id="currentStayCount">0</div><div class="stat-note">09:00~19:00 기준</div></div>
+          <div class="stat purple"><div class="label">최대 체류 인원(추정)</div><div class="value" id="peakStayCount">0</div><div class="stat-note" id="peakStayTime">-</div></div>
+          <div class="stat"><div class="label">데이터 기준일</div><div class="value" id="reportBaseDate" style="font-size:20px">-</div><div class="stat-note">입장일자 기준</div></div>
+          <div class="stat"><div class="label">평균 체류시간</div><div class="value" id="avgStayTime" style="font-size:20px">-</div><div class="stat-note" id="avgStayNote">유효 데이터 기준</div></div>
+          <div class="stat"><div class="label">입장 피크 시간</div><div class="value" id="peakHour" style="font-size:20px">-</div><div class="stat-note" id="secondPeakHour">차순위 -</div></div>
+          <div class="stat orange"><div class="label">퇴장 피크 시간</div><div class="value" id="peakExitHour" style="font-size:20px">-</div><div class="stat-note" id="secondPeakExitHour">차순위 -</div></div>
         </div>
       </div>
     </div>
+
+    <div class="grid two" style="margin-top:16px">
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
+          <h2>시간대별 입·퇴장 현황</h2>
+          <span class="badge ready">1시간 단위</span>
+        </div>
+        <canvas id="hourlyChart" height="155"></canvas>
+        <div class="small" style="margin-top:10px">입장일자와 퇴장일자를 09:00~19:00 범위에서 집계합니다.</div>
+      </div>
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
+          <h2>시간대별 추정 체류 인원</h2>
+          <span class="badge warn" id="estimatedModeBadge">추정 포함</span>
+        </div>
+        <canvas id="stayChart" height="155"></canvas>
+        <div class="small" style="margin-top:10px">체류 인원은 퇴장 시간이 포함된 시간대까지 체류로 인정합니다.</div>
+      </div>
+    </div>
+
+    <div class="grid two" style="margin-top:16px">
+      <div class="card">
+        <h2>데이터 품질 요약</h2>
+        <div class="mini-summary">
+          <div class="summary-row"><span>유효 체류 데이터</span><b id="validStayCount">0건</b></div>
+          <div class="summary-row"><span>추정 퇴장 데이터</span><b id="estimatedExitCount">0건</b></div>
+          <div class="summary-row"><span>제외 데이터</span><b id="excludedStayCount">0건</b></div>
+          <div class="summary-row"><span>추정 기준</span><b>입장+2시간27분, 최대 19:00</b></div>
+        </div>
+        <div class="small" style="margin-top:12px">퇴장일자 없음, 21:00 임의퇴장, 입장=퇴장, 퇴장&lt;입장은 추정 퇴장 데이터로 분류됩니다.</div>
+      </div>
+      <div class="card no-print">
+        <h2>주요 시간대 요약</h2>
+        <div id="hourRankSummary" class="mini-summary"></div>
+      </div>
+    </div>
+
     <div class="card no-print" style="margin-top:16px">
       <h2>빠른 이동</h2>
       <div class="toolbar">
@@ -196,7 +250,7 @@
 
   <section id="upload" class="section">
     <div class="card">
-      <h2>전일 입장 기록</h2>
+      <h2>전일 입·퇴장 기록</h2>
       <div class="upload-grid" style="grid-template-columns:1fr">
         <div><label>입장내역 파일 업로드 / 입장내역.xlsx</label><input id="entryFile" type="file" accept=".xlsx,.xls,.csv" /></div>
       </div>
@@ -207,10 +261,10 @@
         <button class="btn ghost" onclick="showTab('dashboard')">대시보드 보기</button>
       </div>
       <div class="download-grid" style="margin-top:12px;grid-template-columns:1fr">
-        <a id="downloadEntry" class="dl" href="#" download="processed_입장내역.xlsx">입장내역 결과물 다운로드</a>
+        <a id="downloadEntry" class="dl" href="#" download="processed_입퇴장내역.xlsx">입퇴장내역 결과물 다운로드</a>
       </div>
       <div class="small" style="margin-top:12px">
-        입장내역 파일은 입장일자 컬럼이 필요합니다. 처리 후 전일 입장 기록 결과물을 다운로드할 수 있습니다.
+        입장내역 파일은 입장일자 컬럼이 필요합니다. 퇴장일자 컬럼이 있으면 퇴장 및 체류시간 분석에 함께 사용됩니다.
       </div>
     </div>
   </section>
@@ -305,23 +359,22 @@
     <button id="lotteryClear" class="lottery-reset" type="button">🔄</button>
   </section>
 
-    <section id="board" class="section">
-        <div class="card board-card">
-        <div class="board-notice">⚠ 개인정보(전화번호, 이메일 주소) 입력 금지 / 요청사항은 피드백을 위해 실명을 사용해주세요.    </div>
-        <div class="board-header">
-          <h2>센터 게시판</h2>
-              <p class="small">        자유롭게 의견을 남길 수 있습니다.        부적절한 게시물은 관리자 검토 후 삭제될 수 있습니다.      </p>
-        </div>
-        <div class="board-frame-wrap">
-          <iframe src="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" class="board-frame" allow="camera;microphone;display-capture;clipboard-write" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="은평센터 게시판"></iframe>
-        </div>
-    
-        <div class="board-actions">
-          <a href="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" target="_blank" rel="noopener noreferrer" class="btn secondary">새 창으로 열기</a>
-        </div>
-        <div class="small board-guide">※ 게시글은 월 1회 이상 백업 및 내보내기를 권장합니다.</div>
-      </div>        
-      </section>
+  <section id="board" class="section">
+    <div class="card board-card">
+      <div class="board-notice">⚠ 개인정보(전화번호, 이메일 주소) 입력 금지 / 요청사항은 피드백을 위해 실명을 사용해주세요.</div>
+      <div class="board-header">
+        <h2>센터 게시판</h2>
+        <p class="small">자유롭게 의견을 남길 수 있습니다. 부적절한 게시물은 관리자 검토 후 삭제될 수 있습니다.</p>
+      </div>
+      <div class="board-frame-wrap">
+        <iframe src="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" class="board-frame" allow="camera;microphone;display-capture;clipboard-write" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="은평센터 게시판"></iframe>
+      </div>
+      <div class="board-actions">
+        <a href="https://padlet.com/zanque/padlet-sxrj1hyayio2c2p7" target="_blank" rel="noopener noreferrer" class="btn secondary">새 창으로 열기</a>
+      </div>
+      <div class="small board-guide">※ 게시글은 월 1회 이상 백업 및 내보내기를 권장합니다.</div>
+    </div>        
+  </section>
 </div>
 
 <div class="overlay" id="alarmOverlay" role="dialog" aria-modal="true">
@@ -337,11 +390,16 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'eunpyeong_ops_portal_v2_session';
+const STORAGE_KEY = 'eunpyeong_ops_portal_v3_session';
 const STATE_STORAGE = window.sessionStorage; // 공용 PC 보호: 브라우저 종료 시 알람 설정 휘발
 const downloadUrls = new Map();
 const MAX_ALARM_LABEL_LENGTH = 40;
 const MAX_UPLOAD_ROWS = 20000;
+const DASHBOARD_HOURS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+const OPS_START_TIME = '09:00';
+const OPS_END_TIME = '19:00';
+const AUTO_EXIT_TIME = '21:00';
+const ESTIMATED_STAY_MINUTES = 147; // 1분기 평균 체류시간 2시간 27분
 const DEFAULT_ALARMS = [
   { time: '09:15', label: '파크골프(1차)', enabled: true },
   { time: '11:25', label: '파크골프(2차)', enabled: true },
@@ -357,7 +415,7 @@ const sampleData = {
   hourly: [
     {입장시간:'09:00',입장인원:60},{입장시간:'10:00',입장인원:18},{입장시간:'11:00',입장인원:10},{입장시간:'12:00',입장인원:9},
     {입장시간:'13:00',입장인원:16},{입장시간:'14:00',입장인원:13},{입장시간:'15:00',입장인원:9},{입장시간:'16:00',입장인원:8},
-    {입장시간:'17:00',입장인원:4},{입장시간:'18:00',입장인원:1},{입장시간:'19:00',입장인원:1},{입장시간:'20:00',입장인원:1},{입장시간:'21:00',입장인원:2}
+    {입장시간:'17:00',입장인원:4},{입장시간:'18:00',입장인원:1},{입장시간:'19:00',입장인원:1}
   ],
   park: [
     {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'이ㅇ순',연락처:'4980'},
@@ -386,31 +444,16 @@ const sampleData = {
     {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'09:00~10:30',예약자명:'박ㅇ영',연락처:'1102'},
     {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'09:00~10:30',예약자명:'이ㅇ진',연락처:'1103'},
     {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'09:00~10:30',예약자명:'최ㅇ현',연락처:'1104'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'09:00~10:30',예약자명:'정ㅇ은',연락처:'1105'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'10:30~12:00',예약자명:'강ㅇ진',연락처:'2201'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'10:30~12:00',예약자명:'오ㅇ훈',연락처:'2202'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'10:30~12:00',예약자명:'한ㅇ민',연락처:'2203'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'10:30~12:00',예약자명:'송ㅇ늘',연락처:'2204'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'10:30~12:00',예약자명:'윤ㅇ호',연락처:'2205'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'12:00~13:30',예약자명:'임ㅇ우',연락처:'3301'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'12:00~13:30',예약자명:'배ㅇ연',연락처:'3302'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'12:00~13:30',예약자명:'문ㅇ준',연락처:'3303'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'12:00~13:30',예약자명:'조ㅇ빈',연락처:'3304'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'12:00~13:30',예약자명:'유ㅇ준',연락처:'3305'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'13:30~15:00',예약자명:'백ㅇ윤',연락처:'4401'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'13:30~15:00',예약자명:'노ㅇ훈',연락처:'4402'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'13:30~15:00',예약자명:'서ㅇ원',연락처:'4403'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'13:30~15:00',예약자명:'신ㅇ민',연락처:'4404'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'13:30~15:00',예약자명:'류ㅇ별',연락처:'4405'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'15:00~16:30',예약자명:'차ㅇ규',연락처:'5501'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #2','프로그램 시작 시간':'15:00~16:30',예약자명:'고ㅇ서',연락처:'5502'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'15:00~16:30',예약자명:'장ㅇ윤',연락처:'5503'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'15:00~16:30',예약자명:'홍ㅇ인',연락처:'5504'},
-    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'15:00~16:30',예약자명:'남ㅇ우',연락처:'5505'}
+    {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'09:00~10:30',예약자명:'정ㅇ은',연락처:'1105'}
   ]
 };
-let appState = { entryRows: [], reservationRows: [], hourly: [], park: [], ai: [], tablet: [], alarms: [], settings: {sound:true, vibrate:true} };
+let appState = {
+  entryRows: [], reservationRows: [], hourly: [], hourlyExit: [], hourlyStay: [],
+  stayRowsValid: [], stayRowsEstimated: [], stayRowsExcluded: [], avgStayMinutes: 0,
+  includeEstimatedExit: true, park: [], ai: [], tablet: [], alarms: [], settings: {sound:true, vibrate:true}
+};
 let chart = null;
+let stayChart = null;
 let lastTriggered = {};
 let audioCtx = null;
 let beepInterval = null;
@@ -457,6 +500,65 @@ function normalizeDateString(value){
 function formatReportDate(value){ const n=normalizeDateString(value); if(!n) return ''; const [y,m,d]=n.split('-').map(Number); const dt=new Date(y,m-1,d); return `${y}.${m}.${d}.(${WEEKDAY_LABELS[dt.getDay()]})`; }
 function timeToMinutes(hm){ const [h,m]=normalizeTime(hm).split(':').map(Number); return h*60+m; }
 function nowMinutes(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function excelSerialToDate(value){
+  const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+  return new Date(excelEpoch.getTime() + Number(value) * 86400000);
+}
+function parseDateTimeValue(value){
+  if(value === undefined || value === null || value === '') return null;
+  if(value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if(typeof value === 'number' && Number.isFinite(value)) return excelSerialToDate(value);
+  const raw = String(value).trim();
+  if(!raw || raw === '-' || raw === '–' || raw === '—') return null;
+  const normalized = raw.replace(/\./g,'-').replace(/\//g,'-').replace('T',' ');
+  const match = normalized.match(/(\d{4})-(\d{1,2})-(\d{1,2})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+  if(match){
+    const [, y, mo, d, h, mi, s] = match;
+    const dt = new Date(Number(y), Number(mo)-1, Number(d), Number(h), Number(mi), Number(s||0));
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  const fallback = new Date(raw);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+function formatHourFromDate(dt){ if(!dt || Number.isNaN(dt.getTime())) return ''; return `${pad2(dt.getHours())}:00`; }
+function clampToOpsEnd(dt){
+  if(!dt) return null;
+  const end = new Date(dt);
+  const [h,m] = OPS_END_TIME.split(':').map(Number);
+  end.setHours(h,m,0,0);
+  return dt > end ? end : dt;
+}
+function minutesBetween(start, end){
+  if(!start || !end) return null;
+  const diff = Math.round((end - start) / 60000);
+  return diff > 0 ? diff : null;
+}
+function formatMinutesText(minutes){
+  if(!minutes || minutes <= 0) return '-';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}시간 ${m}분`;
+}
+function hourLabelValue(row, timeKey='시간', countKey='인원'){
+  if(!row) return '-';
+  return `${row[timeKey]} / ${Number(row[countKey]||0).toLocaleString()}명`;
+}
+function topN(rows, countKey, n=3){
+  return [...rows]
+    .filter(r=>Number(r[countKey]||0)>0)
+    .sort((a,b)=>Number(b[countKey]||0)-Number(a[countKey]||0) || String(a.시간||a.입장시간).localeCompare(String(b.시간||b.입장시간)))
+    .slice(0,n);
+}
+function getEntryBaseDate(){
+  for(const row of appState.entryRows||[]){
+    const dt = parseDateTimeValue(row['입장일자']);
+    if(dt) return `${dt.getFullYear()}-${pad2(dt.getMonth()+1)}-${pad2(dt.getDate())}`;
+  }
+  return '';
+}
+function getProgramDate(rows){ return rows[0]?.['예약일'] || ''; }
+function getTabletSlot(value){ const m=String(value||'').match(/#\s*(\d+)/); const n=m?Number(m[1]):NaN; return Number.isInteger(n)&&n>=1&&n<=5?n:null; }
+function groupedRows(rows){ const grouped={}; rows.forEach(r=>{ const key=r['프로그램시작시간']||r['프로그램 시작 시간']||''; if(!grouped[key]) grouped[key]=[]; grouped[key].push(r); }); return Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])); }
 function saveState(){
   const safeAlarms = appState.alarms.map(a=>({
     id:String(a.id||uid()),
@@ -490,26 +592,37 @@ function restoreDefaultAlarms(){ appState.alarms = makeDefaultAlarms(); saveStat
 function sheetToJson(file, callback){
   const reader=new FileReader();
   reader.onload=e=>{
-    const data=new Uint8Array(e.target.result);
-    const wb=XLSX.read(data,{type:'array'});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-    if(rows.length > MAX_UPLOAD_ROWS) throw new Error(`업로드 행이 너무 많습니다. 최대 ${MAX_UPLOAD_ROWS.toLocaleString()}행까지 처리합니다.`);
-    callback(rows);
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array', cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:'', raw:false});
+      if(rows.length > MAX_UPLOAD_ROWS) throw new Error(`업로드 행이 너무 많습니다. 최대 ${MAX_UPLOAD_ROWS.toLocaleString()}행까지 처리합니다.`);
+      callback(rows);
+    }catch(err){
+      callback(null, err);
+    }
   };
+  reader.onerror=()=>callback(null, new Error('파일을 읽지 못했습니다.'));
   reader.readAsArrayBuffer(file);
 }
 function validateEntryColumns(entryRowsRaw){
-  const entryColumns=new Set((entryRowsRaw[0]&&Object.keys(entryRowsRaw[0]))||[]);
+  const entryColumns=new Set((entryRowsRaw?.[0]&&Object.keys(entryRowsRaw[0]))||[]);
   if(!entryColumns.has('입장일자')) throw new Error('입장내역 파일에는 입장일자 컬럼이 필요합니다.');
 }
 function validateReservationColumns(resRowsRaw){
-  const reservationColumns=new Set((resRowsRaw[0]&&Object.keys(resRowsRaw[0]))||[]);
+  const reservationColumns=new Set((resRowsRaw?.[0]&&Object.keys(resRowsRaw[0]))||[]);
   if(!reservationColumns.has('예약 상태') || !reservationColumns.has('프로그램명') || !reservationColumns.has('프로그램 시작 시간')){
     throw new Error('예약자 명단에는 예약 상태, 프로그램명, 프로그램 시작 시간 컬럼이 필요합니다.');
   }
 }
-function sanitizeEntryRows(rows){ return rows.map(r=>({ ...r, 연락처:last4(r['연락처']||r['전화번호']||'') })); }
+function sanitizeEntryRows(rows){
+  return rows.map(r=>({
+    ...r,
+    연락처:last4(r['연락처']||r['전화번호']||''),
+    이름:sanitizePlainText(r['이름']||r['성명']||'', 50)
+  }));
+}
 function sanitizeReservationRows(rows){
   const allowedProgramSet=new Set(allowedPrograms.map(normalizeProgramKey));
   return rows.map(r=>({
@@ -521,44 +634,149 @@ function sanitizeReservationRows(rows){
   })).filter(r=>String(r['예약 상태']||'').trim()==='정상').filter(r=>allowedProgramSet.has(String(r['프로그램명']||'')));
 }
 function mapper(r){ return {예약일:r['예약일']||'',프로그램명:r['프로그램명']||'',프로그램시작시간:r['프로그램 시작 시간']||'',예약자명:sanitizePlainText(r['예약자명']||'', 50),연락처:r['연락처']||''}; }
+function analyzeStayRows(rows){
+  const valid = [];
+  const estimated = [];
+  const excluded = [];
+  rows.forEach((row, index) => {
+    const entryDt = parseDateTimeValue(row['입장일자']);
+    const exitDtRaw = parseDateTimeValue(row['퇴장일자']);
+    if(!entryDt){
+      excluded.push({...row, _rowIndex:index, _reason:'입장일자 오류'});
+      return;
+    }
+    const exitHour = exitDtRaw ? formatHourFromDate(exitDtRaw) : '';
+    const rawStayMinutes = minutesBetween(entryDt, exitDtRaw);
+    const isMissingExit = !exitDtRaw;
+    const isAutoExit = exitHour === AUTO_EXIT_TIME;
+    const isSameOrNegative = !rawStayMinutes;
+    if(!isMissingExit && !isAutoExit && !isSameOrNegative){
+      valid.push({...row, _rowIndex:index, _entryDt:entryDt, _exitDt:exitDtRaw, _stayMinutes:rawStayMinutes, _isEstimated:false});
+      return;
+    }
+    let estimatedExit = new Date(entryDt.getTime() + ESTIMATED_STAY_MINUTES * 60000);
+    estimatedExit = clampToOpsEnd(estimatedExit);
+    const estimatedMinutes = minutesBetween(entryDt, estimatedExit);
+    if(!estimatedMinutes){
+      excluded.push({...row, _rowIndex:index, _reason:'추정 퇴장 계산 불가'});
+      return;
+    }
+    estimated.push({
+      ...row,
+      _rowIndex:index,
+      _entryDt:entryDt,
+      _exitDt:estimatedExit,
+      _stayMinutes:estimatedMinutes,
+      _isEstimated:true,
+      _reason:isAutoExit ? '21:00 임의퇴장' : isMissingExit ? '퇴장일자 없음' : '퇴장시각 오류'
+    });
+  });
+  return { valid, estimated, excluded };
+}
+function buildHourlyExitCount(stayRows){
+  const map = new Map(DASHBOARD_HOURS.map(h => [h, 0]));
+  stayRows.forEach(row => {
+    const hour = formatHourFromDate(row._exitDt);
+    if(map.has(hour)) map.set(hour, map.get(hour) + 1);
+  });
+  return [...map.entries()].map(([시간, 인원]) => ({ 시간, 인원 }));
+}
+function buildHourlyStayCount(stayRows){
+  return DASHBOARD_HOURS.map(hour => {
+    const [h,m] = hour.split(':').map(Number);
+    const count = stayRows.filter(row => {
+      const slot = new Date(row._entryDt);
+      slot.setHours(h, m, 0, 0);
+      const slotEnd = new Date(slot);
+      slotEnd.setMinutes(slotEnd.getMinutes() + 59, 59, 999);
+      return row._entryDt <= slotEnd && row._exitDt >= slot;
+    }).length;
+    return { 시간:hour, 인원:count };
+  });
+}
+function getDashboardStayRows(){
+  return appState.includeEstimatedExit ? appState.stayRowsValid.concat(appState.stayRowsEstimated) : appState.stayRowsValid;
+}
 function rebuildDerivedData(){
-  const hourlyMap=new Map();
-  appState.entryRows.forEach(r=>{ const hour=parseDateHour(r['입장일자']); if(hour) hourlyMap.set(hour,(hourlyMap.get(hour)||0)+1); });
-  appState.hourly=[...hourlyMap.entries()].map(([입장시간,입장인원])=>({입장시간,입장인원})).sort((a,b)=>a.입장시간.localeCompare(b.입장시간));
+  const hourlyMap = new Map(DASHBOARD_HOURS.map(h => [h, 0]));
+  appState.entryRows.forEach(r => {
+    const entryDt = parseDateTimeValue(r['입장일자']);
+    const hour = formatHourFromDate(entryDt);
+    if(hourlyMap.has(hour)) hourlyMap.set(hour, hourlyMap.get(hour) + 1);
+  });
+  appState.hourly = [...hourlyMap.entries()].map(([입장시간, 입장인원]) => ({ 입장시간, 입장인원 }));
+
+  const stayAnalysis = analyzeStayRows(appState.entryRows);
+  appState.stayRowsValid = stayAnalysis.valid;
+  appState.stayRowsEstimated = stayAnalysis.estimated;
+  appState.stayRowsExcluded = stayAnalysis.excluded;
+  const stayRowsForDashboard = getDashboardStayRows();
+  appState.hourlyExit = buildHourlyExitCount(stayRowsForDashboard);
+  appState.hourlyStay = buildHourlyStayCount(stayRowsForDashboard);
+  const avgTargetRows = stayRowsForDashboard.filter(r => r._stayMinutes > 0);
+  appState.avgStayMinutes = avgTargetRows.length ? Math.round(avgTargetRows.reduce((sum,r)=>sum+r._stayMinutes,0) / avgTargetRows.length) : 0;
+
   const resSorted=[...appState.reservationRows].sort((a,b)=>String(a['프로그램 시작 시간']||'').localeCompare(String(b['프로그램 시작 시간']||'')) || String(a['예약자명']||'').localeCompare(String(b['예약자명']||'')));
   appState.reservationRows=resSorted;
   appState.park=resSorted.filter(r=>String(r['프로그램명']).includes('파크골프')).map(mapper);
   appState.ai=resSorted.filter(r=>String(r['프로그램명']).includes('AI 바둑 오목')).map(mapper);
   appState.tablet=resSorted.filter(r=>String(r['프로그램명']).includes('태블릿')).map(mapper);
 }
-function getEntryBaseDate(){
-  for(const row of appState.entryRows||[]){ const raw=String(row['입장일자']||'').trim(); const part=raw.includes(' ')?raw.split(' ')[0]:raw.split('T')[0]; const n=normalizeDateString(part); if(n) return n; }
-  return '';
-}
-function getProgramDate(rows){ return rows[0]?.['예약일'] || ''; }
-function getTabletSlot(value){ const m=String(value||'').match(/#\s*(\d+)/); const n=m?Number(m[1]):NaN; return Number.isInteger(n)&&n>=1&&n<=5?n:null; }
-function groupedRows(rows){ const grouped={}; rows.forEach(r=>{ const key=r['프로그램시작시간']||r['프로그램 시작 시간']||''; if(!grouped[key]) grouped[key]=[]; grouped[key].push(r); }); return Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])); }
 function renderKpis(){
-  document.getElementById('reportBaseDate').textContent=formatReportDate(getEntryBaseDate()) || '-';
-  document.getElementById('dailyCount').textContent=appState.entryRows.length||0;
-
-  const sortedPeaks=[...appState.hourly].sort((a,b)=>b.입장인원-a.입장인원);
-  const peak=sortedPeaks[0];
-  const secondPeak=sortedPeaks[1];
-
-  document.getElementById('peakHour').textContent=peak ? `${peak.입장시간} / ${peak.입장인원}명` : '-';
-  document.getElementById('secondPeakHour').textContent=secondPeak ? `${secondPeak.입장시간} / ${secondPeak.입장인원}명` : '-';
+  setText('reportBaseDate', formatReportDate(getEntryBaseDate()) || '-');
+  setText('dailyCount', (appState.entryRows.length||0).toLocaleString());
+  const totalExit = appState.hourlyExit.reduce((sum,r)=>sum+Number(r.인원||0),0);
+  setText('totalExitCount', totalExit.toLocaleString());
+  setText('exitCountNote', appState.includeEstimatedExit ? '실제+추정' : '실제 퇴장만');
+  const currentStay = appState.hourlyStay.length ? appState.hourlyStay[appState.hourlyStay.length-1].인원 : 0;
+  setText('currentStayCount', currentStay.toLocaleString());
+  const peakStay = topN(appState.hourlyStay, '인원', 1)[0];
+  setText('peakStayCount', peakStay ? Number(peakStay.인원).toLocaleString() : '0');
+  setText('peakStayTime', peakStay ? `${peakStay.시간} 기준` : '-');
+  setText('avgStayTime', formatMinutesText(appState.avgStayMinutes));
+  setText('avgStayNote', appState.includeEstimatedExit ? '유효+추정 데이터 기준' : '유효 데이터 기준');
+  const sortedPeaks=[...appState.hourly].sort((a,b)=>b.입장인원-a.입장인원 || a.입장시간.localeCompare(b.입장시간));
+  setText('peakHour', sortedPeaks[0] && sortedPeaks[0].입장인원 ? `${sortedPeaks[0].입장시간} / ${sortedPeaks[0].입장인원.toLocaleString()}명` : '-');
+  setText('secondPeakHour', sortedPeaks[1] && sortedPeaks[1].입장인원 ? `차순위 ${sortedPeaks[1].입장시간} / ${sortedPeaks[1].입장인원.toLocaleString()}명` : '차순위 -');
+  const exitPeaks=topN(appState.hourlyExit,'인원',2);
+  setText('peakExitHour', hourLabelValue(exitPeaks[0]));
+  setText('secondPeakExitHour', exitPeaks[1] ? `차순위 ${hourLabelValue(exitPeaks[1])}` : '차순위 -');
+  setText('validStayCount', `${appState.stayRowsValid.length.toLocaleString()}건`);
+  setText('estimatedExitCount', `${appState.stayRowsEstimated.length.toLocaleString()}건`);
+  setText('excludedStayCount', `${appState.stayRowsExcluded.length.toLocaleString()}건`);
+  setText('estimatedModeBadge', appState.includeEstimatedExit ? '추정 포함' : '추정 제외');
+  renderHourRankSummary();
+}
+function renderHourRankSummary(){
+  const wrap=document.getElementById('hourRankSummary');
+  if(!wrap) return;
+  const entryTop=topN(appState.hourly.map(x=>({시간:x.입장시간,인원:x.입장인원})),'인원',3);
+  const exitTop=topN(appState.hourlyExit,'인원',3);
+  const stayTop=topN(appState.hourlyStay,'인원',3);
+  const makeRows=(title,rows)=>`<div class="summary-row"><span>${title}</span><b>${rows.length ? rows.map((r,i)=>`${i+1}위 ${r.시간}(${r.인원}명)`).join(' / ') : '-'}</b></div>`;
+  wrap.innerHTML = makeRows('입장 상위 3시간', entryTop) + makeRows('퇴장 상위 3시간', exitTop) + makeRows('체류 상위 3시간', stayTop);
 }
 function renderChart(){
-  const ctx=document.getElementById('hourlyChart'); if(chart) chart.destroy();
-  chart=new Chart(ctx,{type:'line',data:{labels:appState.hourly.map(x=>x.입장시간),datasets:[{label:'시간대별 입장인원(명)',data:appState.hourly.map(x=>x.입장인원),tension:.25,fill:false}]},options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+  const ctx=document.getElementById('hourlyChart'); if(!ctx) return; if(chart) chart.destroy();
+  const entryData = DASHBOARD_HOURS.map(hour => appState.hourly.find(x=>x.입장시간===hour)?.입장인원 || 0);
+  const exitData = DASHBOARD_HOURS.map(hour => appState.hourlyExit.find(x=>x.시간===hour)?.인원 || 0);
+  chart=new Chart(ctx,{type:'line',data:{labels:DASHBOARD_HOURS,datasets:[{label:'입장 인원(명)',data:entryData,tension:.25,fill:false},{label:'퇴장 인원(명)',data:exitData,tension:.25,fill:false}]},options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+}
+function renderStayChart(){
+  const ctx=document.getElementById('stayChart'); if(!ctx) return; if(stayChart) stayChart.destroy();
+  const stayData = DASHBOARD_HOURS.map(hour => appState.hourlyStay.find(x=>x.시간===hour)?.인원 || 0);
+  stayChart=new Chart(ctx,{type:'line',data:{labels:DASHBOARD_HOURS,datasets:[{label:'추정 체류 인원(명)',data:stayData,tension:.25,fill:true}]},options:{responsive:true,plugins:{legend:{display:true}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
 }
 function setDownloadLink(anchorId,rows,filename){
   const a=document.getElementById(anchorId);
   if(!a) return;
   const prev=downloadUrls.get(anchorId);
   if(prev) URL.revokeObjectURL(prev);
-  const ws=XLSX.utils.json_to_sheet(rows);
+  const ws=XLSX.utils.json_to_sheet(rows.map(row=>{
+    const out={...row};
+    Object.keys(out).forEach(k=>{ if(k.startsWith('_')) delete out[k]; });
+    return out;
+  }));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'data');
   const array=XLSX.write(wb,{bookType:'xlsx',type:'array'});
@@ -568,14 +786,9 @@ function setDownloadLink(anchorId,rows,filename){
   a.href=url;
   a.download=filename;
 }
-function renderDashboard(){
-  renderKpis();
-  renderChart();
-  renderNextAlarm();
-  renderDashboardReportPreview();
-}
+function renderDashboard(){ renderKpis(); renderChart(); renderStayChart(); renderNextAlarm(); renderDashboardReportPreview(); }
 function renderReports(){ renderFormattedReports(); }
-function renderDownloads(){ setDownloadLink('downloadEntry',appState.entryRows,'processed_입장내역.xlsx'); setDownloadLink('downloadReservation',appState.reservationRows,'processed_예약자명단.xlsx'); }
+function renderDownloads(){ setDownloadLink('downloadEntry',appState.entryRows,'processed_입퇴장내역.xlsx'); setDownloadLink('downloadReservation',appState.reservationRows,'processed_예약자명단.xlsx'); }
 function renderAll(){ renderDashboard(); renderReports(); renderAlarms(); renderDownloads(); }
 
 function buildParkFormatHtml(rows){
@@ -606,36 +819,6 @@ function buildAiFormatHtml(rows){
   fixedTimes.forEach(time=>{ const items=dataMap[time]||[]; const a=items[0]||{}; const b=items[1]||{}; const overflow=items.length>2; html+=`<tr><td class="time">${time}</td><td>${escapeHtml(a['예약자명']||'')}</td><td>${escapeHtml(a['연락처']||'')}</td><td>${escapeHtml(b['예약자명']||'')}</td><td>${escapeHtml(b['연락처']||'')}</td><td class="blank">${overflow?'초과 인원 있음':''}</td></tr>`; });
   return html+='</tbody></table></div>';
 }
-function renderDashboardReportPreview(){
-  const wrap=document.getElementById('dashboardReportPreview');
-  if(!wrap) return;
-
-  wrap.innerHTML = `
-    <div class="card">
-      <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-        <h2>파크골프 출력 양식</h2>
-        <button class="btn ghost no-print" onclick="printFormattedReport('park')">인쇄</button>
-      </div>
-      <div class="report-format">${buildParkFormatHtml(appState.park)}</div>
-    </div>
-
-    <div class="card">
-      <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-        <h2>AI 바둑 오목 출력 양식</h2>
-        <button class="btn ghost no-print" onclick="printFormattedReport('ai')">인쇄</button>
-      </div>
-      <div class="report-format">${buildAiFormatHtml(appState.ai)}</div>
-    </div>
-
-    <div class="card">
-      <div class="toolbar" style="justify-content:space-between;margin-bottom:10px">
-        <h2>태블릿(OTT) 출력 양식</h2>
-        <button class="btn ghost no-print" onclick="printFormattedReport('tablet')">인쇄</button>
-      </div>
-      <div class="report-format">${buildTabletFormatHtml(appState.tablet)}</div>
-    </div>
-  `;
-}
 function buildTabletFormatHtml(rows){
   const groupedMap=new Map(); groupedRows(rows).forEach(([time,items])=>{ const key=normalizeTimeRange(time).split('~')[0]; groupedMap.set(key,items); });
   const date=getProgramDate(rows); let html='<div class="print-sheet" id="tabletPrintArea"><table class="sheet tablet-sheet" id="tabletFormattedTable"><colgroup><col class="col-time"><col class="col-name-1"><col class="col-phone-1"><col class="col-name-2"><col class="col-phone-2"><col class="col-name-3"><col class="col-phone-3"><col class="col-name-4"><col class="col-phone-4"><col class="col-name-5"><col class="col-phone-5"><col class="col-note"></colgroup><tbody>';
@@ -647,7 +830,20 @@ function buildTabletFormatHtml(rows){
   DEFAULT_TABLET_TIMES.forEach(time=>{ const key=normalizeTimeRange(time).split('~')[0]; const items=groupedMap.get(key)||[]; const slotMap={1:{},2:{},3:{},4:{},5:{}}; items.forEach(item=>{ const slot=getTabletSlot(item['프로그램명']); if(slot&&!slotMap[slot]['예약자명']) slotMap[slot]=item; }); html+=`<tr><td class="time">${escapeHtml(time)}</td>${[1,2,3,4,5].map(n=>`<td>${escapeHtml(slotMap[n]['예약자명']||'')}</td><td>${escapeHtml(slotMap[n]['연락처']||'')}</td>`).join('')}<td class="blank"></td></tr>`; });
   return html+='</tbody></table></div>';
 }
-function renderFormattedReports(){ document.getElementById('parkFormatWrap').innerHTML=buildParkFormatHtml(appState.park); document.getElementById('aiFormatWrap').innerHTML=buildAiFormatHtml(appState.ai); document.getElementById('tabletFormatWrap').innerHTML=buildTabletFormatHtml(appState.tablet); }
+function renderDashboardReportPreview(){
+  const wrap=document.getElementById('dashboardReportPreview');
+  if(!wrap) return;
+  wrap.innerHTML = `
+    <div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>파크골프 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('park')">인쇄</button></div><div class="report-format">${buildParkFormatHtml(appState.park)}</div></div>
+    <div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>AI 바둑 오목 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('ai')">인쇄</button></div><div class="report-format">${buildAiFormatHtml(appState.ai)}</div></div>
+    <div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>태블릿(OTT) 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('tablet')">인쇄</button></div><div class="report-format">${buildTabletFormatHtml(appState.tablet)}</div></div>
+  `;
+}
+function renderFormattedReports(){
+  document.getElementById('parkFormatWrap').innerHTML=buildParkFormatHtml(appState.park);
+  document.getElementById('aiFormatWrap').innerHTML=buildAiFormatHtml(appState.ai);
+  document.getElementById('tabletFormatWrap').innerHTML=buildTabletFormatHtml(appState.tablet);
+}
 function printFormattedReport(kind){
   const config={
     park:{areaId:'parkPrintArea',title:'파크골프 양식 인쇄 창을 열었습니다.',pageSize:'A4 portrait',bodyWidth:'190mm'},
@@ -661,53 +857,25 @@ function printFormattedReport(kind){
   setTimeout(()=>{win.focus();win.print();},150); document.getElementById('statusMessage').textContent=config.title;
 }
 
-function renderAlarms(){
-  renderAlarmContainer(document.getElementById('alarmList'));
-}
+function renderAlarms(){ renderAlarmContainer(document.getElementById('alarmList')); }
 function renderAlarmContainer(container){
   if(!container) return;
   container.textContent='';
   const alarms=[...appState.alarms].sort((a,b)=>a.time.localeCompare(b.time));
-  if(!alarms.length){
-    const empty=document.createElement('div');
-    empty.className='small';
-    empty.textContent='알람이 없습니다. 기본 알람을 복구하거나 수동 알람을 추가하세요.';
-    container.appendChild(empty);
-    return;
-  }
+  if(!alarms.length){ const empty=document.createElement('div'); empty.className='small'; empty.textContent='알람이 없습니다. 기본 알람을 복구하거나 수동 알람을 추가하세요.'; container.appendChild(empty); return; }
   const frag=document.createDocumentFragment();
   alarms.forEach(a=>{
-    const item=document.createElement('div');
-    item.className='alarm-item';
-
+    const item=document.createElement('div'); item.className='alarm-item';
     const info=document.createElement('div');
-    const time=document.createElement('div');
-    time.className='alarm-time';
-    time.textContent=a.time;
-    const title=document.createElement('div');
-    title.className='alarm-title';
-    title.textContent=sanitizePlainText(a.label, MAX_ALARM_LABEL_LENGTH);
-    const sub=document.createElement('div');
-    sub.className='alarm-sub';
-    sub.textContent=`${a.source==='default'?'기본 제공 알람':a.source==='snooze'?'스누즈':'수동'} · ${a.enabled?'ON':'OFF'}`;
+    const time=document.createElement('div'); time.className='alarm-time'; time.textContent=a.time;
+    const title=document.createElement('div'); title.className='alarm-title'; title.textContent=sanitizePlainText(a.label, MAX_ALARM_LABEL_LENGTH);
+    const sub=document.createElement('div'); sub.className='alarm-sub'; sub.textContent=`${a.source==='default'?'기본 제공 알람':a.source==='snooze'?'스누즈':'수동'} · ${a.enabled?'ON':'OFF'}`;
     info.append(time,title,sub);
-
-    const toolbar=document.createElement('div');
-    toolbar.className='toolbar';
-    const toggle=document.createElement('button');
-    toggle.className='btn ghost';
-    toggle.type='button';
-    toggle.textContent=a.enabled?'끄기':'켜기';
-    toggle.addEventListener('click',()=>toggleAlarm(a.id));
-    const del=document.createElement('button');
-    del.className='btn danger';
-    del.type='button';
-    del.textContent='삭제';
-    del.addEventListener('click',()=>deleteAlarm(a.id));
+    const toolbar=document.createElement('div'); toolbar.className='toolbar';
+    const toggle=document.createElement('button'); toggle.className='btn ghost'; toggle.type='button'; toggle.textContent=a.enabled?'끄기':'켜기'; toggle.addEventListener('click',()=>toggleAlarm(a.id));
+    const del=document.createElement('button'); del.className='btn danger'; del.type='button'; del.textContent='삭제'; del.addEventListener('click',()=>deleteAlarm(a.id));
     toolbar.append(toggle,del);
-
-    item.append(info,toolbar);
-    frag.appendChild(item);
+    item.append(info,toolbar); frag.appendChild(item);
   });
   container.appendChild(frag);
 }
@@ -717,9 +885,7 @@ function addManualAlarm(){
   if(!/^\d{2}:\d{2}$/.test(time)){ alert('알람 시간을 선택해 주세요.'); return; }
   appState.alarms.push({id:uid(),time,label,enabled:true,source:'manual'});
   document.getElementById('manualAlarmLabel').value='';
-  saveState();
-  renderAlarms();
-  renderNextAlarm();
+  saveState(); renderAlarms(); renderNextAlarm();
 }
 function toggleAlarm(id){ const a=appState.alarms.find(x=>x.id===id); if(a){ a.enabled=!a.enabled; saveState(); renderAlarms(); renderNextAlarm(); } }
 function deleteAlarm(id){ appState.alarms=appState.alarms.filter(a=>a.id!==id); saveState(); renderAlarms(); renderNextAlarm(); }
@@ -730,10 +896,10 @@ function getNextAlarm(){
 }
 function renderNextAlarm(){
   const a=getNextAlarm();
-  if(!a){ document.getElementById('nextAlarmTime').textContent='--:--'; document.getElementById('nextAlarmTitle').textContent='예정된 알림 없음'; document.getElementById('nextAlarmCountdown').textContent='-'; return; }
-  document.getElementById('nextAlarmTime').textContent=a.time; document.getElementById('nextAlarmTitle').textContent=a.label;
+  if(!a){ setText('nextAlarmTime','--:--'); setText('nextAlarmTitle','예정된 알림 없음'); setText('nextAlarmCountdown','-'); return; }
+  setText('nextAlarmTime',a.time); setText('nextAlarmTitle',a.label);
   let diff=timeToMinutes(a.time)-nowMinutes(); if(diff<0) diff+=24*60;
-  document.getElementById('nextAlarmCountdown').textContent=diff===0?'곧 울림':`${diff}분 후`;
+  setText('nextAlarmCountdown', diff===0?'곧 울림':`${diff}분 후`);
 }
 function checkAlarms(){
   const now=new Date(); const hm=fmtHM(now); const key=dateKey(now);
@@ -742,7 +908,7 @@ function checkAlarms(){
 function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume().catch(()=>{}); }
 function playBeepLoop(){ if(!appState.settings.sound) return; ensureAudio(); const once=()=>{ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.value=880; g.gain.value=.0001; o.connect(g); g.connect(audioCtx.destination); const now=audioCtx.currentTime; g.gain.setValueAtTime(.0001,now); g.gain.exponentialRampToValueAtTime(.25,now+.02); g.gain.exponentialRampToValueAtTime(.0001,now+.25); o.start(now); o.stop(now+.26); }; once(); beepInterval=setInterval(once,650); }
 function stopBeepLoop(){ if(beepInterval) clearInterval(beepInterval); beepInterval=null; }
-function showAlarmPopup(a){ document.getElementById('alarmModalTitle').textContent='⏰ '+a.label; document.getElementById('alarmModalTime').textContent=a.time; document.getElementById('alarmModalMessage').textContent=a.once?'1회 알람입니다.':'매일 반복 알람입니다.'; document.getElementById('alarmOverlay').classList.add('show'); stopBeepLoop(); playBeepLoop(); if(appState.settings.vibrate && 'vibrate' in navigator) navigator.vibrate([300,200,300,200,600]); }
+function showAlarmPopup(a){ setText('alarmModalTitle','⏰ '+a.label); setText('alarmModalTime',a.time); setText('alarmModalMessage',a.once?'1회 알람입니다.':'매일 반복 알람입니다.'); document.getElementById('alarmOverlay').classList.add('show'); stopBeepLoop(); playBeepLoop(); if(appState.settings.vibrate && 'vibrate' in navigator) navigator.vibrate([300,200,300,200,600]); }
 function hideAlarmPopup(){ document.getElementById('alarmOverlay').classList.remove('show'); stopBeepLoop(); if('vibrate' in navigator) navigator.vibrate(0); }
 function testAlarm(){ showAlarmPopup({time:fmtHM(new Date()),label:'테스트 알람',source:'manual',once:true}); }
 
@@ -751,22 +917,35 @@ function processUploads(){
   if(!entryFile && !reservationFile){ status.textContent='처리할 입장내역 또는 예약자 명단 파일을 업로드해 주세요.'; return; }
   const tasks=[];
   if(entryFile){
-    tasks.push(new Promise((resolve,reject)=>sheetToJson(entryFile, rows=>{ try{ validateEntryColumns(rows); appState.entryRows=sanitizeEntryRows(rows); resolve('입장내역 처리 완료'); }catch(e){ reject(e); } })));
+    tasks.push(new Promise((resolve,reject)=>sheetToJson(entryFile, (rows,err)=>{ try{ if(err) throw err; validateEntryColumns(rows); appState.entryRows=sanitizeEntryRows(rows); resolve('입장내역 처리 완료'); }catch(e){ reject(e); } })));
   }
   if(reservationFile){
-    tasks.push(new Promise((resolve,reject)=>sheetToJson(reservationFile, rows=>{ try{ validateReservationColumns(rows); appState.reservationRows=sanitizeReservationRows(rows); resolve('예약자 명단 처리 완료'); }catch(e){ reject(e); } })));
+    tasks.push(new Promise((resolve,reject)=>sheetToJson(reservationFile, (rows,err)=>{ try{ if(err) throw err; validateReservationColumns(rows); appState.reservationRows=sanitizeReservationRows(rows); resolve('예약자 명단 처리 완료'); }catch(e){ reject(e); } })));
   }
   Promise.all(tasks).then(messages=>{
-    rebuildDerivedData();
-    renderAll();
-    status.textContent=messages.join(' / ') + '되었습니다.'; showTab('dashboard');
-    }).catch(err=>{
+    rebuildDerivedData(); renderAll(); status.textContent=messages.join(' / ') + '되었습니다.'; showTab('dashboard');
+  }).catch(err=>{
     status.textContent=err.message || '파일 처리 중 오류가 발생했습니다.'; showTab('dashboard');
-    });
+  });
 }
 function loadSample(){
   const sampleReservationRows=sanitizeReservationRows(sampleData.park.concat(sampleData.ai).concat(sampleData.tablet).map(r=>({예약일:r['예약일'],프로그램명:r['프로그램명'],'프로그램 시작 시간':r['프로그램 시작 시간'],예약자명:r['예약자명'],연락처:r['연락처'],'예약 상태':'정상'})));
-  const sampleEntryRows=sampleData.hourly.flatMap(item=>Array.from({length:Number(item.입장인원||0)},(_,idx)=>({번호:`${item.입장시간}-${idx+1}`,입장일자:`2026-01-05 ${item.입장시간.replace(':00',':00:00')}`})));
+  const sampleEntryRows=[];
+  sampleData.hourly.forEach(item=>{
+    const count=Number(item.입장인원||0);
+    const hour=item.입장시간.replace(':00','');
+    for(let i=0;i<count;i++){
+      const inMinute=(i%6)*10;
+      const entry=`2026-01-05 ${pad2(hour)}:${pad2(inMinute)}:00`;
+      let exitHour=Number(hour)+2;
+      let exitMinute=(inMinute+27)%60;
+      if(inMinute+27>=60) exitHour+=1;
+      let exit=`2026-01-05 ${pad2(Math.min(exitHour,19))}:${exitHour>=19?'00':pad2(exitMinute)}:00`;
+      if(i%17===0) exit='';
+      if(i%29===0) exit=`2026-01-05 21:00:00`;
+      sampleEntryRows.push({번호:`${item.입장시간}-${i+1}`,방문센터:'은평센터',이름:'샘플',연락처:'0000',입장일자:entry,퇴장일자:exit});
+    }
+  });
   appState.entryRows=sampleEntryRows; appState.reservationRows=sampleReservationRows; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='샘플 데이터가 로드되었습니다.';
 }
 function clearDataOnly(){ appState.entryRows=[]; appState.reservationRows=[]; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='처리 데이터가 초기화되었습니다. 알람은 유지됩니다.'; }
@@ -797,320 +976,63 @@ const lotteryApp = (() => {
   const minusBtn=document.getElementById('lotteryMinus');
   const plusBtn=document.getElementById('lotteryPlus');
 
-  function getLayout(){
-    const gap=82;
-    const side=48;
-    const width=(people-1)*gap+side*2;
-    return {gap,side,width,height:470,lineTop:64,lineHeight:LINE_HEIGHT};
-  }
-  function secureRandomInt(max){
-    if(max<=0) return 0;
-    if(crypto?.getRandomValues){
-      const bytes=new Uint32Array(1);
-      crypto.getRandomValues(bytes);
-      return bytes[0] % max;
-    }
-    return Math.floor(Math.random()*max);
-  }
-  function shuffleArray(arr){
-    const copy=[...arr];
-    for(let i=copy.length-1;i>0;i--){
-      const j=secureRandomInt(i+1);
-      [copy[i],copy[j]]=[copy[j],copy[i]];
-    }
-    return copy;
-  }
-  function makeBottomResults(){
-    const arr=[];
-    for(let i=0;i<people;i++) arr.push(i<WINNERS ? '당첨' : '꽝');
-    return shuffleArray(arr);
-  }
-  function createNonce(){
-    if(crypto?.getRandomValues){
-      const bytes=new Uint8Array(16);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
-    }
-    return String(Date.now()) + Math.random().toString(16).slice(2);
-  }
-  async function sha256(text){
-    if(!crypto?.subtle) return legacyHash(text);
-    const data=new TextEncoder().encode(text);
-    const hash=await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  function legacyHash(text){
-    let h=2166136261;
-    for(let i=0;i<text.length;i++){
-      h^=text.charCodeAt(i);
-      h=Math.imul(h,16777619);
-    }
-    return String(h>>>0);
-  }
-  function resultPayload(){
-    return JSON.stringify({people,winners:WINNERS,nonce:resultNonce,bottomResults,ladderRungs});
-  }
-  async function sealResults(){
-    resultNonce=createNonce();
-    resultChecksum=await sha256(resultPayload());
-  }
-  async function verifyResults(){
-    if(!shuffled || !resultChecksum) return false;
-    const current=await sha256(resultPayload());
-    return current===resultChecksum;
-  }
+  function getLayout(){ const gap=82; const side=48; const width=(people-1)*gap+side*2; return {gap,side,width,height:470,lineTop:64,lineHeight:LINE_HEIGHT}; }
+  function secureRandomInt(max){ if(max<=0) return 0; if(crypto?.getRandomValues){ const bytes=new Uint32Array(1); crypto.getRandomValues(bytes); return bytes[0] % max; } return Math.floor(Math.random()*max); }
+  function shuffleArray(arr){ const copy=[...arr]; for(let i=copy.length-1;i>0;i--){ const j=secureRandomInt(i+1); [copy[i],copy[j]]=[copy[j],copy[i]]; } return copy; }
+  function makeBottomResults(){ const arr=[]; for(let i=0;i<people;i++) arr.push(i<WINNERS ? '당첨' : '꽝'); return shuffleArray(arr); }
+  function createNonce(){ if(crypto?.getRandomValues){ const bytes=new Uint8Array(16); crypto.getRandomValues(bytes); return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join(''); } return String(Date.now()) + Math.random().toString(16).slice(2); }
+  async function sha256(text){ if(!crypto?.subtle) return legacyHash(text); const data=new TextEncoder().encode(text); const hash=await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join(''); }
+  function legacyHash(text){ let h=2166136261; for(let i=0;i<text.length;i++){ h^=text.charCodeAt(i); h=Math.imul(h,16777619); } return String(h>>>0); }
+  function resultPayload(){ return JSON.stringify({people,winners:WINNERS,nonce:resultNonce,bottomResults,ladderRungs}); }
+  async function sealResults(){ resultNonce=createNonce(); resultChecksum=await sha256(resultPayload()); }
+  async function verifyResults(){ if(!shuffled || !resultChecksum) return false; const current=await sha256(resultPayload()); return current===resultChecksum; }
   function createRungs(){
-    const rungs=[];
-    const rowCount=Math.max(8, Math.min(14, people+2));
-    const usableTop=34;
-    const usableBottom=310;
-    const step=(usableBottom-usableTop)/(rowCount-1);
-
+    const rungs=[]; const rowCount=Math.max(8, Math.min(14, people+2)); const usableTop=34; const usableBottom=310; const step=(usableBottom-usableTop)/(rowCount-1);
     for(let row=0; row<rowCount; row++){
-      const y=Math.round(usableTop + row*step + secureRandomInt(13)-6);
-      const starts=[...Array(people-1)].map((_,i)=>i);
-      const count=secureRandomInt(people>12 ? 3 : 2) + 1;
-      const chosen=[];
-      while(starts.length && chosen.length<count){
-        const idx=secureRandomInt(starts.length);
-        const start=starts.splice(idx,1)[0];
-        if(chosen.some(v=>Math.abs(v-start)<=1)) continue;
-        chosen.push(start);
-      }
+      const y=Math.round(usableTop + row*step + secureRandomInt(13)-6); const starts=[...Array(people-1)].map((_,i)=>i); const count=secureRandomInt(people>12 ? 3 : 2) + 1; const chosen=[];
+      while(starts.length && chosen.length<count){ const idx=secureRandomInt(starts.length); const start=starts.splice(idx,1)[0]; if(chosen.some(v=>Math.abs(v-start)<=1)) continue; chosen.push(start); }
       chosen.forEach(start=>rungs.push({start,y}));
     }
-
     return rungs.sort((a,b)=>a.y-b.y || a.start-b.start);
   }
-  function ensureRungs(){
-    if(!ladderRungs.length) ladderRungs=createRungs();
-    return ladderRungs;
-  }
+  function ensureRungs(){ if(!ladderRungs.length) ladderRungs=createRungs(); return ladderRungs; }
   function computePath(topIndex){
-    const {gap,side}=getLayout();
-    const rungs=ensureRungs().slice().sort((a,b)=>a.y-b.y || a.start-b.start);
-    let col=topIndex;
-    let currentY=0;
-    const segments=[];
-
-    rungs.forEach(({start,y})=>{
-      if(start===col || start===col-1){
-        const fromX=side+col*gap;
-        if(y>currentY){
-          segments.push({type:'vertical',x:fromX,y1:currentY,y2:y});
-        }
-        if(start===col){
-          segments.push({type:'horizontal',x1:fromX,x2:fromX+gap,y});
-          col+=1;
-        } else {
-          segments.push({type:'horizontal',x1:fromX-gap,x2:fromX,y});
-          col-=1;
-        }
-        currentY=y;
-      }
-    });
-
-    const finalX=side+col*gap;
-    if(LINE_HEIGHT>currentY){
-      segments.push({type:'vertical',x:finalX,y1:currentY,y2:LINE_HEIGHT});
-    }
-
+    const {gap,side}=getLayout(); const rungs=ensureRungs().slice().sort((a,b)=>a.y-b.y || a.start-b.start); let col=topIndex; let currentY=0; const segments=[];
+    rungs.forEach(({start,y})=>{ if(start===col || start===col-1){ const fromX=side+col*gap; if(y>currentY) segments.push({type:'vertical',x:fromX,y1:currentY,y2:y}); if(start===col){ segments.push({type:'horizontal',x1:fromX,x2:fromX+gap,y}); col+=1; } else { segments.push({type:'horizontal',x1:fromX-gap,x2:fromX,y}); col-=1; } currentY=y; } });
+    const finalX=side+col*gap; if(LINE_HEIGHT>currentY) segments.push({type:'vertical',x:finalX,y1:currentY,y2:LINE_HEIGHT});
     return {endCol:col,segments};
   }
-  function topNumberForBottom(bottomIndex){
-    for(let top=0; top<people; top++){
-      if(computePath(top).endCol===bottomIndex) return top+1;
-    }
-    return '';
-  }
+  function topNumberForBottom(bottomIndex){ for(let top=0; top<people; top++){ if(computePath(top).endCol===bottomIndex) return top+1; } return ''; }
   function renderTrace(lineArea){
-    if(selectedTop===null || !activePath.length) return;
-    const frag=document.createDocumentFragment();
-
-    activePath.forEach((seg,idx)=>{
-      const el=document.createElement('div');
-      el.className='lottery-trace-segment '+(seg.type==='vertical'?'vertical':'horizontal');
-      el.style.animationDelay=(idx*.12)+'s';
-
-      if(seg.type==='vertical'){
-        el.style.left=seg.x+'px';
-        el.style.top=Math.min(seg.y1,seg.y2)+'px';
-        el.style.height=Math.max(4, Math.abs(seg.y2-seg.y1))+'px';
-      } else {
-        el.style.left=Math.min(seg.x1,seg.x2)+'px';
-        el.style.top=seg.y+'px';
-        el.style.width=Math.max(4, Math.abs(seg.x2-seg.x1))+'px';
-      }
-      frag.appendChild(el);
-    });
-
-    const last=activePath[activePath.length-1];
-    const runner=document.createElement('div');
-    runner.className='lottery-runner';
-    runner.textContent='🏌️';
-    runner.style.animationDelay=(activePath.length*.12)+'s';
-    if(last.type==='vertical'){
-      runner.style.left=last.x+'px';
-      runner.style.top=last.y2+'px';
-    } else {
-      runner.style.left=last.x2+'px';
-      runner.style.top=last.y+'px';
-    }
-    frag.appendChild(runner);
-    lineArea.appendChild(frag);
+    if(selectedTop===null || !activePath.length) return; const frag=document.createDocumentFragment();
+    activePath.forEach((seg,idx)=>{ const el=document.createElement('div'); el.className='lottery-trace-segment '+(seg.type==='vertical'?'vertical':'horizontal'); el.style.animationDelay=(idx*.12)+'s'; if(seg.type==='vertical'){ el.style.left=seg.x+'px'; el.style.top=Math.min(seg.y1,seg.y2)+'px'; el.style.height=Math.max(4, Math.abs(seg.y2-seg.y1))+'px'; } else { el.style.left=Math.min(seg.x1,seg.x2)+'px'; el.style.top=seg.y+'px'; el.style.width=Math.max(4, Math.abs(seg.x2-seg.x1))+'px'; } frag.appendChild(el); });
+    const last=activePath[activePath.length-1]; const runner=document.createElement('div'); runner.className='lottery-runner'; runner.textContent='🏌️'; runner.style.animationDelay=(activePath.length*.12)+'s'; if(last.type==='vertical'){ runner.style.left=last.x+'px'; runner.style.top=last.y2+'px'; } else { runner.style.left=last.x2+'px'; runner.style.top=last.y+'px'; } frag.appendChild(runner); lineArea.appendChild(frag);
   }
   function render(){
-    if(!ladderEl) return;
-    const {gap,side,width,height}=getLayout();
-    peopleEl.textContent=people;
-    minusBtn.disabled=people<=MIN;
-    plusBtn.disabled=people>=MAX;
-    ladderEl.style.width=width+'px';
-    ladderEl.style.height=height+'px';
-    ladderEl.textContent='';
-
-    const personRow=document.createElement('div');
-    personRow.className='lottery-person-row';
-    const lineArea=document.createElement('div');
-    lineArea.className='lottery-lines';
-    const resultRow=document.createElement('div');
-    resultRow.className='lottery-result-row';
-
-    for(let i=0;i<people;i++){
-      const x=side+i*gap;
-
-      const person=document.createElement('button');
-      person.type='button';
-      person.className='lottery-person'+(selectedTop===i?' active':'');
-      person.style.left=x+'px';
-      const ball=document.createElement('span');
-      ball.className='ball';
-      ball.textContent='⚪';
-      person.append(ball, document.createTextNode(`${i+1}번`));
-      person.addEventListener('click',()=>revealOne(i));
-      personRow.appendChild(person);
-
-      const v=document.createElement('div');
-      v.className='lottery-v-line';
-      v.style.left=x+'px';
-      lineArea.appendChild(v);
-    }
-
-    ensureRungs().forEach(({start,y})=>{
-      const h=document.createElement('div');
-      h.className='lottery-h-line';
-      h.style.left=(side+start*gap)+'px';
-      h.style.top=y+'px';
-      h.style.width=gap+'px';
-      lineArea.appendChild(h);
-    });
-
+    if(!ladderEl) return; const {gap,side,width,height}=getLayout(); peopleEl.textContent=people; minusBtn.disabled=people<=MIN; plusBtn.disabled=people>=MAX; ladderEl.style.width=width+'px'; ladderEl.style.height=height+'px'; ladderEl.textContent='';
+    const personRow=document.createElement('div'); personRow.className='lottery-person-row'; const lineArea=document.createElement('div'); lineArea.className='lottery-lines'; const resultRow=document.createElement('div'); resultRow.className='lottery-result-row';
+    for(let i=0;i<people;i++){ const x=side+i*gap; const person=document.createElement('button'); person.type='button'; person.className='lottery-person'+(selectedTop===i?' active':''); person.style.left=x+'px'; const ball=document.createElement('span'); ball.className='ball'; ball.textContent='⚪'; person.append(ball, document.createTextNode(`${i+1}번`)); person.addEventListener('click',()=>revealOne(i)); personRow.appendChild(person); const v=document.createElement('div'); v.className='lottery-v-line'; v.style.left=x+'px'; lineArea.appendChild(v); }
+    ensureRungs().forEach(({start,y})=>{ const h=document.createElement('div'); h.className='lottery-h-line'; h.style.left=(side+start*gap)+'px'; h.style.top=y+'px'; h.style.width=gap+'px'; lineArea.appendChild(h); });
     renderTrace(lineArea);
-
-    for(let bottom=0; bottom<people; bottom++){
-      const x=side+bottom*gap;
-      const box=document.createElement('div');
-      box.className='lottery-result-box';
-      box.style.left=x+'px';
-
-      if(shuffled){
-        const value=bottomResults[bottom];
-        const arrivedTop=topNumberForBottom(bottom);
-        const isOpened=openedTops.has(arrivedTop-1);
-        const selectedEnd=selectedTop!==null ? computePath(selectedTop).endCol : null;
-        box.className='lottery-result-box '+(value==='당첨'?'win':'lose')+(selectedEnd===bottom?' revealed':'');
-        box.textContent=isOpened ? `${arrivedTop}번 ${value}` : value;
-      } else {
-        box.textContent='숨김';
-      }
-      resultRow.appendChild(box);
-    }
-
+    for(let bottom=0; bottom<people; bottom++){ const x=side+bottom*gap; const box=document.createElement('div'); box.className='lottery-result-box'; box.style.left=x+'px'; if(shuffled){ const value=bottomResults[bottom]; const arrivedTop=topNumberForBottom(bottom); const isOpened=openedTops.has(arrivedTop-1); const selectedEnd=selectedTop!==null ? computePath(selectedTop).endCol : null; box.className='lottery-result-box '+(value==='당첨'?'win':'lose')+(selectedEnd===bottom?' revealed':''); box.textContent=isOpened ? `${arrivedTop}번 ${value}` : value; } else { box.textContent='숨김'; } resultRow.appendChild(box); }
     ladderEl.append(personRow,lineArea,resultRow);
   }
-  async function shuffle(){
-    bottomResults=makeBottomResults();
-    ladderRungs=createRungs();
-    shuffled=true;
-    openedTops.clear();
-    selectedTop=null;
-    activePath=[];
-    await sealResults();
-    resultEl.textContent='하단 위치가 섞였습니다. 번호를 누르면 사다리 경로를 따라 결과가 공개됩니다.';
-    render();
-    ladderEl.classList.remove('lottery-shuffle-effect');
-    void ladderEl.offsetWidth;
-    ladderEl.classList.add('lottery-shuffle-effect');
-  }
+  async function shuffle(){ bottomResults=makeBottomResults(); ladderRungs=createRungs(); shuffled=true; openedTops.clear(); selectedTop=null; activePath=[]; await sealResults(); resultEl.textContent='하단 위치가 섞였습니다. 번호를 누르면 사다리 경로를 따라 결과가 공개됩니다.'; render(); ladderEl.classList.remove('lottery-shuffle-effect'); void ladderEl.offsetWidth; ladderEl.classList.add('lottery-shuffle-effect'); }
   async function reveal(){
-    if(!shuffled){
-      alert('먼저 섞기를 눌러주세요.');
-      return;
-    }
-    if(!(await verifyResults())){
-      alert('추첨 데이터가 변경된 것으로 감지되어 결과를 공개할 수 없습니다. 새로하기 후 다시 섞어주세요.');
-      reset();
-      return;
-    }
-    for(let i=0;i<people;i++) openedTops.add(i);
-    selectedTop=null;
-    activePath=[];
-    render();
-
-    const winners=[];
-    const losers=[];
-    for(let top=0; top<people; top++){
-      const endCol=computePath(top).endCol;
-      if(bottomResults[endCol]==='당첨') winners.push(top+1);
-      else losers.push(top+1);
-    }
+    if(!shuffled){ alert('먼저 섞기를 눌러주세요.'); return; }
+    if(!(await verifyResults())){ alert('추첨 데이터가 변경된 것으로 감지되어 결과를 공개할 수 없습니다. 새로하기 후 다시 섞어주세요.'); reset(); return; }
+    for(let i=0;i<people;i++) openedTops.add(i); selectedTop=null; activePath=[]; render();
+    const winners=[]; const losers=[]; for(let top=0; top<people; top++){ const endCol=computePath(top).endCol; if(bottomResults[endCol]==='당첨') winners.push(top+1); else losers.push(top+1); }
     resultEl.textContent=`당첨 번호: ${winners.join(', ')} / 꽝 번호: ${losers.join(', ')}`;
   }
   async function revealOne(i){
-    if(!shuffled){
-      alert('먼저 섞기를 눌러주세요.');
-      return;
-    }
-    if(!(await verifyResults())){
-      alert('추첨 데이터가 변경된 것으로 감지되어 결과를 공개할 수 없습니다. 새로하기 후 다시 섞어주세요.');
-      reset();
-      return;
-    }
-
-    const path=computePath(i);
-    selectedTop=i;
-    activePath=path.segments;
-    openedTops.add(i);
-    render();
-
-    if(pathTimer) clearTimeout(pathTimer);
-    pathTimer=setTimeout(()=>{
-      const result=bottomResults[path.endCol];
-      resultEl.textContent=`${i+1}번 결과: ${result} / 도착 위치: 하단 ${path.endCol+1}번`;
-    }, Math.max(350, activePath.length*120+420));
+    if(!shuffled){ alert('먼저 섞기를 눌러주세요.'); return; }
+    if(!(await verifyResults())){ alert('추첨 데이터가 변경된 것으로 감지되어 결과를 공개할 수 없습니다. 새로하기 후 다시 섞어주세요.'); reset(); return; }
+    const path=computePath(i); selectedTop=i; activePath=path.segments; openedTops.add(i); render();
+    if(pathTimer) clearTimeout(pathTimer); pathTimer=setTimeout(()=>{ const result=bottomResults[path.endCol]; resultEl.textContent=`${i+1}번 결과: ${result} / 도착 위치: 하단 ${path.endCol+1}번`; }, Math.max(350, activePath.length*120+420));
   }
-  function reset(){
-    shuffled=false;
-    bottomResults=[];
-    ladderRungs=createRungs();
-    resultNonce='';
-    resultChecksum='';
-    openedTops.clear();
-    selectedTop=null;
-    activePath=[];
-    if(pathTimer) clearTimeout(pathTimer);
-    resultEl.textContent='';
-    render();
-  }
-  function init(){
-    minusBtn.onclick=()=>{people=Math.max(MIN,people-1);reset()};
-    plusBtn.onclick=()=>{people=Math.min(MAX,people+1);reset()};
-    document.getElementById('lotteryShuffle').onclick=shuffle;
-    document.getElementById('lotteryReveal').onclick=reveal;
-    clearBtn.onclick=reset;
-    ladderRungs=createRungs();
-    render();
-  }
+  function reset(){ shuffled=false; bottomResults=[]; ladderRungs=createRungs(); resultNonce=''; resultChecksum=''; openedTops.clear(); selectedTop=null; activePath=[]; if(pathTimer) clearTimeout(pathTimer); resultEl.textContent=''; render(); }
+  function init(){ minusBtn.onclick=()=>{people=Math.max(MIN,people-1);reset()}; plusBtn.onclick=()=>{people=Math.min(MAX,people+1);reset()}; document.getElementById('lotteryShuffle').onclick=shuffle; document.getElementById('lotteryReveal').onclick=reveal; clearBtn.onclick=reset; ladderRungs=createRungs(); render(); }
   return {init, reset, shuffle, reveal};
 })();
 
@@ -1119,6 +1041,11 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideAlarmPopup(); 
 window.addEventListener('pointerdown',()=>{ if(appState.settings.sound) ensureAudio(); },{once:true});
 document.getElementById('soundToggle').addEventListener('change',e=>{ appState.settings.sound=e.target.checked; saveState(); if(e.target.checked) ensureAudio(); });
 document.getElementById('vibrateToggle').addEventListener('change',e=>{ appState.settings.vibrate=e.target.checked; saveState(); });
+document.getElementById('includeEstimatedExitToggle').addEventListener('change', e => {
+  appState.includeEstimatedExit = e.target.checked;
+  rebuildDerivedData();
+  renderAll();
+});
 function tick(){
   const now=new Date();
   setText('clockTime', fmtHMS(now));
@@ -1138,7 +1065,15 @@ function scheduleTick(){
 }
 document.addEventListener('visibilitychange',()=>{ tick(); scheduleTick(); });
 window.addEventListener('beforeunload',()=>{ downloadUrls.forEach(url=>URL.revokeObjectURL(url)); });
-loadSaved(); if(!appState.alarms.length) appState.alarms=makeDefaultAlarms(); document.getElementById('soundToggle').checked=!!appState.settings.sound; document.getElementById('vibrateToggle').checked=!!appState.settings.vibrate; lotteryApp.init(); loadSample(); tick(); scheduleTick();
+loadSaved();
+if(!appState.alarms.length) appState.alarms=makeDefaultAlarms();
+document.getElementById('soundToggle').checked=!!appState.settings.sound;
+document.getElementById('vibrateToggle').checked=!!appState.settings.vibrate;
+document.getElementById('includeEstimatedExitToggle').checked=!!appState.includeEstimatedExit;
+lotteryApp.init();
+loadSample();
+tick();
+scheduleTick();
 </script>
 </body>
 </html>
