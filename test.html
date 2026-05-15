@@ -1,4 +1,3 @@
-//대시보드 개선 테스트 260512
 <!doctype html>
 <html lang="ko">
 <head>
@@ -11,6 +10,9 @@
 
     본 파일 및 관련 로직의 저작권은 zanque에게 있으며,
     무단 수정, 배포, 재사용을 금지합니다.
+
+    - 260512 대시보드 개선
+    - 월간보고 산출 test
   -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -138,6 +140,26 @@
     .board-frame{width:100%; height:80vh; min-height:700px; border:0; background:#fff;}
     .board-actions{display:flex; justify-content:flex-end;}
     .board-guide{text-align:right;}
+
+    /* Monthly report tab */
+    .monthly-panel{display:grid;gap:16px}
+    .monthly-upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .monthly-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .monthly-message{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff;color:var(--muted);font-weight:700}
+    .monthly-message.ok{background:var(--ok-soft);color:var(--ok);border-color:#bbf7d0}
+    .monthly-message.warn{background:var(--warn-soft);color:var(--warn);border-color:#fde68a}
+    .monthly-message.err{background:var(--danger-soft);color:var(--danger);border-color:#fecaca}
+    .monthly-kpi{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .monthly-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    .monthly-table th,.monthly-table td{border-bottom:1px solid var(--line);padding:10px;text-align:left;font-size:13px}
+    .monthly-table th{background:#f8fafc;color:#475569;font-weight:900}
+    .monthly-table td:last-child,.monthly-table th:last-child{text-align:right}
+    .monthly-table tr:last-child td{border-bottom:0}
+    .monthly-html-preview{border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px;overflow:auto}
+    .monthly-chip{display:inline-flex;align-items:center;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-size:12px;font-weight:900;padding:6px 10px}
+    @media (max-width:1080px){.monthly-upload-grid{grid-template-columns:1fr}.monthly-kpi{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:680px){.monthly-kpi{grid-template-columns:1fr}}
+
   </style>
 </head>
 <body>
@@ -159,6 +181,7 @@
     <button class="tab" data-tab="reports">예약자 명단(예약자 리스트) 등록</button>
     <button class="tab" data-tab="alarms">알람 설정</button>
     <button class="tab" data-tab="lottery">파크골프 추첨</button>
+    <button class="tab" data-tab="monthlyReport">월간보고</button>
     <button class="tab" data-tab="board">게시판</button>
   </div>
 
@@ -357,6 +380,103 @@
       <p id="lotteryResult" class="lottery-note"></p>
     </div>
     <button id="lotteryClear" class="lottery-reset" type="button">🔄</button>
+  </section>
+
+
+  <section id="monthlyReport" class="section">
+    <div class="monthly-panel">
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:12px">
+          <div>
+            <h2>월간보고 자동 생성</h2>
+            <div class="small">INPUT.xlsx를 업로드하면 입장일자 기준으로 보고월을 자동 감지하고, 통계·검증내역·XLSX 산출물을 생성합니다. 모든 처리는 브라우저 로컬 메모리에서 수행됩니다.</div>
+          </div>
+          <span class="monthly-chip">로컬 처리 / 외부 송부 없음</span>
+        </div>
+
+        <div class="monthly-upload-grid">
+          <div>
+            <label>월간보고 INPUT.xlsx</label>
+            <input id="monthlyInputFile" type="file" accept=".xlsx,.xls" />
+            <div class="small" style="margin-top:8px">필수 컬럼: 성별, 연령/연령대, 입장일자, 퇴장일자, 방문횟수, 만족도 항목</div>
+          </div>
+          <div>
+            <label>누계 input XLSX 선택 업로드</label>
+            <input id="monthlyCumulativeFile" type="file" accept=".xlsx,.xls" />
+            <div class="small" style="margin-top:8px">현재 보고월과 같은 월은 기존 누계에서 자동 제외 후 새 결과로 반영합니다.</div>
+          </div>
+        </div>
+
+        <div class="monthly-actions" style="margin-top:14px">
+          <button class="btn" onclick="processMonthlyReport()">월간보고 생성</button>
+          <button class="btn secondary" onclick="downloadMonthlyReportXlsx()">월간보고 XLSX 다운로드</button>
+          <button class="btn ok" onclick="downloadMonthlyCumulativeOutput()">누계 output XLSX</button>
+          <button class="btn ghost" onclick="downloadMonthlyCumulativeWithoutCurrent()">해당월 제외 누계 XLSX</button>
+          <button class="btn ghost" onclick="clearMonthlyReport()">초기화</button>
+        </div>
+
+        <div id="monthlyMessage" class="monthly-message" style="margin-top:12px">월간보고 INPUT.xlsx를 업로드해 주세요.</div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between;margin-bottom:12px">
+          <h2>보고 조건</h2>
+          <div style="min-width:260px">
+            <label>센터 선택</label>
+            <select id="monthlyCenterSelect" onchange="changeMonthlyCenter(this.value)">
+              <option value="ALL">전체</option>
+            </select>
+          </div>
+        </div>
+        <div class="monthly-kpi">
+          <div class="stat blue"><div class="label">보고월</div><div class="value" id="mrReportMonth" style="font-size:20px">-</div><div class="stat-note">입장일자 자동 감지</div></div>
+          <div class="stat green"><div class="label">전체 이용건수</div><div class="value" id="mrTotalVisits">0</div><div class="stat-note">연인원 기준</div></div>
+          <div class="stat purple"><div class="label">평균 체류시간</div><div class="value" id="mrAvgStay" style="font-size:20px">-</div><div class="stat-note">정상 입퇴장만</div></div>
+          <div class="stat orange"><div class="label">평균 산출 대상</div><div class="value" id="mrEligibleCount">0</div><div class="stat-note">VALID 건수</div></div>
+          <div class="stat"><div class="label">보고월 외 데이터</div><div class="value" id="mrOutMonthCount">0</div><div class="stat-note">검증 참고</div></div>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>성별 통계</h2>
+          <div id="mrGenderTable"></div>
+        </div>
+        <div class="card">
+          <h2>연령대 통계</h2>
+          <div id="mrAgeTable"></div>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>만족도 평균</h2>
+          <div id="mrSatisfactionTable"></div>
+        </div>
+        <div class="card">
+          <h2>체류시간 검증</h2>
+          <div id="mrStayTable"></div>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <h2>재방문 및 텍스트 응답</h2>
+          <div id="mrTextTable"></div>
+        </div>
+        <div class="card">
+          <h2>검증 내역</h2>
+          <div id="mrValidationTable"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>HTML 화면 요약</h2>
+        <div id="mrHtmlPreview" class="monthly-html-preview">
+          <div class="small">월간보고 생성 후 화면 요약이 표시됩니다.</div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="board" class="section">
@@ -950,7 +1070,709 @@ function loadSample(){
 }
 function clearDataOnly(){ appState.entryRows=[]; appState.reservationRows=[]; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='처리 데이터가 초기화되었습니다. 알람은 유지됩니다.'; }
 
-function showTab(id){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id)); document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id)); }
+function showTab(id){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id)); 
+/* Monthly Report Tab - local only, no external upload */
+const MR_MAX_EXCEL_FILE_BYTES = 20 * 1024 * 1024;
+const MR_REQUIRED_KEYS = ['gender','age','entryDateTime','exitDateTime','visitCount','programSatisfaction','operationSatisfaction','digitalHelpSatisfaction','revisitIntention'];
+const MR_OPTIONAL_KEYS = ['center','name','phone','residence','awarenessPath','program'];
+const MR_HEADER_ALIASES = {
+  center:['방문센터','센터','이용센터'],
+  name:['이름','성명'],
+  phone:['연락처','전화번호','휴대폰','휴대전화'],
+  gender:['성별'],
+  age:['연령대','연령','나이'],
+  residence:['거주지','주소','지역'],
+  entryDateTime:['입장일자','입장시각','입장시간','입장일시'],
+  exitDateTime:['퇴장일자','퇴장시각','퇴장시간','퇴장일시'],
+  awarenessPath:['알게된 경로','인지경로','방문경로'],
+  visitCount:['방문횟수','방문 회차','재방문 여부'],
+  program:['참여 프로그램','프로그램','이용 프로그램'],
+  programSatisfaction:['프로그램 만족도'],
+  operationSatisfaction:['운영 만족도'],
+  digitalHelpSatisfaction:['디지털기기 사용 도움 만족도','디지털 도움 만족도'],
+  revisitIntention:['재방문 의향','재방문 여부']
+};
+const MR_SCORE_MAP = {'매우 그렇다':5,'그렇다':4,'보통이다':3,'아니다':2,'매우 아니다':1};
+const MR_STAY_STATUSES = ['VALID','CORRECTED_ENTRY_BEFORE_OPEN','CORRECTED_EXIT_AFTER_CLOSE','ESTIMATED_EXIT','AUTO_EXIT_21','INVALID_NO_ENTRY','INVALID_BAD_ENTRY','INVALID_BAD_EXIT','INVALID_NEGATIVE','INVALID_ZERO','INVALID_AFTER_CLOSE'];
+const MR_REPORT_COLUMNS = ['항목','값'];
+const MR_VALIDATION_COLUMNS = ['항목','값'];
+const MR_DETAIL_COLUMNS = ['행번호','방문센터','이름','연락처','성별','연령','연령상태','입장월','알게된경로','방문횟수','참여프로그램','재방문여부','체류시간분','체류상태','평균포함여부'];
+const MR_CUMULATIVE_COLUMNS = ['보고월','총이용건수','남성','여성','성별미분류','40세미만','40대','50대','60대','70대','80세이상','연령무효','첫방문','재방문','재방문율','프로그램만족도평균','운영만족도평균','디지털도움만족도평균','재방문의향평균','평균체류시간분','평균산출대상수','보정제외수','추정제외수','체류시간무효수'];
+
+let monthlyState = {
+  rawRows: [],
+  normalizedRows: [],
+  result: null,
+  selectedCenter: 'ALL',
+  cumulativeRows: [],
+  cumulativeResult: null
+};
+
+function mrSafeInfo(message, meta){
+  // 개인정보 원문, 행 전체, 파일 객체는 기록하지 않는다.
+  // 필요 시 운영환경에서 no-op 처리 가능.
+}
+
+function mrSetMessage(text, type=''){
+  const el=document.getElementById('monthlyMessage');
+  if(!el) return;
+  el.className='monthly-message' + (type ? ' ' + type : '');
+  el.textContent=text;
+}
+function mrNormalizeHeader(value){ return String(value??'').replace(/\s+/g,'').trim(); }
+function mrToText(value){ return value===undefined || value===null ? '' : String(value).trim(); }
+function mrRate(n,d){ return d>0 ? Math.round((n/d)*1000)/10 : 0; }
+function mrAverage(values){ return values.length ? Math.round((values.reduce((s,v)=>s+v,0)/values.length)*100)/100 : null; }
+function mrAverageRaw(values){ return values.length ? values.reduce((s,v)=>s+v,0)/values.length : null; }
+function mrFormatMinutes(minutes){
+  if(minutes===null || minutes===undefined || Number.isNaN(minutes)) return '-';
+  const rounded=Math.round(minutes);
+  const h=Math.floor(rounded/60);
+  const m=rounded%60;
+  return `${h}시간 ${m}분 (${rounded}분)`;
+}
+function mrSanitizeForExcelCell(value){
+  const text=String(value??'');
+  return /^[=+\-@]/.test(text) ? `'${text}` : text;
+}
+function mrSanitizeRecordForExcel(row, textColumns){
+  const out={...row};
+  textColumns.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(out,k)) out[k]=mrSanitizeForExcelCell(out[k]); });
+  return out;
+}
+function mrValidateExcelFile(file){
+  if(!file) throw new Error('파일을 선택해 주세요.');
+  const lower=file.name.toLowerCase();
+  if(!lower.endsWith('.xlsx') && !lower.endsWith('.xls')) throw new Error('xlsx 또는 xls 파일만 업로드할 수 있습니다.');
+  if(file.size===0) throw new Error('빈 파일은 업로드할 수 없습니다.');
+  if(file.size>MR_MAX_EXCEL_FILE_BYTES) throw new Error('파일 크기는 20MB 이하만 업로드할 수 있습니다.');
+}
+function mrReadWorkbook(file){
+  mrValidateExcelFile(file);
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const data=new Uint8Array(e.target.result);
+        const wb=XLSX.read(data,{type:'array', cellDates:true});
+        resolve(wb);
+      }catch(err){ reject(err); }
+    };
+    reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+function mrFindHeaderIndex(headers, key){
+  const aliases=(MR_HEADER_ALIASES[key]||[]).map(mrNormalizeHeader);
+  const normalized=headers.map(mrNormalizeHeader);
+  return normalized.findIndex(h=>aliases.includes(h));
+}
+function mrValidateRequiredColumns(headers){
+  const missingRequired=MR_REQUIRED_KEYS.filter(key=>mrFindHeaderIndex(headers,key)<0);
+  const missingOptional=MR_OPTIONAL_KEYS.filter(key=>mrFindHeaderIndex(headers,key)<0);
+  if(missingRequired.length){
+    const labels=missingRequired.map(key=>(MR_HEADER_ALIASES[key]||[key])[0]).join(', ');
+    throw new Error(`필수 컬럼이 누락되었습니다: ${labels}`);
+  }
+  return {missingRequired, missingOptional};
+}
+function mrGetCell(row, headers, key){
+  const idx=mrFindHeaderIndex(headers,key);
+  return idx>=0 ? row[idx] : '';
+}
+function mrParseInputWorkbook(wb){
+  const sheetName=wb.SheetNames.includes('종합내역') ? '종합내역' : wb.SheetNames[0];
+  if(!sheetName) throw new Error('엑셀 파일에 시트가 없습니다.');
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, defval:'', raw:true});
+  if(rows.length<2) return [];
+  const headers=rows[0];
+  mrValidateRequiredColumns(headers);
+  return rows.slice(1)
+    .map((row,i)=>({row,rowIndex:i+2}))
+    .filter(({row})=>row.some(cell=>mrToText(cell)!==''))
+    .map(({row,rowIndex})=>({
+      rowIndex,
+      center:mrGetCell(row,headers,'center'),
+      name:mrGetCell(row,headers,'name'),
+      phone:mrGetCell(row,headers,'phone'),
+      gender:mrGetCell(row,headers,'gender'),
+      age:mrGetCell(row,headers,'age'),
+      residence:mrGetCell(row,headers,'residence'),
+      entryDateTime:mrGetCell(row,headers,'entryDateTime'),
+      exitDateTime:mrGetCell(row,headers,'exitDateTime'),
+      awarenessPath:mrGetCell(row,headers,'awarenessPath'),
+      visitCount:mrGetCell(row,headers,'visitCount'),
+      program:mrGetCell(row,headers,'program'),
+      programSatisfaction:mrGetCell(row,headers,'programSatisfaction'),
+      operationSatisfaction:mrGetCell(row,headers,'operationSatisfaction'),
+      digitalHelpSatisfaction:mrGetCell(row,headers,'digitalHelpSatisfaction'),
+      revisitIntention:mrGetCell(row,headers,'revisitIntention')
+    }));
+}
+function mrExcelSerialToDate(value){
+  if(typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code){
+    const parsed=XLSX.SSF.parse_date_code(value);
+    if(parsed) return new Date(parsed.y, parsed.m-1, parsed.d, parsed.H, parsed.M, Math.floor(parsed.S||0));
+  }
+  const epoch=new Date(Date.UTC(1899,11,30));
+  return new Date(epoch.getTime()+Number(value)*86400000);
+}
+function mrParseDateTimeWithStatus(value){
+  const rawText=String(value??'').trim();
+  if(value===undefined || value===null || rawText==='') return {date:null,status:'BLANK',rawText};
+  if(value instanceof Date) return Number.isNaN(value.getTime()) ? {date:null,status:'INVALID',rawText} : {date:value,status:'VALID',rawText};
+  if(typeof value==='number' && Number.isFinite(value)){
+    const dt=mrExcelSerialToDate(value);
+    return Number.isNaN(dt.getTime()) ? {date:null,status:'INVALID',rawText} : {date:dt,status:'VALID',rawText};
+  }
+  const normalized=rawText.replace(/[.]/g,'-').replace(/\//g,'-').replace(/년|월/g,'-').replace(/일/g,'').replace('T',' ').replace(/\s+/g,' ').trim();
+  const match=normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+  if(!match) return {date:null,status:'INVALID',rawText};
+  const [,y,m,d,hh='0',mm='0',ss='0']=match;
+  const dt=new Date(Number(y),Number(m)-1,Number(d),Number(hh),Number(mm),Number(ss),0);
+  const ok=dt.getFullYear()===Number(y)&&dt.getMonth()===Number(m)-1&&dt.getDate()===Number(d)&&dt.getHours()===Number(hh)&&dt.getMinutes()===Number(mm);
+  return ok ? {date:dt,status:'VALID',rawText} : {date:null,status:'INVALID',rawText};
+}
+function mrYearMonth(date){
+  if(!date || Number.isNaN(date.getTime())) return null;
+  return `${date.getFullYear()}-${pad2(date.getMonth()+1)}`;
+}
+function mrMaskName(value){
+  const name=mrToText(value);
+  if(!name) return '';
+  if(name.length===1) return name;
+  return name[0]+'O'.repeat(name.length-1);
+}
+function mrMaskPhone(value){
+  const digits=mrToText(value).replace(/\D/g,'');
+  if(!digits) return '';
+  if(digits.length<7) return '0'.repeat(digits.length);
+  return digits.slice(0,3)+'0000'+digits.slice(-4);
+}
+function mrNormalizeGender(value){
+  const text=mrToText(value).toLowerCase();
+  if(['남','남성','m','male'].includes(text)) return 'MALE';
+  if(['여','여성','f','female'].includes(text)) return 'FEMALE';
+  return 'UNKNOWN';
+}
+function mrNormalizeAge(value){
+  const text=mrToText(value);
+  if(!text) return {age:null,status:'BLANK'};
+  if(/^\d+$/.test(text)) return {age:Number(text),status:'VALID'};
+  const decade=text.match(/^(\d{2})대$/);
+  if(decade) return {age:Number(decade[1])+5,status:'VALID'};
+  const numbers=(text.match(/\d+/g)||[]).map(Number);
+  if(numbers.length>=2) return {age:Math.floor((numbers[0]+numbers[1])/2),status:'VALID'};
+  if(numbers.length===1) return {age:numbers[0],status:'VALID'};
+  return {age:null,status:'INVALID'};
+}
+function mrNormalizeSatisfaction(value){
+  const rawText=mrToText(value);
+  if(!rawText) return {score:null,status:'BLANK',rawText};
+  if(MR_SCORE_MAP[rawText]===undefined) return {score:null,status:'INVALID',rawText};
+  return {score:MR_SCORE_MAP[rawText],status:'VALID',rawText};
+}
+function mrNormalizeRevisit(value){
+  const text=mrToText(value);
+  if(!text) return null;
+  return text==='첫 방문' ? false : true;
+}
+function mrMinutesOfDay(date){ return date.getHours()*60+date.getMinutes(); }
+function mrSetTime(date,timeText){ const [h,m]=timeText.split(':').map(Number); const d=new Date(date); d.setHours(h,m,0,0); return d; }
+function mrAddMinutes(date,minutes){ return new Date(date.getTime()+minutes*60000); }
+function mrDiffMinutes(start,end){ return Math.round((end.getTime()-start.getTime())/60000); }
+function mrIsAutoExit21(exitAt){ return !!exitAt && mrMinutesOfDay(exitAt)===timeToMinutes(AUTO_EXIT_TIME); }
+function mrStayResult(input){
+  return {
+    status:input.status,
+    entryAt:input.entryAt||null,
+    exitAt:input.exitAt||null,
+    correctedEntryAt:input.correctedEntryAt||null,
+    correctedExitAt:input.correctedExitAt||null,
+    minutes:input.minutes??null,
+    isEstimated:!!input.isEstimated,
+    isCorrected:!!input.isCorrected,
+    includeInAverage:input.status==='VALID',
+    reason:input.reason||''
+  };
+}
+function mrCalculateStayTime(entryAt, entryStatus, exitAt, exitStatus){
+  const openMinutes=timeToMinutes(OPS_START_TIME);
+  const closeMinutes=timeToMinutes(OPS_END_TIME);
+  if(entryStatus==='BLANK') return mrStayResult({status:'INVALID_NO_ENTRY',entryAt,exitAt,reason:'입장시각 공백'});
+  if(entryStatus==='INVALID' || !entryAt) return mrStayResult({status:'INVALID_BAD_ENTRY',entryAt,exitAt,reason:'입장시각 형식 오류'});
+  const entryMinutes=mrMinutesOfDay(entryAt);
+  if(entryMinutes>=closeMinutes) return mrStayResult({status:'INVALID_AFTER_CLOSE',entryAt,exitAt,reason:'운영 종료 이후 입장'});
+  if(exitStatus==='INVALID') return mrStayResult({status:'INVALID_BAD_EXIT',entryAt,exitAt,reason:'퇴장시각 형식 오류'});
+  if(entryMinutes<openMinutes){
+    const correctedEntryAt=mrSetTime(entryAt, OPS_START_TIME);
+    const minutes=exitAt ? mrDiffMinutes(correctedEntryAt, exitAt) : null;
+    return mrStayResult({status:'CORRECTED_ENTRY_BEFORE_OPEN',entryAt,exitAt,correctedEntryAt,correctedExitAt:exitAt,minutes:minutes&&minutes>0?minutes:null,isCorrected:true,reason:'09:00 이전 입장 보정, 평균 제외'});
+  }
+  if(exitStatus==='BLANK' || !exitAt){
+    let correctedExitAt=mrAddMinutes(entryAt, ESTIMATED_STAY_MINUTES);
+    if(mrMinutesOfDay(correctedExitAt)>closeMinutes) correctedExitAt=mrSetTime(entryAt, OPS_END_TIME);
+    const minutes=mrDiffMinutes(entryAt, correctedExitAt);
+    return mrStayResult({status:'ESTIMATED_EXIT',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt,minutes:minutes>0?minutes:null,isEstimated:true,reason:'퇴장시각 없음, 평균 제외'});
+  }
+  if(mrIsAutoExit21(exitAt)){
+    let correctedExitAt=mrAddMinutes(entryAt, ESTIMATED_STAY_MINUTES);
+    if(mrMinutesOfDay(correctedExitAt)>closeMinutes) correctedExitAt=mrSetTime(entryAt, OPS_END_TIME);
+    const minutes=mrDiffMinutes(entryAt, correctedExitAt);
+    return mrStayResult({status:'AUTO_EXIT_21',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt,minutes:minutes>0?minutes:null,isEstimated:true,reason:'21:00 자동퇴장, 평균 제외'});
+  }
+  const exitMinutes=mrMinutesOfDay(exitAt);
+  if(exitMinutes>closeMinutes){
+    const correctedExitAt=mrSetTime(exitAt, OPS_END_TIME);
+    const minutes=mrDiffMinutes(entryAt, correctedExitAt);
+    return mrStayResult({status:'CORRECTED_EXIT_AFTER_CLOSE',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt,minutes:minutes>0?minutes:null,isCorrected:true,reason:'19:00 이후 퇴장 보정, 평균 제외'});
+  }
+  const minutes=mrDiffMinutes(entryAt, exitAt);
+  if(minutes<0) return mrStayResult({status:'INVALID_NEGATIVE',entryAt,exitAt,reason:'퇴장시각이 입장시각보다 빠름'});
+  if(minutes===0) return mrStayResult({status:'INVALID_ZERO',entryAt,exitAt,reason:'체류시간 0분'});
+  return mrStayResult({status:'VALID',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt:exitAt,minutes});
+}
+function mrNormalizeRows(rawRows){
+  return rawRows.map(raw=>{
+    const entry=mrParseDateTimeWithStatus(raw.entryDateTime);
+    const exit=mrParseDateTimeWithStatus(raw.exitDateTime);
+    const age=mrNormalizeAge(raw.age);
+    return {
+      rowIndex:raw.rowIndex,
+      center:mrToText(raw.center)||'미분류',
+      maskedName:mrMaskName(raw.name),
+      maskedPhone:mrMaskPhone(raw.phone),
+      gender:mrNormalizeGender(raw.gender),
+      age:age.age,
+      ageStatus:age.status,
+      entryAt:entry.date,
+      entryStatus:entry.status,
+      exitAt:exit.date,
+      exitStatus:exit.status,
+      entryMonth:mrYearMonth(entry.date),
+      awarenessPath:mrToText(raw.awarenessPath),
+      visitCountText:mrToText(raw.visitCount),
+      program:mrToText(raw.program),
+      isRevisit:mrNormalizeRevisit(raw.visitCount),
+      satisfaction:{
+        program:mrNormalizeSatisfaction(raw.programSatisfaction),
+        operation:mrNormalizeSatisfaction(raw.operationSatisfaction),
+        digitalHelp:mrNormalizeSatisfaction(raw.digitalHelpSatisfaction),
+        revisitIntention:mrNormalizeSatisfaction(raw.revisitIntention)
+      },
+      stayTime:mrCalculateStayTime(entry.date, entry.status, exit.date, exit.status)
+    };
+  });
+}
+function mrDetectReportMonth(rows){
+  const counts={};
+  rows.forEach(r=>{ if(r.entryMonth) counts[r.entryMonth]=(counts[r.entryMonth]||0)+1; });
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length) throw new Error('입장일자에서 보고월을 감지할 수 없습니다.');
+  const reportMonth=sorted[0][0];
+  return {reportMonth, monthCounts:counts, outOfReportMonthCount:rows.filter(r=>r.entryMonth && r.entryMonth!==reportMonth).length};
+}
+function mrFilterRows(rows, center){ return center==='ALL' ? rows : rows.filter(r=>r.center===center); }
+function mrGenderStats(rows){
+  const male=rows.filter(r=>r.gender==='MALE').length;
+  const female=rows.filter(r=>r.gender==='FEMALE').length;
+  const unknown=rows.length-male-female;
+  const validCount=male+female;
+  return {male,female,unknown,validCount,maleRate:mrRate(male,validCount),femaleRate:mrRate(female,validCount)};
+}
+function mrAgeStats(rows){
+  const s={under40:0,age40s:0,age50s:0,age60s:0,age70s:0,age80plus:0,invalid:0,validCount:0};
+  rows.forEach(r=>{
+    if(r.age===null || r.ageStatus!=='VALID'){ s.invalid++; return; }
+    s.validCount++;
+    if(r.age<40) s.under40++; else if(r.age<50) s.age40s++; else if(r.age<60) s.age50s++; else if(r.age<70) s.age60s++; else if(r.age<80) s.age70s++; else s.age80plus++;
+  });
+  return s;
+}
+function mrRevisitStats(rows){
+  const firstVisit=rows.filter(r=>r.isRevisit===false).length;
+  const revisit=rows.filter(r=>r.isRevisit===true).length;
+  const blank=rows.filter(r=>r.isRevisit===null).length;
+  return {firstVisit,revisit,blank,revisitRate:mrRate(revisit, firstVisit+revisit)};
+}
+function mrOneSatisfactionStats(items){
+  const valid=items.filter(x=>x.status==='VALID'&&x.score!==null).map(x=>x.score);
+  return {average:mrAverage(valid),validCount:valid.length,blankCount:items.filter(x=>x.status==='BLANK').length,invalidCount:items.filter(x=>x.status==='INVALID').length};
+}
+function mrSatisfactionStats(rows){
+  return {
+    program:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.program)),
+    operation:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.operation)),
+    digitalHelp:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.digitalHelp)),
+    revisitIntention:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.revisitIntention))
+  };
+}
+function mrStayStats(rows){
+  const statusCounts={}; MR_STAY_STATUSES.forEach(s=>statusCounts[s]=0);
+  rows.forEach(r=>{ statusCounts[r.stayTime.status]=(statusCounts[r.stayTime.status]||0)+1; });
+  const eligible=rows.filter(r=>r.stayTime.status==='VALID' && r.stayTime.minutes!==null).map(r=>r.stayTime.minutes);
+  return {
+    averageMinutes:mrAverageRaw(eligible),
+    averageEligibleCount:eligible.length,
+    correctedCount:(statusCounts.CORRECTED_ENTRY_BEFORE_OPEN||0)+(statusCounts.CORRECTED_EXIT_AFTER_CLOSE||0),
+    estimatedCount:(statusCounts.ESTIMATED_EXIT||0)+(statusCounts.AUTO_EXIT_21||0),
+    invalidCount:rows.filter(r=>String(r.stayTime.status).startsWith('INVALID')).length,
+    statusCounts
+  };
+}
+function mrTextStatsBy(rows, selector){
+  const counts={}; let blankCount=0;
+  rows.forEach(r=>{ const v=selector(r).trim(); if(!v){blankCount++; return;} counts[v]=(counts[v]||0)+1; });
+  return {counts,blankCount,totalCount:rows.length};
+}
+function mrTextStats(rows){
+  return {awarenessPath:mrTextStatsBy(rows,r=>r.awarenessPath), program:mrTextStatsBy(rows,r=>r.program)};
+}
+function mrDuplicateSuspectedRows(rows){
+  const seen=new Set(); let dup=0;
+  rows.forEach(r=>{
+    if(!r.maskedPhone || !r.entryAt) return;
+    const key=`${r.maskedPhone}|${r.entryAt.toISOString()}`;
+    if(seen.has(key)) dup++;
+    seen.add(key);
+  });
+  return dup;
+}
+function mrValidationStats(sourceRows, reportRows, reportMonth){
+  const satisfactionValues=reportRows.flatMap(r=>Object.values(r.satisfaction));
+  return {
+    sourceRows:sourceRows.length,
+    reportMonthRows:reportRows.length,
+    outOfReportMonthRows:sourceRows.filter(r=>r.entryMonth && r.entryMonth!==reportMonth).length,
+    genderUnknownRows:reportRows.filter(r=>r.gender==='UNKNOWN').length,
+    ageInvalidRows:reportRows.filter(r=>r.ageStatus!=='VALID').length,
+    satisfactionBlankRows:satisfactionValues.filter(v=>v.status==='BLANK').length,
+    satisfactionInvalidRows:satisfactionValues.filter(v=>v.status==='INVALID').length,
+    stayTimeInvalidRows:reportRows.filter(r=>String(r.stayTime.status).startsWith('INVALID')).length,
+    duplicateSuspectedRows:mrDuplicateSuspectedRows(reportRows)
+  };
+}
+function mrCalculateReport(rows, selectedCenter='ALL'){
+  const detected=mrDetectReportMonth(rows);
+  const reportRows=rows.filter(r=>r.entryMonth===detected.reportMonth);
+  const filtered=mrFilterRows(reportRows, selectedCenter);
+  const centers=Array.from(new Set(reportRows.map(r=>r.center))).sort();
+  return {
+    reportMonth:detected.reportMonth,
+    totalRows:rows.length,
+    totalVisits:filtered.length,
+    outOfReportMonthCount:detected.outOfReportMonthCount,
+    filters:{selectedCenter,availableCenters:centers},
+    gender:mrGenderStats(filtered),
+    ageGroups:mrAgeStats(filtered),
+    revisit:mrRevisitStats(filtered),
+    satisfaction:mrSatisfactionStats(filtered),
+    stayTime:mrStayStats(filtered),
+    textResponses:mrTextStats(filtered),
+    validation:mrValidationStats(rows, filtered, detected.reportMonth),
+    rows:filtered
+  };
+}
+function mrTable(rows, headers){
+  let html='<table class="monthly-table"><thead><tr>'+headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')+'</tr></thead><tbody>';
+  rows.forEach(row=>{ html+='<tr>'+headers.map(h=>`<td>${escapeHtml(row[h]??'')}</td>`).join('')+'</tr>'; });
+  html+='</tbody></table>';
+  return html;
+}
+function mrTopCounts(counts, limit=5){
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0])).slice(0,limit).map(([k,v])=>`${k}(${v})`).join(', ') || '-';
+}
+function mrRenderCenterSelect(result){
+  const sel=document.getElementById('monthlyCenterSelect');
+  if(!sel) return;
+  const current=monthlyState.selectedCenter;
+  sel.innerHTML='<option value="ALL">전체</option>'+result.filters.availableCenters.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  sel.value=current;
+}
+function mrRenderResult(result){
+  if(!result) return;
+  mrRenderCenterSelect(result);
+  setText('mrReportMonth', result.reportMonth);
+  setText('mrTotalVisits', result.totalVisits.toLocaleString());
+  setText('mrAvgStay', mrFormatMinutes(result.stayTime.averageMinutes));
+  setText('mrEligibleCount', result.stayTime.averageEligibleCount.toLocaleString());
+  setText('mrOutMonthCount', result.outOfReportMonthCount.toLocaleString());
+  document.getElementById('mrGenderTable').innerHTML=mrTable([
+    {'구분':'남성','건수':result.gender.male,'비율':result.gender.maleRate+'%'},
+    {'구분':'여성','건수':result.gender.female,'비율':result.gender.femaleRate+'%'},
+    {'구분':'미분류','건수':result.gender.unknown,'비율':'분모 제외'}
+  ], ['구분','건수','비율']);
+  document.getElementById('mrAgeTable').innerHTML=mrTable([
+    {'구분':'40세 미만','건수':result.ageGroups.under40},
+    {'구분':'40대','건수':result.ageGroups.age40s},
+    {'구분':'50대','건수':result.ageGroups.age50s},
+    {'구분':'60대','건수':result.ageGroups.age60s},
+    {'구분':'70대','건수':result.ageGroups.age70s},
+    {'구분':'80세 이상','건수':result.ageGroups.age80plus},
+    {'구분':'무효/공백','건수':result.ageGroups.invalid}
+  ], ['구분','건수']);
+  const satRows=[
+    ['프로그램 만족도',result.satisfaction.program],
+    ['운영 만족도',result.satisfaction.operation],
+    ['디지털 도움 만족도',result.satisfaction.digitalHelp],
+    ['재방문 의향',result.satisfaction.revisitIntention]
+  ].map(([label,s])=>({'항목':label,'평균':s.average===null?'-':s.average.toFixed(2),'유효':s.validCount,'공백':s.blankCount,'무효':s.invalidCount}));
+  document.getElementById('mrSatisfactionTable').innerHTML=mrTable(satRows,['항목','평균','유효','공백','무효']);
+  document.getElementById('mrStayTable').innerHTML=mrTable([
+    {'항목':'평균 체류시간','값':mrFormatMinutes(result.stayTime.averageMinutes)},
+    {'항목':'평균 산출 대상','값':result.stayTime.averageEligibleCount+'건'},
+    {'항목':'보정 제외','값':result.stayTime.correctedCount+'건'},
+    {'항목':'추정 제외','값':result.stayTime.estimatedCount+'건'},
+    {'항목':'무효 제외','값':result.stayTime.invalidCount+'건'}
+  ], ['항목','값']);
+  document.getElementById('mrTextTable').innerHTML=mrTable([
+    {'항목':'첫 방문','값':result.revisit.firstVisit+'건'},
+    {'항목':'재방문','값':result.revisit.revisit+'건'},
+    {'항목':'재방문율','값':result.revisit.revisitRate+'%'},
+    {'항목':'알게 된 경로 TOP','값':mrTopCounts(result.textResponses.awarenessPath.counts)},
+    {'항목':'참여 프로그램 TOP','값':mrTopCounts(result.textResponses.program.counts)}
+  ], ['항목','값']);
+  document.getElementById('mrValidationTable').innerHTML=mrTable([
+    {'항목':'원자료 행 수','값':result.validation.sourceRows+'건'},
+    {'항목':'보고월 대상 행 수','값':result.validation.reportMonthRows+'건'},
+    {'항목':'보고월 외 데이터 수','값':result.validation.outOfReportMonthRows+'건'},
+    {'항목':'성별 미분류 수','값':result.validation.genderUnknownRows+'건'},
+    {'항목':'연령 무효 수','값':result.validation.ageInvalidRows+'건'},
+    {'항목':'만족도 공백 수','값':result.validation.satisfactionBlankRows+'건'},
+    {'항목':'만족도 무효 수','값':result.validation.satisfactionInvalidRows+'건'},
+    {'항목':'체류시간 무효 수','값':result.validation.stayTimeInvalidRows+'건'},
+    {'항목':'중복 의심 수','값':result.validation.duplicateSuspectedRows+'건'},
+    {'항목':'중복 안내','값':'마스킹 기준 참고값'}
+  ], ['항목','값']);
+  document.getElementById('mrHtmlPreview').innerHTML=`
+    <div class="grid three">
+      <div class="stat blue"><div class="label">보고월</div><div class="value" style="font-size:20px">${escapeHtml(result.reportMonth)}</div></div>
+      <div class="stat green"><div class="label">총 이용건수</div><div class="value">${result.totalVisits.toLocaleString()}</div></div>
+      <div class="stat purple"><div class="label">평균 체류시간</div><div class="value" style="font-size:20px">${escapeHtml(mrFormatMinutes(result.stayTime.averageMinutes))}</div><div class="stat-note">보정·추정 제외</div></div>
+    </div>
+    <div class="small" style="margin-top:12px">평균 체류시간은 보정·추정이 없는 정상 입퇴장 데이터만 기준으로 산출됩니다.</div>
+  `;
+}
+async function processMonthlyReport(){
+  try{
+    const file=document.getElementById('monthlyInputFile').files[0];
+    mrValidateExcelFile(file);
+    mrSetMessage('월간보고 파일을 처리하는 중입니다.', 'warn');
+    const wb=await mrReadWorkbook(file);
+    const raw=mrParseInputWorkbook(wb);
+    if(raw.length>MAX_UPLOAD_ROWS) throw new Error(`업로드 행이 너무 많습니다. 최대 ${MAX_UPLOAD_ROWS.toLocaleString()}행까지 처리합니다.`);
+    const normalized=mrNormalizeRows(raw);
+    monthlyState.rawRows=[]; // 원본 행은 보존하지 않음
+    monthlyState.normalizedRows=normalized;
+    monthlyState.selectedCenter='ALL';
+    monthlyState.result=mrCalculateReport(normalized,'ALL');
+    monthlyState.cumulativeRows=[];
+    monthlyState.cumulativeResult=null;
+    mrRenderResult(monthlyState.result);
+    mrSetMessage(`${monthlyState.result.reportMonth} 월간보고가 생성되었습니다. 개인정보 원문은 저장하지 않고 마스킹값만 출력합니다.`, 'ok');
+    const cumulativeFile=document.getElementById('monthlyCumulativeFile').files[0];
+    if(cumulativeFile) await processMonthlyCumulativeFile(cumulativeFile);
+  }catch(err){
+    mrSetMessage(err?.message || '월간보고 처리 중 오류가 발생했습니다.', 'err');
+  }
+}
+function changeMonthlyCenter(center){
+  try{
+    if(!monthlyState.normalizedRows.length) return;
+    monthlyState.selectedCenter=center;
+    monthlyState.result=mrCalculateReport(monthlyState.normalizedRows, center);
+    mrRenderResult(monthlyState.result);
+    mrSetMessage(`센터 조건이 '${center==='ALL'?'전체':center}'로 변경되었습니다.`, 'ok');
+  }catch(err){ mrSetMessage(err?.message || '센터 변경 중 오류가 발생했습니다.', 'err'); }
+}
+function mrSummaryRows(result){
+  return [
+    {항목:'보고월',값:mrSanitizeForExcelCell(result.reportMonth)},
+    {항목:'센터',값:mrSanitizeForExcelCell(result.filters.selectedCenter)},
+    {항목:'전체 이용건수',값:result.totalVisits},
+    {항목:'보고월 외 데이터 수',값:result.outOfReportMonthCount},
+    {항목:'남성 수',값:result.gender.male},
+    {항목:'여성 수',값:result.gender.female},
+    {항목:'성별 미분류 수',값:result.gender.unknown},
+    {항목:'남성 비율',값:`${result.gender.maleRate}%`},
+    {항목:'여성 비율',값:`${result.gender.femaleRate}%`},
+    {항목:'40세 미만',값:result.ageGroups.under40},
+    {항목:'40대',값:result.ageGroups.age40s},
+    {항목:'50대',값:result.ageGroups.age50s},
+    {항목:'60대',값:result.ageGroups.age60s},
+    {항목:'70대',값:result.ageGroups.age70s},
+    {항목:'80세 이상',값:result.ageGroups.age80plus},
+    {항목:'연령 무효/공백',값:result.ageGroups.invalid},
+    {항목:'첫 방문 수',값:result.revisit.firstVisit},
+    {항목:'재방문 수',값:result.revisit.revisit},
+    {항목:'재방문율',값:`${result.revisit.revisitRate}%`},
+    {항목:'프로그램 만족도 평균',값:result.satisfaction.program.average},
+    {항목:'운영 만족도 평균',값:result.satisfaction.operation.average},
+    {항목:'디지털 도움 만족도 평균',값:result.satisfaction.digitalHelp.average},
+    {항목:'재방문 의향 평균',값:result.satisfaction.revisitIntention.average},
+    {항목:'평균 체류시간',값:mrFormatMinutes(result.stayTime.averageMinutes)},
+    {항목:'평균 산출 대상',값:result.stayTime.averageEligibleCount},
+    {항목:'보정 제외 수',값:result.stayTime.correctedCount},
+    {항목:'추정 제외 수',값:result.stayTime.estimatedCount},
+    {항목:'체류시간 무효 수',값:result.stayTime.invalidCount}
+  ];
+}
+function mrValidationRows(result){
+  return [
+    {항목:'원자료 행 수',값:result.validation.sourceRows},
+    {항목:'보고월 대상 행 수',값:result.validation.reportMonthRows},
+    {항목:'보고월 외 데이터 수',값:result.validation.outOfReportMonthRows},
+    {항목:'성별 미분류 수',값:result.validation.genderUnknownRows},
+    {항목:'연령 무효 수',값:result.validation.ageInvalidRows},
+    {항목:'만족도 공백 수',값:result.validation.satisfactionBlankRows},
+    {항목:'만족도 무효 수',값:result.validation.satisfactionInvalidRows},
+    {항목:'체류시간 무효 수',값:result.validation.stayTimeInvalidRows},
+    {항목:'중복 의심 수',값:result.validation.duplicateSuspectedRows}
+  ].map(r=>mrSanitizeRecordForExcel(r,['항목']));
+}
+function mrDetailRows(rows){
+  return rows.map(r=>mrSanitizeRecordForExcel({
+    행번호:r.rowIndex,
+    방문센터:r.center,
+    이름:r.maskedName,
+    연락처:r.maskedPhone,
+    성별:r.gender,
+    연령:r.age,
+    연령상태:r.ageStatus,
+    입장월:r.entryMonth,
+    알게된경로:r.awarenessPath,
+    방문횟수:r.visitCountText,
+    참여프로그램:r.program,
+    재방문여부:r.isRevisit===null?'':r.isRevisit?'재방문':'첫 방문',
+    체류시간분:r.stayTime.minutes,
+    체류상태:r.stayTime.status,
+    평균포함여부:r.stayTime.includeInAverage?'Y':'N'
+  }, ['방문센터','이름','연락처','성별','연령상태','입장월','알게된경로','방문횟수','참여프로그램','재방문여부','체류상태','평균포함여부']));
+}
+function mrBookToDownload(sheets, filename){
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(sheet=>{
+    const ws=XLSX.utils.json_to_sheet(sheet.rows, {header:sheet.header});
+    XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+  });
+  const array=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  const blob=new Blob([array],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),0);
+}
+function downloadMonthlyReportXlsx(){
+  try{
+    const result=monthlyState.result;
+    if(!result) throw new Error('먼저 월간보고를 생성해 주세요.');
+    const center=result.filters.selectedCenter==='ALL'?'전체':result.filters.selectedCenter;
+    mrBookToDownload([
+      {name:'월간보고',rows:mrSummaryRows(result),header:MR_REPORT_COLUMNS},
+      {name:'검증내역',rows:mrValidationRows(result),header:MR_VALIDATION_COLUMNS},
+      {name:'종합내역',rows:mrDetailRows(result.rows),header:MR_DETAIL_COLUMNS}
+    ], `${result.reportMonth}_월간보고_${center}.xlsx`);
+  }catch(err){ mrSetMessage(err?.message || '다운로드 중 오류가 발생했습니다.', 'err'); }
+}
+function mrCurrentCumulativeRow(result){
+  return {
+    보고월:result.reportMonth,
+    총이용건수:result.totalVisits,
+    남성:result.gender.male,
+    여성:result.gender.female,
+    성별미분류:result.gender.unknown,
+    '40세미만':result.ageGroups.under40,
+    '40대':result.ageGroups.age40s,
+    '50대':result.ageGroups.age50s,
+    '60대':result.ageGroups.age60s,
+    '70대':result.ageGroups.age70s,
+    '80세이상':result.ageGroups.age80plus,
+    연령무효:result.ageGroups.invalid,
+    첫방문:result.revisit.firstVisit,
+    재방문:result.revisit.revisit,
+    재방문율:result.revisit.revisitRate,
+    프로그램만족도평균:result.satisfaction.program.average,
+    운영만족도평균:result.satisfaction.operation.average,
+    디지털도움만족도평균:result.satisfaction.digitalHelp.average,
+    재방문의향평균:result.satisfaction.revisitIntention.average,
+    평균체류시간분:result.stayTime.averageMinutes===null?null:Math.round(result.stayTime.averageMinutes),
+    평균산출대상수:result.stayTime.averageEligibleCount,
+    보정제외수:result.stayTime.correctedCount,
+    추정제외수:result.stayTime.estimatedCount,
+    체류시간무효수:result.stayTime.invalidCount
+  };
+}
+function mrValidateCumulativeHeaders(headers){
+  const required=['보고월','총이용건수','남성','여성','40대','50대','60대','70대','80세이상','평균체류시간분'];
+  const normalized=headers.map(mrNormalizeHeader);
+  const missing=required.filter(h=>!normalized.includes(mrNormalizeHeader(h)));
+  if(missing.length) throw new Error(`누계 input 필수 컬럼이 누락되었습니다: ${missing.join(', ')}`);
+}
+function mrParseCumulativeWorkbook(wb){
+  const sheetName=wb.SheetNames.includes('월간누계') ? '월간누계' : wb.SheetNames[0];
+  if(!sheetName) return [];
+  const arrayRows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, defval:'', raw:false});
+  if(!arrayRows.length) return [];
+  mrValidateCumulativeHeaders(arrayRows[0]);
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:'', raw:false});
+  return rows.map(row=>{
+    const out={};
+    MR_CUMULATIVE_COLUMNS.forEach(col=>{ out[col]=row[col]??''; });
+    if(!mrToText(out['보고월'])) return null;
+    return out;
+  }).filter(Boolean);
+}
+async function processMonthlyCumulativeFile(file){
+  mrValidateExcelFile(file);
+  const wb=await mrReadWorkbook(file);
+  monthlyState.cumulativeRows=mrParseCumulativeWorkbook(wb);
+  if(monthlyState.result) mrBuildCumulativeResult();
+}
+async function handleMonthlyCumulativeFileChange(){
+  try{
+    const file=document.getElementById('monthlyCumulativeFile').files[0];
+    if(!file) return;
+    if(!monthlyState.result) { mrSetMessage('먼저 월간보고를 생성한 뒤 누계 파일을 업로드해 주세요.', 'warn'); return; }
+    await processMonthlyCumulativeFile(file);
+    mrSetMessage('누계 input이 반영되었습니다. 현재 보고월은 기존 누계에서 자동 제외 후 새로 반영됩니다.', 'ok');
+  }catch(err){ mrSetMessage(err?.message || '누계 처리 중 오류가 발생했습니다.', 'err'); }
+}
+function mrBuildCumulativeResult(){
+  const current=mrCurrentCumulativeRow(monthlyState.result);
+  const rowsWithout=monthlyState.cumulativeRows.filter(r=>String(r['보고월'])!==monthlyState.result.reportMonth);
+  const outputRows=[...rowsWithout,current].sort((a,b)=>String(a['보고월']).localeCompare(String(b['보고월'])));
+  monthlyState.cumulativeResult={reportMonth:monthlyState.result.reportMonth,rowsWithoutCurrentMonth:rowsWithout,currentMonthRow:current,outputRows};
+  return monthlyState.cumulativeResult;
+}
+function downloadMonthlyCumulativeOutput(){
+  try{
+    if(!monthlyState.result) throw new Error('먼저 월간보고를 생성해 주세요.');
+    const cumulative=monthlyState.cumulativeResult || mrBuildCumulativeResult();
+    const rows=cumulative.outputRows.map(r=>mrSanitizeRecordForExcel(r,['보고월']));
+    mrBookToDownload([{name:'월간누계',rows,header:MR_CUMULATIVE_COLUMNS}], `${cumulative.reportMonth}_월간누계_output.xlsx`);
+  }catch(err){ mrSetMessage(err?.message || '누계 다운로드 중 오류가 발생했습니다.', 'err'); }
+}
+function downloadMonthlyCumulativeWithoutCurrent(){
+  try{
+    if(!monthlyState.result) throw new Error('먼저 월간보고를 생성해 주세요.');
+    const cumulative=monthlyState.cumulativeResult || mrBuildCumulativeResult();
+    const rows=cumulative.outputRows.filter(r=>String(r['보고월'])!==cumulative.reportMonth).map(r=>mrSanitizeRecordForExcel(r,['보고월']));
+    mrBookToDownload([{name:'월간누계',rows,header:MR_CUMULATIVE_COLUMNS}], `${cumulative.reportMonth}_제외_누계_input용.xlsx`);
+  }catch(err){ mrSetMessage(err?.message || '누계 다운로드 중 오류가 발생했습니다.', 'err'); }
+}
+function clearMonthlyReport(){
+  monthlyState={rawRows:[],normalizedRows:[],result:null,selectedCenter:'ALL',cumulativeRows:[],cumulativeResult:null};
+  const input=document.getElementById('monthlyInputFile'); if(input) input.value='';
+  const cum=document.getElementById('monthlyCumulativeFile'); if(cum) cum.value='';
+  ['mrReportMonth','mrAvgStay'].forEach(id=>setText(id,'-'));
+  ['mrTotalVisits','mrEligibleCount','mrOutMonthCount'].forEach(id=>setText(id,'0'));
+  ['mrGenderTable','mrAgeTable','mrSatisfactionTable','mrStayTable','mrTextTable','mrValidationTable'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; });
+  const preview=document.getElementById('mrHtmlPreview'); if(preview) preview.innerHTML='<div class="small">월간보고 생성 후 화면 요약이 표시됩니다.</div>';
+  const sel=document.getElementById('monthlyCenterSelect'); if(sel) sel.innerHTML='<option value="ALL">전체</option>';
+  mrSetMessage('월간보고 INPUT.xlsx를 업로드해 주세요.');
+}
+
+document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id)); }
 function scrollToReport(id){ setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}),80); }
 
 /* Lottery draw / ladder */
@@ -1036,6 +1858,708 @@ const lotteryApp = (() => {
   return {init, reset, shuffle, reveal};
 })();
 
+
+/* Monthly Report Tab - local only, no external upload */
+const MR_MAX_EXCEL_FILE_BYTES = 20 * 1024 * 1024;
+const MR_REQUIRED_KEYS = ['gender','age','entryDateTime','exitDateTime','visitCount','programSatisfaction','operationSatisfaction','digitalHelpSatisfaction','revisitIntention'];
+const MR_OPTIONAL_KEYS = ['center','name','phone','residence','awarenessPath','program'];
+const MR_HEADER_ALIASES = {
+  center:['방문센터','센터','이용센터'],
+  name:['이름','성명'],
+  phone:['연락처','전화번호','휴대폰','휴대전화'],
+  gender:['성별'],
+  age:['연령대','연령','나이'],
+  residence:['거주지','주소','지역'],
+  entryDateTime:['입장일자','입장시각','입장시간','입장일시'],
+  exitDateTime:['퇴장일자','퇴장시각','퇴장시간','퇴장일시'],
+  awarenessPath:['알게된 경로','인지경로','방문경로'],
+  visitCount:['방문횟수','방문 회차','재방문 여부'],
+  program:['참여 프로그램','프로그램','이용 프로그램'],
+  programSatisfaction:['프로그램 만족도'],
+  operationSatisfaction:['운영 만족도'],
+  digitalHelpSatisfaction:['디지털기기 사용 도움 만족도','디지털 도움 만족도'],
+  revisitIntention:['재방문 의향','재방문 여부']
+};
+const MR_SCORE_MAP = {'매우 그렇다':5,'그렇다':4,'보통이다':3,'아니다':2,'매우 아니다':1};
+const MR_STAY_STATUSES = ['VALID','CORRECTED_ENTRY_BEFORE_OPEN','CORRECTED_EXIT_AFTER_CLOSE','ESTIMATED_EXIT','AUTO_EXIT_21','INVALID_NO_ENTRY','INVALID_BAD_ENTRY','INVALID_BAD_EXIT','INVALID_NEGATIVE','INVALID_ZERO','INVALID_AFTER_CLOSE'];
+const MR_REPORT_COLUMNS = ['항목','값'];
+const MR_VALIDATION_COLUMNS = ['항목','값'];
+const MR_DETAIL_COLUMNS = ['행번호','방문센터','이름','연락처','성별','연령','연령상태','입장월','알게된경로','방문횟수','참여프로그램','재방문여부','체류시간분','체류상태','평균포함여부'];
+const MR_CUMULATIVE_COLUMNS = ['보고월','총이용건수','남성','여성','성별미분류','40세미만','40대','50대','60대','70대','80세이상','연령무효','첫방문','재방문','재방문율','프로그램만족도평균','운영만족도평균','디지털도움만족도평균','재방문의향평균','평균체류시간분','평균산출대상수','보정제외수','추정제외수','체류시간무효수'];
+
+let monthlyState = {
+  rawRows: [],
+  normalizedRows: [],
+  result: null,
+  selectedCenter: 'ALL',
+  cumulativeRows: [],
+  cumulativeResult: null
+};
+
+function mrSafeInfo(message, meta){
+  // 개인정보 원문, 행 전체, 파일 객체는 기록하지 않는다.
+  // 필요 시 운영환경에서 no-op 처리 가능.
+}
+
+function mrSetMessage(text, type=''){
+  const el=document.getElementById('monthlyMessage');
+  if(!el) return;
+  el.className='monthly-message' + (type ? ' ' + type : '');
+  el.textContent=text;
+}
+function mrNormalizeHeader(value){ return String(value??'').replace(/\s+/g,'').trim(); }
+function mrToText(value){ return value===undefined || value===null ? '' : String(value).trim(); }
+function mrRate(n,d){ return d>0 ? Math.round((n/d)*1000)/10 : 0; }
+function mrAverage(values){ return values.length ? Math.round((values.reduce((s,v)=>s+v,0)/values.length)*100)/100 : null; }
+function mrAverageRaw(values){ return values.length ? values.reduce((s,v)=>s+v,0)/values.length : null; }
+function mrFormatMinutes(minutes){
+  if(minutes===null || minutes===undefined || Number.isNaN(minutes)) return '-';
+  const rounded=Math.round(minutes);
+  const h=Math.floor(rounded/60);
+  const m=rounded%60;
+  return `${h}시간 ${m}분 (${rounded}분)`;
+}
+function mrSanitizeForExcelCell(value){
+  const text=String(value??'');
+  return /^[=+\-@]/.test(text) ? `'${text}` : text;
+}
+function mrSanitizeRecordForExcel(row, textColumns){
+  const out={...row};
+  textColumns.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(out,k)) out[k]=mrSanitizeForExcelCell(out[k]); });
+  return out;
+}
+function mrValidateExcelFile(file){
+  if(!file) throw new Error('파일을 선택해 주세요.');
+  const lower=file.name.toLowerCase();
+  if(!lower.endsWith('.xlsx') && !lower.endsWith('.xls')) throw new Error('xlsx 또는 xls 파일만 업로드할 수 있습니다.');
+  if(file.size===0) throw new Error('빈 파일은 업로드할 수 없습니다.');
+  if(file.size>MR_MAX_EXCEL_FILE_BYTES) throw new Error('파일 크기는 20MB 이하만 업로드할 수 있습니다.');
+}
+function mrReadWorkbook(file){
+  mrValidateExcelFile(file);
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const data=new Uint8Array(e.target.result);
+        const wb=XLSX.read(data,{type:'array', cellDates:true});
+        resolve(wb);
+      }catch(err){ reject(err); }
+    };
+    reader.onerror=()=>reject(new Error('파일을 읽지 못했습니다.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+function mrFindHeaderIndex(headers, key){
+  const aliases=(MR_HEADER_ALIASES[key]||[]).map(mrNormalizeHeader);
+  const normalized=headers.map(mrNormalizeHeader);
+  return normalized.findIndex(h=>aliases.includes(h));
+}
+function mrValidateRequiredColumns(headers){
+  const missingRequired=MR_REQUIRED_KEYS.filter(key=>mrFindHeaderIndex(headers,key)<0);
+  const missingOptional=MR_OPTIONAL_KEYS.filter(key=>mrFindHeaderIndex(headers,key)<0);
+  if(missingRequired.length){
+    const labels=missingRequired.map(key=>(MR_HEADER_ALIASES[key]||[key])[0]).join(', ');
+    throw new Error(`필수 컬럼이 누락되었습니다: ${labels}`);
+  }
+  return {missingRequired, missingOptional};
+}
+function mrGetCell(row, headers, key){
+  const idx=mrFindHeaderIndex(headers,key);
+  return idx>=0 ? row[idx] : '';
+}
+function mrParseInputWorkbook(wb){
+  const sheetName=wb.SheetNames.includes('종합내역') ? '종합내역' : wb.SheetNames[0];
+  if(!sheetName) throw new Error('엑셀 파일에 시트가 없습니다.');
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, defval:'', raw:true});
+  if(rows.length<2) return [];
+  const headers=rows[0];
+  mrValidateRequiredColumns(headers);
+  return rows.slice(1)
+    .map((row,i)=>({row,rowIndex:i+2}))
+    .filter(({row})=>row.some(cell=>mrToText(cell)!==''))
+    .map(({row,rowIndex})=>({
+      rowIndex,
+      center:mrGetCell(row,headers,'center'),
+      name:mrGetCell(row,headers,'name'),
+      phone:mrGetCell(row,headers,'phone'),
+      gender:mrGetCell(row,headers,'gender'),
+      age:mrGetCell(row,headers,'age'),
+      residence:mrGetCell(row,headers,'residence'),
+      entryDateTime:mrGetCell(row,headers,'entryDateTime'),
+      exitDateTime:mrGetCell(row,headers,'exitDateTime'),
+      awarenessPath:mrGetCell(row,headers,'awarenessPath'),
+      visitCount:mrGetCell(row,headers,'visitCount'),
+      program:mrGetCell(row,headers,'program'),
+      programSatisfaction:mrGetCell(row,headers,'programSatisfaction'),
+      operationSatisfaction:mrGetCell(row,headers,'operationSatisfaction'),
+      digitalHelpSatisfaction:mrGetCell(row,headers,'digitalHelpSatisfaction'),
+      revisitIntention:mrGetCell(row,headers,'revisitIntention')
+    }));
+}
+function mrExcelSerialToDate(value){
+  if(typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code){
+    const parsed=XLSX.SSF.parse_date_code(value);
+    if(parsed) return new Date(parsed.y, parsed.m-1, parsed.d, parsed.H, parsed.M, Math.floor(parsed.S||0));
+  }
+  const epoch=new Date(Date.UTC(1899,11,30));
+  return new Date(epoch.getTime()+Number(value)*86400000);
+}
+function mrParseDateTimeWithStatus(value){
+  const rawText=String(value??'').trim();
+  if(value===undefined || value===null || rawText==='') return {date:null,status:'BLANK',rawText};
+  if(value instanceof Date) return Number.isNaN(value.getTime()) ? {date:null,status:'INVALID',rawText} : {date:value,status:'VALID',rawText};
+  if(typeof value==='number' && Number.isFinite(value)){
+    const dt=mrExcelSerialToDate(value);
+    return Number.isNaN(dt.getTime()) ? {date:null,status:'INVALID',rawText} : {date:dt,status:'VALID',rawText};
+  }
+  const normalized=rawText.replace(/[.]/g,'-').replace(/\//g,'-').replace(/년|월/g,'-').replace(/일/g,'').replace('T',' ').replace(/\s+/g,' ').trim();
+  const match=normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+  if(!match) return {date:null,status:'INVALID',rawText};
+  const [,y,m,d,hh='0',mm='0',ss='0']=match;
+  const dt=new Date(Number(y),Number(m)-1,Number(d),Number(hh),Number(mm),Number(ss),0);
+  const ok=dt.getFullYear()===Number(y)&&dt.getMonth()===Number(m)-1&&dt.getDate()===Number(d)&&dt.getHours()===Number(hh)&&dt.getMinutes()===Number(mm);
+  return ok ? {date:dt,status:'VALID',rawText} : {date:null,status:'INVALID',rawText};
+}
+function mrYearMonth(date){
+  if(!date || Number.isNaN(date.getTime())) return null;
+  return `${date.getFullYear()}-${pad2(date.getMonth()+1)}`;
+}
+function mrMaskName(value){
+  const name=mrToText(value);
+  if(!name) return '';
+  if(name.length===1) return name;
+  return name[0]+'O'.repeat(name.length-1);
+}
+function mrMaskPhone(value){
+  const digits=mrToText(value).replace(/\D/g,'');
+  if(!digits) return '';
+  if(digits.length<7) return '0'.repeat(digits.length);
+  return digits.slice(0,3)+'0000'+digits.slice(-4);
+}
+function mrNormalizeGender(value){
+  const text=mrToText(value).toLowerCase();
+  if(['남','남성','m','male'].includes(text)) return 'MALE';
+  if(['여','여성','f','female'].includes(text)) return 'FEMALE';
+  return 'UNKNOWN';
+}
+function mrNormalizeAge(value){
+  const text=mrToText(value);
+  if(!text) return {age:null,status:'BLANK'};
+  if(/^\d+$/.test(text)) return {age:Number(text),status:'VALID'};
+  const decade=text.match(/^(\d{2})대$/);
+  if(decade) return {age:Number(decade[1])+5,status:'VALID'};
+  const numbers=(text.match(/\d+/g)||[]).map(Number);
+  if(numbers.length>=2) return {age:Math.floor((numbers[0]+numbers[1])/2),status:'VALID'};
+  if(numbers.length===1) return {age:numbers[0],status:'VALID'};
+  return {age:null,status:'INVALID'};
+}
+function mrNormalizeSatisfaction(value){
+  const rawText=mrToText(value);
+  if(!rawText) return {score:null,status:'BLANK',rawText};
+  if(MR_SCORE_MAP[rawText]===undefined) return {score:null,status:'INVALID',rawText};
+  return {score:MR_SCORE_MAP[rawText],status:'VALID',rawText};
+}
+function mrNormalizeRevisit(value){
+  const text=mrToText(value);
+  if(!text) return null;
+  return text==='첫 방문' ? false : true;
+}
+function mrMinutesOfDay(date){ return date.getHours()*60+date.getMinutes(); }
+function mrSetTime(date,timeText){ const [h,m]=timeText.split(':').map(Number); const d=new Date(date); d.setHours(h,m,0,0); return d; }
+function mrAddMinutes(date,minutes){ return new Date(date.getTime()+minutes*60000); }
+function mrDiffMinutes(start,end){ return Math.round((end.getTime()-start.getTime())/60000); }
+function mrIsAutoExit21(exitAt){ return !!exitAt && mrMinutesOfDay(exitAt)===timeToMinutes(AUTO_EXIT_TIME); }
+function mrStayResult(input){
+  return {
+    status:input.status,
+    entryAt:input.entryAt||null,
+    exitAt:input.exitAt||null,
+    correctedEntryAt:input.correctedEntryAt||null,
+    correctedExitAt:input.correctedExitAt||null,
+    minutes:input.minutes??null,
+    isEstimated:!!input.isEstimated,
+    isCorrected:!!input.isCorrected,
+    includeInAverage:input.status==='VALID',
+    reason:input.reason||''
+  };
+}
+function mrCalculateStayTime(entryAt, entryStatus, exitAt, exitStatus){
+  const openMinutes=timeToMinutes(OPS_START_TIME);
+  const closeMinutes=timeToMinutes(OPS_END_TIME);
+  if(entryStatus==='BLANK') return mrStayResult({status:'INVALID_NO_ENTRY',entryAt,exitAt,reason:'입장시각 공백'});
+  if(entryStatus==='INVALID' || !entryAt) return mrStayResult({status:'INVALID_BAD_ENTRY',entryAt,exitAt,reason:'입장시각 형식 오류'});
+  const entryMinutes=mrMinutesOfDay(entryAt);
+  if(entryMinutes>=closeMinutes) return mrStayResult({status:'INVALID_AFTER_CLOSE',entryAt,exitAt,reason:'운영 종료 이후 입장'});
+  if(exitStatus==='INVALID') return mrStayResult({status:'INVALID_BAD_EXIT',entryAt,exitAt,reason:'퇴장시각 형식 오류'});
+  if(entryMinutes<openMinutes){
+    const correctedEntryAt=mrSetTime(entryAt, OPS_START_TIME);
+    const minutes=exitAt ? mrDiffMinutes(correctedEntryAt, exitAt) : null;
+    return mrStayResult({status:'CORRECTED_ENTRY_BEFORE_OPEN',entryAt,exitAt,correctedEntryAt,correctedExitAt:exitAt,minutes:minutes&&minutes>0?minutes:null,isCorrected:true,reason:'09:00 이전 입장 보정, 평균 제외'});
+  }
+  if(exitStatus==='BLANK' || !exitAt){
+    let correctedExitAt=mrAddMinutes(entryAt, ESTIMATED_STAY_MINUTES);
+    if(mrMinutesOfDay(correctedExitAt)>closeMinutes) correctedExitAt=mrSetTime(entryAt, OPS_END_TIME);
+    const minutes=mrDiffMinutes(entryAt, correctedExitAt);
+    return mrStayResult({status:'ESTIMATED_EXIT',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt,minutes:minutes>0?minutes:null,isEstimated:true,reason:'퇴장시각 없음, 평균 제외'});
+  }
+  if(mrIsAutoExit21(exitAt)){
+    let correctedExitAt=mrAddMinutes(entryAt, ESTIMATED_STAY_MINUTES);
+    if(mrMinutesOfDay(correctedExitAt)>closeMinutes) correctedExitAt=mrSetTime(entryAt, OPS_END_TIME);
+    const minutes=mrDiffMinutes(entryAt, correctedExitAt);
+    return mrStayResult({status:'AUTO_EXIT_21',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt,minutes:minutes>0?minutes:null,isEstimated:true,reason:'21:00 자동퇴장, 평균 제외'});
+  }
+  const exitMinutes=mrMinutesOfDay(exitAt);
+  if(exitMinutes>closeMinutes){
+    const correctedExitAt=mrSetTime(exitAt, OPS_END_TIME);
+    const minutes=mrDiffMinutes(entryAt, correctedExitAt);
+    return mrStayResult({status:'CORRECTED_EXIT_AFTER_CLOSE',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt,minutes:minutes>0?minutes:null,isCorrected:true,reason:'19:00 이후 퇴장 보정, 평균 제외'});
+  }
+  const minutes=mrDiffMinutes(entryAt, exitAt);
+  if(minutes<0) return mrStayResult({status:'INVALID_NEGATIVE',entryAt,exitAt,reason:'퇴장시각이 입장시각보다 빠름'});
+  if(minutes===0) return mrStayResult({status:'INVALID_ZERO',entryAt,exitAt,reason:'체류시간 0분'});
+  return mrStayResult({status:'VALID',entryAt,exitAt,correctedEntryAt:entryAt,correctedExitAt:exitAt,minutes});
+}
+function mrNormalizeRows(rawRows){
+  return rawRows.map(raw=>{
+    const entry=mrParseDateTimeWithStatus(raw.entryDateTime);
+    const exit=mrParseDateTimeWithStatus(raw.exitDateTime);
+    const age=mrNormalizeAge(raw.age);
+    return {
+      rowIndex:raw.rowIndex,
+      center:mrToText(raw.center)||'미분류',
+      maskedName:mrMaskName(raw.name),
+      maskedPhone:mrMaskPhone(raw.phone),
+      gender:mrNormalizeGender(raw.gender),
+      age:age.age,
+      ageStatus:age.status,
+      entryAt:entry.date,
+      entryStatus:entry.status,
+      exitAt:exit.date,
+      exitStatus:exit.status,
+      entryMonth:mrYearMonth(entry.date),
+      awarenessPath:mrToText(raw.awarenessPath),
+      visitCountText:mrToText(raw.visitCount),
+      program:mrToText(raw.program),
+      isRevisit:mrNormalizeRevisit(raw.visitCount),
+      satisfaction:{
+        program:mrNormalizeSatisfaction(raw.programSatisfaction),
+        operation:mrNormalizeSatisfaction(raw.operationSatisfaction),
+        digitalHelp:mrNormalizeSatisfaction(raw.digitalHelpSatisfaction),
+        revisitIntention:mrNormalizeSatisfaction(raw.revisitIntention)
+      },
+      stayTime:mrCalculateStayTime(entry.date, entry.status, exit.date, exit.status)
+    };
+  });
+}
+function mrDetectReportMonth(rows){
+  const counts={};
+  rows.forEach(r=>{ if(r.entryMonth) counts[r.entryMonth]=(counts[r.entryMonth]||0)+1; });
+  const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length) throw new Error('입장일자에서 보고월을 감지할 수 없습니다.');
+  const reportMonth=sorted[0][0];
+  return {reportMonth, monthCounts:counts, outOfReportMonthCount:rows.filter(r=>r.entryMonth && r.entryMonth!==reportMonth).length};
+}
+function mrFilterRows(rows, center){ return center==='ALL' ? rows : rows.filter(r=>r.center===center); }
+function mrGenderStats(rows){
+  const male=rows.filter(r=>r.gender==='MALE').length;
+  const female=rows.filter(r=>r.gender==='FEMALE').length;
+  const unknown=rows.length-male-female;
+  const validCount=male+female;
+  return {male,female,unknown,validCount,maleRate:mrRate(male,validCount),femaleRate:mrRate(female,validCount)};
+}
+function mrAgeStats(rows){
+  const s={under40:0,age40s:0,age50s:0,age60s:0,age70s:0,age80plus:0,invalid:0,validCount:0};
+  rows.forEach(r=>{
+    if(r.age===null || r.ageStatus!=='VALID'){ s.invalid++; return; }
+    s.validCount++;
+    if(r.age<40) s.under40++; else if(r.age<50) s.age40s++; else if(r.age<60) s.age50s++; else if(r.age<70) s.age60s++; else if(r.age<80) s.age70s++; else s.age80plus++;
+  });
+  return s;
+}
+function mrRevisitStats(rows){
+  const firstVisit=rows.filter(r=>r.isRevisit===false).length;
+  const revisit=rows.filter(r=>r.isRevisit===true).length;
+  const blank=rows.filter(r=>r.isRevisit===null).length;
+  return {firstVisit,revisit,blank,revisitRate:mrRate(revisit, firstVisit+revisit)};
+}
+function mrOneSatisfactionStats(items){
+  const valid=items.filter(x=>x.status==='VALID'&&x.score!==null).map(x=>x.score);
+  return {average:mrAverage(valid),validCount:valid.length,blankCount:items.filter(x=>x.status==='BLANK').length,invalidCount:items.filter(x=>x.status==='INVALID').length};
+}
+function mrSatisfactionStats(rows){
+  return {
+    program:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.program)),
+    operation:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.operation)),
+    digitalHelp:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.digitalHelp)),
+    revisitIntention:mrOneSatisfactionStats(rows.map(r=>r.satisfaction.revisitIntention))
+  };
+}
+function mrStayStats(rows){
+  const statusCounts={}; MR_STAY_STATUSES.forEach(s=>statusCounts[s]=0);
+  rows.forEach(r=>{ statusCounts[r.stayTime.status]=(statusCounts[r.stayTime.status]||0)+1; });
+  const eligible=rows.filter(r=>r.stayTime.status==='VALID' && r.stayTime.minutes!==null).map(r=>r.stayTime.minutes);
+  return {
+    averageMinutes:mrAverageRaw(eligible),
+    averageEligibleCount:eligible.length,
+    correctedCount:(statusCounts.CORRECTED_ENTRY_BEFORE_OPEN||0)+(statusCounts.CORRECTED_EXIT_AFTER_CLOSE||0),
+    estimatedCount:(statusCounts.ESTIMATED_EXIT||0)+(statusCounts.AUTO_EXIT_21||0),
+    invalidCount:rows.filter(r=>String(r.stayTime.status).startsWith('INVALID')).length,
+    statusCounts
+  };
+}
+function mrTextStatsBy(rows, selector){
+  const counts={}; let blankCount=0;
+  rows.forEach(r=>{ const v=selector(r).trim(); if(!v){blankCount++; return;} counts[v]=(counts[v]||0)+1; });
+  return {counts,blankCount,totalCount:rows.length};
+}
+function mrTextStats(rows){
+  return {awarenessPath:mrTextStatsBy(rows,r=>r.awarenessPath), program:mrTextStatsBy(rows,r=>r.program)};
+}
+function mrDuplicateSuspectedRows(rows){
+  const seen=new Set(); let dup=0;
+  rows.forEach(r=>{
+    if(!r.maskedPhone || !r.entryAt) return;
+    const key=`${r.maskedPhone}|${r.entryAt.toISOString()}`;
+    if(seen.has(key)) dup++;
+    seen.add(key);
+  });
+  return dup;
+}
+function mrValidationStats(sourceRows, reportRows, reportMonth){
+  const satisfactionValues=reportRows.flatMap(r=>Object.values(r.satisfaction));
+  return {
+    sourceRows:sourceRows.length,
+    reportMonthRows:reportRows.length,
+    outOfReportMonthRows:sourceRows.filter(r=>r.entryMonth && r.entryMonth!==reportMonth).length,
+    genderUnknownRows:reportRows.filter(r=>r.gender==='UNKNOWN').length,
+    ageInvalidRows:reportRows.filter(r=>r.ageStatus!=='VALID').length,
+    satisfactionBlankRows:satisfactionValues.filter(v=>v.status==='BLANK').length,
+    satisfactionInvalidRows:satisfactionValues.filter(v=>v.status==='INVALID').length,
+    stayTimeInvalidRows:reportRows.filter(r=>String(r.stayTime.status).startsWith('INVALID')).length,
+    duplicateSuspectedRows:mrDuplicateSuspectedRows(reportRows)
+  };
+}
+function mrCalculateReport(rows, selectedCenter='ALL'){
+  const detected=mrDetectReportMonth(rows);
+  const reportRows=rows.filter(r=>r.entryMonth===detected.reportMonth);
+  const filtered=mrFilterRows(reportRows, selectedCenter);
+  const centers=Array.from(new Set(reportRows.map(r=>r.center))).sort();
+  return {
+    reportMonth:detected.reportMonth,
+    totalRows:rows.length,
+    totalVisits:filtered.length,
+    outOfReportMonthCount:detected.outOfReportMonthCount,
+    filters:{selectedCenter,availableCenters:centers},
+    gender:mrGenderStats(filtered),
+    ageGroups:mrAgeStats(filtered),
+    revisit:mrRevisitStats(filtered),
+    satisfaction:mrSatisfactionStats(filtered),
+    stayTime:mrStayStats(filtered),
+    textResponses:mrTextStats(filtered),
+    validation:mrValidationStats(rows, filtered, detected.reportMonth),
+    rows:filtered
+  };
+}
+function mrTable(rows, headers){
+  let html='<table class="monthly-table"><thead><tr>'+headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')+'</tr></thead><tbody>';
+  rows.forEach(row=>{ html+='<tr>'+headers.map(h=>`<td>${escapeHtml(row[h]??'')}</td>`).join('')+'</tr>'; });
+  html+='</tbody></table>';
+  return html;
+}
+function mrTopCounts(counts, limit=5){
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0])).slice(0,limit).map(([k,v])=>`${k}(${v})`).join(', ') || '-';
+}
+function mrRenderCenterSelect(result){
+  const sel=document.getElementById('monthlyCenterSelect');
+  if(!sel) return;
+  const current=monthlyState.selectedCenter;
+  sel.innerHTML='<option value="ALL">전체</option>'+result.filters.availableCenters.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  sel.value=current;
+}
+function mrRenderResult(result){
+  if(!result) return;
+  mrRenderCenterSelect(result);
+  setText('mrReportMonth', result.reportMonth);
+  setText('mrTotalVisits', result.totalVisits.toLocaleString());
+  setText('mrAvgStay', mrFormatMinutes(result.stayTime.averageMinutes));
+  setText('mrEligibleCount', result.stayTime.averageEligibleCount.toLocaleString());
+  setText('mrOutMonthCount', result.outOfReportMonthCount.toLocaleString());
+  document.getElementById('mrGenderTable').innerHTML=mrTable([
+    {'구분':'남성','건수':result.gender.male,'비율':result.gender.maleRate+'%'},
+    {'구분':'여성','건수':result.gender.female,'비율':result.gender.femaleRate+'%'},
+    {'구분':'미분류','건수':result.gender.unknown,'비율':'분모 제외'}
+  ], ['구분','건수','비율']);
+  document.getElementById('mrAgeTable').innerHTML=mrTable([
+    {'구분':'40세 미만','건수':result.ageGroups.under40},
+    {'구분':'40대','건수':result.ageGroups.age40s},
+    {'구분':'50대','건수':result.ageGroups.age50s},
+    {'구분':'60대','건수':result.ageGroups.age60s},
+    {'구분':'70대','건수':result.ageGroups.age70s},
+    {'구분':'80세 이상','건수':result.ageGroups.age80plus},
+    {'구분':'무효/공백','건수':result.ageGroups.invalid}
+  ], ['구분','건수']);
+  const satRows=[
+    ['프로그램 만족도',result.satisfaction.program],
+    ['운영 만족도',result.satisfaction.operation],
+    ['디지털 도움 만족도',result.satisfaction.digitalHelp],
+    ['재방문 의향',result.satisfaction.revisitIntention]
+  ].map(([label,s])=>({'항목':label,'평균':s.average===null?'-':s.average.toFixed(2),'유효':s.validCount,'공백':s.blankCount,'무효':s.invalidCount}));
+  document.getElementById('mrSatisfactionTable').innerHTML=mrTable(satRows,['항목','평균','유효','공백','무효']);
+  document.getElementById('mrStayTable').innerHTML=mrTable([
+    {'항목':'평균 체류시간','값':mrFormatMinutes(result.stayTime.averageMinutes)},
+    {'항목':'평균 산출 대상','값':result.stayTime.averageEligibleCount+'건'},
+    {'항목':'보정 제외','값':result.stayTime.correctedCount+'건'},
+    {'항목':'추정 제외','값':result.stayTime.estimatedCount+'건'},
+    {'항목':'무효 제외','값':result.stayTime.invalidCount+'건'}
+  ], ['항목','값']);
+  document.getElementById('mrTextTable').innerHTML=mrTable([
+    {'항목':'첫 방문','값':result.revisit.firstVisit+'건'},
+    {'항목':'재방문','값':result.revisit.revisit+'건'},
+    {'항목':'재방문율','값':result.revisit.revisitRate+'%'},
+    {'항목':'알게 된 경로 TOP','값':mrTopCounts(result.textResponses.awarenessPath.counts)},
+    {'항목':'참여 프로그램 TOP','값':mrTopCounts(result.textResponses.program.counts)}
+  ], ['항목','값']);
+  document.getElementById('mrValidationTable').innerHTML=mrTable([
+    {'항목':'원자료 행 수','값':result.validation.sourceRows+'건'},
+    {'항목':'보고월 대상 행 수','값':result.validation.reportMonthRows+'건'},
+    {'항목':'보고월 외 데이터 수','값':result.validation.outOfReportMonthRows+'건'},
+    {'항목':'성별 미분류 수','값':result.validation.genderUnknownRows+'건'},
+    {'항목':'연령 무효 수','값':result.validation.ageInvalidRows+'건'},
+    {'항목':'만족도 공백 수','값':result.validation.satisfactionBlankRows+'건'},
+    {'항목':'만족도 무효 수','값':result.validation.satisfactionInvalidRows+'건'},
+    {'항목':'체류시간 무효 수','값':result.validation.stayTimeInvalidRows+'건'},
+    {'항목':'중복 의심 수','값':result.validation.duplicateSuspectedRows+'건'},
+    {'항목':'중복 안내','값':'마스킹 기준 참고값'}
+  ], ['항목','값']);
+  document.getElementById('mrHtmlPreview').innerHTML=`
+    <div class="grid three">
+      <div class="stat blue"><div class="label">보고월</div><div class="value" style="font-size:20px">${escapeHtml(result.reportMonth)}</div></div>
+      <div class="stat green"><div class="label">총 이용건수</div><div class="value">${result.totalVisits.toLocaleString()}</div></div>
+      <div class="stat purple"><div class="label">평균 체류시간</div><div class="value" style="font-size:20px">${escapeHtml(mrFormatMinutes(result.stayTime.averageMinutes))}</div><div class="stat-note">보정·추정 제외</div></div>
+    </div>
+    <div class="small" style="margin-top:12px">평균 체류시간은 보정·추정이 없는 정상 입퇴장 데이터만 기준으로 산출됩니다.</div>
+  `;
+}
+async function processMonthlyReport(){
+  try{
+    const file=document.getElementById('monthlyInputFile').files[0];
+    mrValidateExcelFile(file);
+    mrSetMessage('월간보고 파일을 처리하는 중입니다.', 'warn');
+    const wb=await mrReadWorkbook(file);
+    const raw=mrParseInputWorkbook(wb);
+    if(raw.length>MAX_UPLOAD_ROWS) throw new Error(`업로드 행이 너무 많습니다. 최대 ${MAX_UPLOAD_ROWS.toLocaleString()}행까지 처리합니다.`);
+    const normalized=mrNormalizeRows(raw);
+    monthlyState.rawRows=[]; // 원본 행은 보존하지 않음
+    monthlyState.normalizedRows=normalized;
+    monthlyState.selectedCenter='ALL';
+    monthlyState.result=mrCalculateReport(normalized,'ALL');
+    monthlyState.cumulativeRows=[];
+    monthlyState.cumulativeResult=null;
+    mrRenderResult(monthlyState.result);
+    mrSetMessage(`${monthlyState.result.reportMonth} 월간보고가 생성되었습니다. 개인정보 원문은 저장하지 않고 마스킹값만 출력합니다.`, 'ok');
+    const cumulativeFile=document.getElementById('monthlyCumulativeFile').files[0];
+    if(cumulativeFile) await processMonthlyCumulativeFile(cumulativeFile);
+  }catch(err){
+    mrSetMessage(err?.message || '월간보고 처리 중 오류가 발생했습니다.', 'err');
+  }
+}
+function changeMonthlyCenter(center){
+  try{
+    if(!monthlyState.normalizedRows.length) return;
+    monthlyState.selectedCenter=center;
+    monthlyState.result=mrCalculateReport(monthlyState.normalizedRows, center);
+    mrRenderResult(monthlyState.result);
+    mrSetMessage(`센터 조건이 '${center==='ALL'?'전체':center}'로 변경되었습니다.`, 'ok');
+  }catch(err){ mrSetMessage(err?.message || '센터 변경 중 오류가 발생했습니다.', 'err'); }
+}
+function mrSummaryRows(result){
+  return [
+    {항목:'보고월',값:mrSanitizeForExcelCell(result.reportMonth)},
+    {항목:'센터',값:mrSanitizeForExcelCell(result.filters.selectedCenter)},
+    {항목:'전체 이용건수',값:result.totalVisits},
+    {항목:'보고월 외 데이터 수',값:result.outOfReportMonthCount},
+    {항목:'남성 수',값:result.gender.male},
+    {항목:'여성 수',값:result.gender.female},
+    {항목:'성별 미분류 수',값:result.gender.unknown},
+    {항목:'남성 비율',값:`${result.gender.maleRate}%`},
+    {항목:'여성 비율',값:`${result.gender.femaleRate}%`},
+    {항목:'40세 미만',값:result.ageGroups.under40},
+    {항목:'40대',값:result.ageGroups.age40s},
+    {항목:'50대',값:result.ageGroups.age50s},
+    {항목:'60대',값:result.ageGroups.age60s},
+    {항목:'70대',값:result.ageGroups.age70s},
+    {항목:'80세 이상',값:result.ageGroups.age80plus},
+    {항목:'연령 무효/공백',값:result.ageGroups.invalid},
+    {항목:'첫 방문 수',값:result.revisit.firstVisit},
+    {항목:'재방문 수',값:result.revisit.revisit},
+    {항목:'재방문율',값:`${result.revisit.revisitRate}%`},
+    {항목:'프로그램 만족도 평균',값:result.satisfaction.program.average},
+    {항목:'운영 만족도 평균',값:result.satisfaction.operation.average},
+    {항목:'디지털 도움 만족도 평균',값:result.satisfaction.digitalHelp.average},
+    {항목:'재방문 의향 평균',값:result.satisfaction.revisitIntention.average},
+    {항목:'평균 체류시간',값:mrFormatMinutes(result.stayTime.averageMinutes)},
+    {항목:'평균 산출 대상',값:result.stayTime.averageEligibleCount},
+    {항목:'보정 제외 수',값:result.stayTime.correctedCount},
+    {항목:'추정 제외 수',값:result.stayTime.estimatedCount},
+    {항목:'체류시간 무효 수',값:result.stayTime.invalidCount}
+  ];
+}
+function mrValidationRows(result){
+  return [
+    {항목:'원자료 행 수',값:result.validation.sourceRows},
+    {항목:'보고월 대상 행 수',값:result.validation.reportMonthRows},
+    {항목:'보고월 외 데이터 수',값:result.validation.outOfReportMonthRows},
+    {항목:'성별 미분류 수',값:result.validation.genderUnknownRows},
+    {항목:'연령 무효 수',값:result.validation.ageInvalidRows},
+    {항목:'만족도 공백 수',값:result.validation.satisfactionBlankRows},
+    {항목:'만족도 무효 수',값:result.validation.satisfactionInvalidRows},
+    {항목:'체류시간 무효 수',값:result.validation.stayTimeInvalidRows},
+    {항목:'중복 의심 수',값:result.validation.duplicateSuspectedRows}
+  ].map(r=>mrSanitizeRecordForExcel(r,['항목']));
+}
+function mrDetailRows(rows){
+  return rows.map(r=>mrSanitizeRecordForExcel({
+    행번호:r.rowIndex,
+    방문센터:r.center,
+    이름:r.maskedName,
+    연락처:r.maskedPhone,
+    성별:r.gender,
+    연령:r.age,
+    연령상태:r.ageStatus,
+    입장월:r.entryMonth,
+    알게된경로:r.awarenessPath,
+    방문횟수:r.visitCountText,
+    참여프로그램:r.program,
+    재방문여부:r.isRevisit===null?'':r.isRevisit?'재방문':'첫 방문',
+    체류시간분:r.stayTime.minutes,
+    체류상태:r.stayTime.status,
+    평균포함여부:r.stayTime.includeInAverage?'Y':'N'
+  }, ['방문센터','이름','연락처','성별','연령상태','입장월','알게된경로','방문횟수','참여프로그램','재방문여부','체류상태','평균포함여부']));
+}
+function mrBookToDownload(sheets, filename){
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(sheet=>{
+    const ws=XLSX.utils.json_to_sheet(sheet.rows, {header:sheet.header});
+    XLSX.utils.book_append_sheet(wb, ws, sheet.name);
+  });
+  const array=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  const blob=new Blob([array],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),0);
+}
+function downloadMonthlyReportXlsx(){
+  try{
+    const result=monthlyState.result;
+    if(!result) throw new Error('먼저 월간보고를 생성해 주세요.');
+    const center=result.filters.selectedCenter==='ALL'?'전체':result.filters.selectedCenter;
+    mrBookToDownload([
+      {name:'월간보고',rows:mrSummaryRows(result),header:MR_REPORT_COLUMNS},
+      {name:'검증내역',rows:mrValidationRows(result),header:MR_VALIDATION_COLUMNS},
+      {name:'종합내역',rows:mrDetailRows(result.rows),header:MR_DETAIL_COLUMNS}
+    ], `${result.reportMonth}_월간보고_${center}.xlsx`);
+  }catch(err){ mrSetMessage(err?.message || '다운로드 중 오류가 발생했습니다.', 'err'); }
+}
+function mrCurrentCumulativeRow(result){
+  return {
+    보고월:result.reportMonth,
+    총이용건수:result.totalVisits,
+    남성:result.gender.male,
+    여성:result.gender.female,
+    성별미분류:result.gender.unknown,
+    '40세미만':result.ageGroups.under40,
+    '40대':result.ageGroups.age40s,
+    '50대':result.ageGroups.age50s,
+    '60대':result.ageGroups.age60s,
+    '70대':result.ageGroups.age70s,
+    '80세이상':result.ageGroups.age80plus,
+    연령무효:result.ageGroups.invalid,
+    첫방문:result.revisit.firstVisit,
+    재방문:result.revisit.revisit,
+    재방문율:result.revisit.revisitRate,
+    프로그램만족도평균:result.satisfaction.program.average,
+    운영만족도평균:result.satisfaction.operation.average,
+    디지털도움만족도평균:result.satisfaction.digitalHelp.average,
+    재방문의향평균:result.satisfaction.revisitIntention.average,
+    평균체류시간분:result.stayTime.averageMinutes===null?null:Math.round(result.stayTime.averageMinutes),
+    평균산출대상수:result.stayTime.averageEligibleCount,
+    보정제외수:result.stayTime.correctedCount,
+    추정제외수:result.stayTime.estimatedCount,
+    체류시간무효수:result.stayTime.invalidCount
+  };
+}
+function mrValidateCumulativeHeaders(headers){
+  const required=['보고월','총이용건수','남성','여성','40대','50대','60대','70대','80세이상','평균체류시간분'];
+  const normalized=headers.map(mrNormalizeHeader);
+  const missing=required.filter(h=>!normalized.includes(mrNormalizeHeader(h)));
+  if(missing.length) throw new Error(`누계 input 필수 컬럼이 누락되었습니다: ${missing.join(', ')}`);
+}
+function mrParseCumulativeWorkbook(wb){
+  const sheetName=wb.SheetNames.includes('월간누계') ? '월간누계' : wb.SheetNames[0];
+  if(!sheetName) return [];
+  const arrayRows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {header:1, defval:'', raw:false});
+  if(!arrayRows.length) return [];
+  mrValidateCumulativeHeaders(arrayRows[0]);
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:'', raw:false});
+  return rows.map(row=>{
+    const out={};
+    MR_CUMULATIVE_COLUMNS.forEach(col=>{ out[col]=row[col]??''; });
+    if(!mrToText(out['보고월'])) return null;
+    return out;
+  }).filter(Boolean);
+}
+async function processMonthlyCumulativeFile(file){
+  mrValidateExcelFile(file);
+  const wb=await mrReadWorkbook(file);
+  monthlyState.cumulativeRows=mrParseCumulativeWorkbook(wb);
+  if(monthlyState.result) mrBuildCumulativeResult();
+}
+async function handleMonthlyCumulativeFileChange(){
+  try{
+    const file=document.getElementById('monthlyCumulativeFile').files[0];
+    if(!file) return;
+    if(!monthlyState.result) { mrSetMessage('먼저 월간보고를 생성한 뒤 누계 파일을 업로드해 주세요.', 'warn'); return; }
+    await processMonthlyCumulativeFile(file);
+    mrSetMessage('누계 input이 반영되었습니다. 현재 보고월은 기존 누계에서 자동 제외 후 새로 반영됩니다.', 'ok');
+  }catch(err){ mrSetMessage(err?.message || '누계 처리 중 오류가 발생했습니다.', 'err'); }
+}
+function mrBuildCumulativeResult(){
+  const current=mrCurrentCumulativeRow(monthlyState.result);
+  const rowsWithout=monthlyState.cumulativeRows.filter(r=>String(r['보고월'])!==monthlyState.result.reportMonth);
+  const outputRows=[...rowsWithout,current].sort((a,b)=>String(a['보고월']).localeCompare(String(b['보고월'])));
+  monthlyState.cumulativeResult={reportMonth:monthlyState.result.reportMonth,rowsWithoutCurrentMonth:rowsWithout,currentMonthRow:current,outputRows};
+  return monthlyState.cumulativeResult;
+}
+function downloadMonthlyCumulativeOutput(){
+  try{
+    if(!monthlyState.result) throw new Error('먼저 월간보고를 생성해 주세요.');
+    const cumulative=monthlyState.cumulativeResult || mrBuildCumulativeResult();
+    const rows=cumulative.outputRows.map(r=>mrSanitizeRecordForExcel(r,['보고월']));
+    mrBookToDownload([{name:'월간누계',rows,header:MR_CUMULATIVE_COLUMNS}], `${cumulative.reportMonth}_월간누계_output.xlsx`);
+  }catch(err){ mrSetMessage(err?.message || '누계 다운로드 중 오류가 발생했습니다.', 'err'); }
+}
+function downloadMonthlyCumulativeWithoutCurrent(){
+  try{
+    if(!monthlyState.result) throw new Error('먼저 월간보고를 생성해 주세요.');
+    const cumulative=monthlyState.cumulativeResult || mrBuildCumulativeResult();
+    const rows=cumulative.outputRows.filter(r=>String(r['보고월'])!==cumulative.reportMonth).map(r=>mrSanitizeRecordForExcel(r,['보고월']));
+    mrBookToDownload([{name:'월간누계',rows,header:MR_CUMULATIVE_COLUMNS}], `${cumulative.reportMonth}_제외_누계_input용.xlsx`);
+  }catch(err){ mrSetMessage(err?.message || '누계 다운로드 중 오류가 발생했습니다.', 'err'); }
+}
+function clearMonthlyReport(){
+  monthlyState={rawRows:[],normalizedRows:[],result:null,selectedCenter:'ALL',cumulativeRows:[],cumulativeResult:null};
+  const input=document.getElementById('monthlyInputFile'); if(input) input.value='';
+  const cum=document.getElementById('monthlyCumulativeFile'); if(cum) cum.value='';
+  ['mrReportMonth','mrAvgStay'].forEach(id=>setText(id,'-'));
+  ['mrTotalVisits','mrEligibleCount','mrOutMonthCount'].forEach(id=>setText(id,'0'));
+  ['mrGenderTable','mrAgeTable','mrSatisfactionTable','mrStayTable','mrTextTable','mrValidationTable'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; });
+  const preview=document.getElementById('mrHtmlPreview'); if(preview) preview.innerHTML='<div class="small">월간보고 생성 후 화면 요약이 표시됩니다.</div>';
+  const sel=document.getElementById('monthlyCenterSelect'); if(sel) sel.innerHTML='<option value="ALL">전체</option>';
+  mrSetMessage('월간보고 INPUT.xlsx를 업로드해 주세요.');
+}
+
 document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>showTab(btn.dataset.tab)));
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideAlarmPopup(); });
 window.addEventListener('pointerdown',()=>{ if(appState.settings.sound) ensureAudio(); },{once:true});
@@ -1046,6 +2570,8 @@ document.getElementById('includeEstimatedExitToggle').addEventListener('change',
   rebuildDerivedData();
   renderAll();
 });
+const monthlyCumulativeInputEl = document.getElementById('monthlyCumulativeFile');
+if(monthlyCumulativeInputEl) monthlyCumulativeInputEl.addEventListener('change', handleMonthlyCumulativeFileChange);
 function tick(){
   const now=new Date();
   setText('clockTime', fmtHMS(now));
