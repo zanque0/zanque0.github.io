@@ -718,7 +718,7 @@ function rebuildDerivedData(){
   const avgTargetRows = stayRowsForDashboard.filter(r => r._stayMinutes > 0);
   appState.avgStayMinutes = avgTargetRows.length ? Math.round(avgTargetRows.reduce((sum,r)=>sum+r._stayMinutes,0) / avgTargetRows.length) : 0;
 
-  const resSorted=[...appState.reservationRows].sort((a,b)=>String(a['프로그램 시작 시간']||'').localeCompare(String(b['프로그램 시작 시간']||'')) || String(a['예약자명']||'').localeCompare(String(b['예약자명']||'')));
+  const resSorted=[...appState.reservationRows].sort((a,b)=>String(a['프로그램 시작 시간']||'').localeCompare(String(b['프로그램 시작 시간']||'')) /*|| String(a['예약자명']||'').localeCompare(String(b['예약자명']||''))*/); //가나다순 정렬제거
   appState.reservationRows=resSorted;
   appState.park=resSorted.filter(r=>String(r['프로그램명']).includes('파크골프')).map(mapper);
   appState.ai=resSorted.filter(r=>String(r['프로그램명']).includes('AI 바둑 오목')).map(mapper);
