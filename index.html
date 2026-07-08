@@ -2,21 +2,27 @@
 <html lang="ko">
 <head>
     <!--
-    Copyright (c) 2026 zanque
-    
-    본 애플리케이션의 사용자 정의 코드 및 UI 구성의 저작권은
-    zanque에게 있습니다.
-    
-    본 애플리케이션은 다음 오픈소스 라이브러리를 사용합니다. 
-    - SheetJS (Apache License 2.0)
-    - Chart.js (MIT License)
-    
-    각 오픈소스의 저작권 및 라이선스는 해당 권리자에게 있으며,
-    관련 라이선스 조건을 따릅니다.
+	Copyright (c) 2026 zanque
+	All Rights Reserved.
+	
+	Author : zanque
+	Contact : zanque@saif.or.kr
+	
+	This software contains original source code developed by zanque.
+	
+	AI Notice
+	- Generative AI was used as a development assistant.
+	- Final design, implementation, integration and verification were performed by zanque.
+	
+	Open Source Software
+	- SheetJS Community Edition (Apache License 2.0)
+	- Chart.js (MIT License)
+	
+	The copyrights for third-party software remain with their respective owners.
     -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>은평센터 통합 운영 포털</title>
+  <title>은평센터 통합 운영 포털_zanque</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
@@ -81,14 +87,14 @@
     .toggle-card input{width:auto;margin-top:3px}
     .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.download-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
     .table-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}.report-format{overflow:auto;border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px}
+    .dashboard-report-stack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.dashboard-report-stack .card{width:100%}.dashboard-report-stack .card:nth-child(3){grid-column:1/-1}.dashboard-report-stack .report-format,.dashboard-report-stack .education-preview-wrap{overflow-x:auto;overflow-y:visible}
     .mini-summary{display:grid;grid-template-columns:1fr;gap:10px}.summary-row{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:8px 0;font-size:13px}.summary-row:last-child{border-bottom:0}.summary-row b{font-weight:900}
     .print-sheet{width:100%;max-width:210mm;margin:0 auto;background:#fff}.sheet{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;word-break:keep-all}.sheet th,.sheet td{border:1px solid #444;padding:10px 8px;text-align:center;vertical-align:middle;font-weight:600;line-height:1.4;font-size:17px}.sheet .title{background:#dbe5f1;font-size:22px;font-weight:900;padding:12px 10px}.sheet .meta{background:#eef3f8;text-align:left;font-size:16px;font-weight:500;padding:10px 12px}.sheet .note{background:#fff;text-align:left;font-size:14px;font-weight:500;line-height:1.65;padding:12px}.sheet .head{background:#ece4c9}.sheet .time{background:#f3ecd4;white-space:nowrap}.sheet .blank{background:#f8f8f8}.sheet .left{text-align:left}.sheet .big{font-size:18px;font-weight:900;padding:10px 12px}
-    .sheet.park-sheet col.col-time{width:17%}.sheet.park-sheet col.col-name{width:20%}.sheet.park-sheet col.col-phone{width:48%}.sheet.park-sheet col.col-note{width:15%}
     .sheet.ai-sheet col.col-time{width:12%}.sheet.ai-sheet col.col-name-a{width:12%}.sheet.ai-sheet col.col-phone-a{width:27%}.sheet.ai-sheet col.col-name-b{width:12%}.sheet.ai-sheet col.col-phone-b{width:27%}.sheet.ai-sheet col.col-note{width:10%}
     .sheet.tablet-sheet col.col-time{width:8%}.sheet.tablet-sheet col.col-name-1,.sheet.tablet-sheet col.col-name-2,.sheet.tablet-sheet col.col-name-3,.sheet.tablet-sheet col.col-name-4,.sheet.tablet-sheet col.col-name-5{width:6%}.sheet.tablet-sheet col.col-phone-1,.sheet.tablet-sheet col.col-phone-2,.sheet.tablet-sheet col.col-phone-3,.sheet.tablet-sheet col.col-phone-4,.sheet.tablet-sheet col.col-phone-5{width:9%}.sheet.tablet-sheet col.col-note{width:12%}
     .alarm-list{display:grid;gap:10px}.alarm-item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}.alarm-time{font-weight:900;font-size:18px}.alarm-title{font-weight:800}.alarm-sub{font-size:12px;color:var(--muted);margin-top:4px}
     .overlay{position:fixed;inset:0;background:rgba(15,23,42,.72);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}.overlay.show{display:flex}.modal{width:min(760px,100%);border-radius:28px;background:radial-gradient(600px 300px at 10% 0%,rgba(37,99,235,.22),transparent 60%),#fff;padding:28px;box-shadow:0 30px 100px rgba(0,0,0,.35)}.modal h1{margin:0;font-size:44px}.modal-time{font-size:80px;font-weight:900;color:#1d4ed8;letter-spacing:-.05em}.modal-msg{font-size:18px;color:#475569;margin:10px 0 20px}
-    @media (max-width:1080px){.grid.top,.grid.two,.upload-grid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column}.clock-box{text-align:left;width:100%}}
+    @media (max-width:1080px){.grid.top,.grid.two,.upload-grid,.dashboard-report-stack{grid-template-columns:1fr}.dashboard-report-stack .card:nth-child(3){grid-column:auto}.kpi-grid{grid-template-columns:repeat(2,1fr)}.header{flex-direction:column}.clock-box{text-align:left;width:100%}}
     @media (max-width:680px){.wrap{padding:14px}.kpi-grid,.grid.three,.download-grid{grid-template-columns:1fr}.clock-time{font-size:28px}.next-time{font-size:38px}.table-grid{grid-template-columns:1fr}.modal-time{font-size:56px}}
 
     /* Lottery draw / ladder tab */
@@ -132,6 +138,40 @@
     @keyframes lotteryTrace{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:blur(0)}}
     @keyframes lotteryRunnerPulse{from{transform:translate(-50%,-50%) scale(.92)}to{transform:translate(-50%,-50%) scale(1.08)}}
 
+
+
+    /* Education reservation tab / print format */
+    .education-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+    .education-status{font-size:13px;font-weight:800;color:var(--ok);margin-top:12px}
+    .education-pager{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+    .education-pager-title{font-weight:900;text-align:center;line-height:1.45}
+    .education-preview-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px}
+    .education-print-sheet{width:200mm;min-height:287mm;margin:0 auto;background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .education-table{width:100%;border-collapse:collapse;table-layout:fixed;color:#000;font-family:"Malgun Gothic","Noto Sans KR",sans-serif;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .education-table th,.education-table td{border:1px solid #000;text-align:center;vertical-align:middle;padding:3px 5px;font-size:15px;line-height:1.2;height:27px;font-weight:600;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .education-title{font-size:26px!important;font-weight:900!important;letter-spacing:1px;height:42px!important;background:#fff!important}
+    .education-total-label{font-size:14px!important;font-weight:900!important;background:#fff!important}
+    .education-total-blank{height:27px!important;background:#fff!important}
+    .education-date{text-align:right!important;font-size:14px!important;height:27px!important;font-weight:900!important;padding-right:14px!important;background:#fff!important}
+    .education-program{background:#d9d9d9!important;font-size:17px!important;font-weight:900!important;height:36px!important}
+    .education-head th{background:#e6e6e6!important;font-size:14px!important;font-weight:900!important;height:28px!important}
+    .education-group{font-size:17px!important;font-weight:900!important;line-height:1.45!important;background:#fff!important}
+    .education-note{border:0!important;text-align:left!important;font-size:15px!important;font-weight:900!important;padding-top:9px!important;height:30px!important;background:#fff!important}
+    .education-note .red{color:red;text-decoration:underline;font-weight:900}
+    #educationAllPrintArea{display:none}
+    .education-print-page{width:200mm;min-height:287mm;margin:0 auto;background:#fff;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .education-print-page:last-child{break-after:auto;page-break-after:auto}
+    @media(max-width:900px){.education-summary{grid-template-columns:1fr}.education-print-sheet{transform:scale(.62);transform-origin:top left;width:200mm}.education-preview-wrap{height:760px}}
+    @media print{
+      @page{size:A4 portrait;margin:5mm}
+      body.printing-education-all{background:#fff}
+      body.printing-education-all .wrap, body.printing-education-all .overlay{display:none!important}
+      body.printing-education-all #educationAllPrintArea{display:block!important}
+      body.printing-education-all .education-print-page{width:200mm;min-height:auto;margin:0 auto;transform:none!important;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      body.printing-education-all .education-table, body.printing-education-all .education-table th, body.printing-education-all .education-table td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .education-print-sheet{transform:none!important;transform-origin:initial!important}
+    }
+
     /* Board tab */
     .board-card{display:flex; flex-direction:column; gap:16px;}
     .board-notice{background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:14px; border-radius:14px; font-weight:800; text-align:center; position:sticky; top:0; z-index:10;}
@@ -147,7 +187,7 @@
   <div class="header">
     <div>
       <h1>서울디지털동행플라자 은평센터 통합 운영 포털</h1>
-      <div class="sub">알람 운영, 입·퇴장 내역 처리, 예약자 명단 정리, 출력 양식 생성을 한 화면에서 처리합니다.</div>
+      <div class="sub">오류수정, 기능추가 등 관련 문의 : 서울AI재단 최현철 선임(zanque@saif.or.kr)</div>
     </div>
     <div class="clock-box">
       <div class="clock-time" id="clockTime">--:--:--</div>
@@ -159,6 +199,7 @@
     <button class="tab active" data-tab="dashboard">대시보드</button>
     <button class="tab" data-tab="upload">입장내역(입퇴장 내역) 등록</button>
     <button class="tab" data-tab="reports">예약자 명단(예약자 리스트) 등록</button>
+    <button class="tab" data-tab="education">예약자 명단(교육) 등록</button>
     <button class="tab" data-tab="alarms">알람 설정</button>
     <button class="tab" data-tab="lottery">파크골프 추첨</button>
     <button class="tab" data-tab="board">게시판</button>
@@ -241,12 +282,12 @@
     <div class="card no-print" style="margin-top:16px">
       <h2>빠른 이동</h2>
       <div class="toolbar">
-        <button class="btn ghost" onclick="showTab('reports'); scrollToReport('parkFormatWrap')">파크골프 양식</button>
+        <button class="btn ghost" onclick="showTab('education')">교육 참석자 명단</button>
         <button class="btn ghost" onclick="showTab('reports'); scrollToReport('aiFormatWrap')">AI 바둑 양식</button>
         <button class="btn ghost" onclick="showTab('reports'); scrollToReport('tabletFormatWrap')">태블릿 양식</button>
       </div>
       <div id="statusMessage" class="small" style="margin-top:12px;color:var(--ok)">샘플 데이터가 로드되었습니다.</div>
-      <div id="dashboardReportPreview" class="table-grid" style="margin-top:16px"></div>
+      <div id="dashboardReportPreview" class="dashboard-report-stack" style="margin-top:16px"></div>
     </div>
   </section>
 
@@ -290,10 +331,6 @@
       </div>
     </div>
     <div class="table-grid">
-      <div class="card" id="parkFormatWrapCard">
-        <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>파크골프 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('park')">인쇄</button></div>
-        <div id="parkFormatWrap" class="report-format"></div>
-      </div>
       <div class="card" id="aiFormatWrapCard">
         <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>AI 바둑 오목 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('ai')">인쇄</button></div>
         <div id="aiFormatWrap" class="report-format"></div>
@@ -301,6 +338,47 @@
       <div class="card" id="tabletFormatWrapCard">
         <div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>태블릿(OTT) 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('tablet')">인쇄</button></div>
         <div id="tabletFormatWrap" class="report-format"></div>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="education" class="section">
+    <div class="card" style="margin-bottom:16px">
+      <h2>예약자 명단(교육) 등록</h2>
+      <div class="upload-grid" style="grid-template-columns:1fr 1fr">
+        <div><label>교육 예약자 명단 파일(.xlsx, .xls, .csv)</label><input id="educationReservationFile" type="file" accept=".xlsx,.xls,.csv" /></div>
+        <div><label>현재 프로그램</label><select id="educationProgramSelect"></select></div>
+      </div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn" onclick="processEducationFile()">교육 예약 처리하기</button>
+        <button class="btn secondary" onclick="loadEducationSample()">샘플 데이터 불러오기</button>
+        <button class="btn ghost" onclick="clearEducationData()">초기화</button>
+        <button class="btn ok" onclick="printEducationAll()">전체 인쇄</button>
+      </div>
+      <div id="educationStatus" class="education-status">대기 중입니다.</div>
+      <div class="education-summary">
+        <div class="stat"><span class="small">전체 정상 예약</span><div class="value" id="educationTotalCount" style="font-size:22px">0</div></div>
+        <div class="stat"><span class="small">프로그램 수</span><div class="value" id="educationProgramCount" style="font-size:22px">0</div></div>
+        <div class="stat"><span class="small">현재 페이지</span><div class="value" id="educationPageNo" style="font-size:22px">-</div></div>
+        <div class="stat"><span class="small">현재 명단 인원</span><div class="value" id="educationCurrentCount" style="font-size:22px">0</div></div>
+      </div>
+      <div class="small" style="margin-top:12px">필수 컬럼: 예약일, 프로그램명, 프로그램 시작 시간, 프로그램 끝 시간, 예약 상태, 예약자명, 연락처</div>
+    </div>
+
+    <div class="card">
+      <div class="education-pager no-print">
+        <button class="btn ghost" onclick="prevEducationProgram()">◀ 이전</button>
+        <div class="education-pager-title" id="educationPagerTitle">출력할 교육 명단이 없습니다.</div>
+        <button class="btn ghost" onclick="nextEducationProgram()">다음 ▶</button>
+      </div>
+      <div class="education-preview-wrap">
+        <div class="education-print-sheet">
+          <table class="education-table">
+            <colgroup><col style="width:15%"><col style="width:8%"><col style="width:22%"><col style="width:37%"><col style="width:18%"></colgroup>
+            <tbody id="educationBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </section>
@@ -379,6 +457,8 @@
   </section>
 </div>
 
+<div id="educationAllPrintArea"></div>
+
 <div class="overlay" id="alarmOverlay" role="dialog" aria-modal="true">
   <div class="modal">
     <h1 id="alarmModalTitle">⏰ 알람</h1>
@@ -397,6 +477,7 @@ const STATE_STORAGE = window.sessionStorage; // 공용 PC 보호: 브라우저 �
 const downloadUrls = new Map();
 const MAX_ALARM_LABEL_LENGTH = 40;
 const MAX_UPLOAD_ROWS = 20000;
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
 const DASHBOARD_HOURS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
 const OPS_START_TIME = '09:00';
 const OPS_END_TIME = '19:00';
@@ -410,24 +491,15 @@ const DEFAULT_ALARMS = [
   { time: '10:58', label: '현장추첨(오전)', enabled: true },
   { time: '14:58', label: '현장추첨(오후)', enabled: true }
 ];
-const allowedPrograms = ['AI 바둑 오목','파크골프 (숙련자용, 주 2회까지 예약 가능)','파크골프 (초보자용, 주 2회까지 예약 가능)','태블릿(OTT) #1','태블릿(OTT) #2','태블릿(OTT) #3','태블릿(OTT) #4','태블릿(OTT) #5'];
+const allowedPrograms = ['AI 바둑 오목','태블릿(OTT) #1','태블릿(OTT) #2','태블릿(OTT) #3','태블릿(OTT) #4','태블릿(OTT) #5'];
 const DEFAULT_TABLET_TIMES = ['09:00~10:30','10:30~12:00','12:00~13:30','13:30~15:00','15:00~16:30'];
 const WEEKDAY_LABELS = ['일','월','화','수','목','금','토'];
+const EDUCATION_TOTAL_PRINT_ROWS = 30;
 const sampleData = {
   hourly: [
     {입장시간:'09:00',입장인원:60},{입장시간:'10:00',입장인원:18},{입장시간:'11:00',입장인원:10},{입장시간:'12:00',입장인원:9},
     {입장시간:'13:00',입장인원:16},{입장시간:'14:00',입장인원:13},{입장시간:'15:00',입장인원:9},{입장시간:'16:00',입장인원:8},
     {입장시간:'17:00',입장인원:4},{입장시간:'18:00',입장인원:1},{입장시간:'19:00',입장인원:1}
-  ],
-  park: [
-    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'이ㅇ순',연락처:'4980'},
-    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'경ㅇ태',연락처:'4558'},
-    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'이ㅇ수',연락처:'1865'},
-    {예약일:'2026-01-06',프로그램명:'파크골프 (숙련자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'9:20~11:10',예약자명:'문ㅇ화',연락처:'4809'},
-    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'금ㅇ례',연락처:'1588'},
-    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'박ㅇ옥',연락처:'6463'},
-    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'김ㅇ임',연락처:'5825'},
-    {예약일:'2026-01-06',프로그램명:'파크골프 (초보자용, 주 2회까지 예약 가능)','프로그램 시작 시간':'13:40~15:30',예약자명:'신ㅇ순',연락처:'3399'}
   ],
   ai: [
     {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'9:00~10:30',예약자명:'신ㅇ걸',연락처:'4139'},
@@ -447,12 +519,17 @@ const sampleData = {
     {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #3','프로그램 시작 시간':'09:00~10:30',예약자명:'이ㅇ진',연락처:'1103'},
     {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #4','프로그램 시작 시간':'09:00~10:30',예약자명:'최ㅇ현',연락처:'1104'},
     {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #5','프로그램 시작 시간':'09:00~10:30',예약자명:'정ㅇ은',연락처:'1105'}
+  ],
+  education: [
+    ['하루 한 장 사진 기록표 만들기','2026-06-09','10:00','11:30',13],
+    ['추억 사진 이야기 카드 만들기','2026-06-10','13:00','14:30',18],
+    ['AI로 만드는 정보 카드뉴스','2026-06-11','15:00','16:30',22]
   ]
 };
 let appState = {
   entryRows: [], reservationRows: [], hourly: [], hourlyExit: [], hourlyStay: [],
   stayRowsValid: [], stayRowsEstimated: [], stayRowsExcluded: [], avgStayMinutes: 0,
-  includeEstimatedExit: true, park: [], ai: [], tablet: [], alarms: [], settings: {sound:true, vibrate:true}
+  includeEstimatedExit: true, ai: [], tablet: [], educationRows: [], educationPrograms: [], educationCurrentIndex: 0, alarms: [], settings: {sound:true, vibrate:true}
 };
 let chart = null;
 let stayChart = null;
@@ -592,6 +669,7 @@ function makeDefaultAlarms(){ return DEFAULT_ALARMS.map(a=>({ id:uid(), ...a, so
 function restoreDefaultAlarms(){ appState.alarms = makeDefaultAlarms(); saveState(); renderAlarms(); renderNextAlarm(); }
 
 function sheetToJson(file, callback){
+  if(file && file.size > MAX_UPLOAD_SIZE){ callback(null, new Error(`파일 크기는 최대 ${(MAX_UPLOAD_SIZE / 1024 / 1024).toLocaleString()}MB까지 처리합니다.`)); return; }
   const reader=new FileReader();
   reader.onload=e=>{
     try{
@@ -617,6 +695,60 @@ function validateReservationColumns(resRowsRaw){
   if(!reservationColumns.has('예약 상태') || !reservationColumns.has('프로그램명') || !reservationColumns.has('프로그램 시작 시간')){
     throw new Error('예약자 명단에는 예약 상태, 프로그램명, 프로그램 시작 시간 컬럼이 필요합니다.');
   }
+}
+
+function validateEducationColumns(rows){
+  const required=['예약일','프로그램명','프로그램 시작 시간','프로그램 끝 시간','예약 상태','예약자명','연락처'];
+  const cols=new Set(Object.keys(rows?.[0] || {}));
+  const missing=required.filter(col=>!cols.has(col));
+  if(missing.length) throw new Error('교육 예약자 명단에 필수 컬럼이 없습니다: '+missing.join(', '));
+}
+function formatKoreanDate(value){
+  const n=normalizeDateString(value); if(!n) return '';
+  const [y,m,d]=n.split('-').map(Number); const dt=new Date(y,m-1,d);
+  return `[${WEEKDAY_LABELS[dt.getDay()]}] ${y}년 ${m}월 ${d}일`;
+}
+function normalizeEducationDate(value){ return normalizeDateString(value); }
+function educationTimeRange(row){
+  const start=normalizeTime(row['프로그램 시작 시간']);
+  const end=normalizeTime(row['프로그램 끝 시간']);
+  return start && end ? `${start}~${end}` : (start || end || '');
+}
+function safeTimeToMinutes(value){ const t=normalizeTime(value); const m=String(t).match(/^(\d{2}):(\d{2})/); return m ? Number(m[1])*60 + Number(m[2]) : 99999; }
+function sanitizeEducationRows(rows){
+  return rows
+    .filter(row => String(row['예약 상태'] ?? '').trim() === '정상')
+    .map(row => ({
+      예약일: normalizeEducationDate(row['예약일']),
+      프로그램명: sanitizePlainText(row['프로그램명'],150),
+      '프로그램 시작 시간': normalizeTime(row['프로그램 시작 시간']),
+      '프로그램 끝 시간': normalizeTime(row['프로그램 끝 시간']),
+      예약자명: sanitizePlainText(row['예약자명'],50),
+      연락처: last4(row['연락처'] || row['전화번호'] || '')
+    }))
+    .sort((a,b)=>
+      String(a.예약일).localeCompare(String(b.예약일)) ||
+      safeTimeToMinutes(a['프로그램 시작 시간']) - safeTimeToMinutes(b['프로그램 시작 시간']) ||
+      safeTimeToMinutes(a['프로그램 끝 시간']) - safeTimeToMinutes(b['프로그램 끝 시간']) ||
+      String(a.프로그램명).localeCompare(String(b.프로그램명))
+    );
+}
+function buildEducationPrograms(rows){
+  const map=new Map();
+  rows.forEach(row=>{
+    const key=[row.예약일, row.프로그램명, educationTimeRange(row)].join('||');
+    if(!map.has(key)) map.set(key, []);
+    map.get(key).push(row);
+  });
+  return Array.from(map.entries()).map(([key, people])=>{
+    const first=people[0] || {}; const [date, program, time]=key.split('||');
+    return { key, date, program, time, startMinutes:safeTimeToMinutes(first['프로그램 시작 시간']), endMinutes:safeTimeToMinutes(first['프로그램 끝 시간']), people };
+  }).sort((a,b)=>
+    String(a.date).localeCompare(String(b.date)) ||
+    a.startMinutes - b.startMinutes ||
+    a.endMinutes - b.endMinutes ||
+    String(a.program).localeCompare(String(b.program))
+  );
 }
 function sanitizeEntryRows(rows){
   return rows.map(r=>({
@@ -720,7 +852,6 @@ function rebuildDerivedData(){
 
   const resSorted=[...appState.reservationRows].sort((a,b)=>String(a['프로그램 시작 시간']||'').localeCompare(String(b['프로그램 시작 시간']||'')) /*|| String(a['예약자명']||'').localeCompare(String(b['예약자명']||''))*/); //가나다순 정렬제거
   appState.reservationRows=resSorted;
-  appState.park=resSorted.filter(r=>String(r['프로그램명']).includes('파크골프')).map(mapper);
   appState.ai=resSorted.filter(r=>String(r['프로그램명']).includes('AI 바둑 오목')).map(mapper);
   appState.tablet=resSorted.filter(r=>String(r['프로그램명']).includes('태블릿')).map(mapper);
 }
@@ -791,24 +922,8 @@ function setDownloadLink(anchorId,rows,filename){
 function renderDashboard(){ renderKpis(); renderChart(); renderStayChart(); renderNextAlarm(); renderDashboardReportPreview(); }
 function renderReports(){ renderFormattedReports(); }
 function renderDownloads(){ setDownloadLink('downloadEntry',appState.entryRows,'processed_입퇴장내역.xlsx'); setDownloadLink('downloadReservation',appState.reservationRows,'processed_예약자명단.xlsx'); }
-function renderAll(){ renderDashboard(); renderReports(); renderAlarms(); renderDownloads(); }
+function renderAll(){ renderDashboard(); renderReports(); renderEducation(); renderAlarms(); renderDownloads(); }
 
-function buildParkFormatHtml(rows){
-  const date=getProgramDate(rows); const amTime='09:20'; const pmTime='13:40';
-  const amRows=rows.filter(r=>normalizeTimeRange(r['프로그램시작시간']||'').split('~')[0]===amTime);
-  const pmRows=rows.filter(r=>normalizeTimeRange(r['프로그램시작시간']||'').split('~')[0]===pmTime);
-  const amData=amRows.slice(0,4); const pmData=pmRows.slice(0,4); const amOverflow=amRows.length>4; const pmOverflow=pmRows.length>4;
-  let html='<div class="print-sheet" id="parkPrintArea"><table class="sheet park-sheet" id="parkFormattedTable"><colgroup><col class="col-time"><col class="col-name"><col class="col-phone"><col class="col-note"></colgroup><tbody>';
-  html+=`<tr><td colspan="4" class="left big">${escapeHtml(date)}</td></tr>`;
-  html+='<tr><td colspan="4" class="title">파크골프 온라인 예약 및 신청 명단</td></tr>';
-  html+='<tr><td colspan="4" class="meta left">이용시간 : 오전 9시20분 ~ 오후 3시30분</td></tr>';
-  html+='<tr><td colspan="4" class="note">- 센터 입장등록(QR입력)을 하지 않으신 분은 현장이용을 신청 하실 수 없습니다.<br>- 기재하신 성명을 지우고 다른 사람의 이름을 기재한 경우 무효처리합니다.<br>- 체험예약으로 게임을 하신 분들은 현장 이용 명단을 기재하지 않습니다.<br>- 예약 접수는 <span style="color:#d00">1일 1회로 제한</span>됩니다.<br></td></tr>';
-  html+='<tr><th class="head">구분</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">비고</th></tr>';
-  for(let i=0;i<4;i++){ const r=amData[i]||{}; html+=`<tr><td class="time">${amTime}</td><td>${escapeHtml(r['예약자명']||'')}</td><td>${escapeHtml(r['연락처']||'')}</td><td>${i===0&&amOverflow?'초과 인원 있음':''}</td></tr>`; }
-  for(let i=0;i<4;i++){ const r=pmData[i]||{}; html+=`<tr><td class="time">${pmTime}</td><td>${escapeHtml(r['예약자명']||'')}</td><td>${escapeHtml(r['연락처']||'')}</td><td>${i===0&&pmOverflow?'초과 인원 있음':''}</td></tr>`; }
-  html+='<tr><td colspan="6" class="note"><span style="color:#d00; font-weight:bold;">- 본인 확인을 위해, 신분증을 지참해주세요.<br>- 예약자 확인이 불가능한 경우 예약이 취소될 수 있습니다.</span><br> 예시) <br> ①이름 없음<br>  ②이름 w<br>  ③전화번호 없음<br>  ④6개월간 방문이력 없음 등</td></tr>';
-  return html+='</tbody></table></div>';
-}
 function buildAiFormatHtml(rows){
   const date=getProgramDate(rows); const fixedTimes=['09:00','10:30','12:00','13:30','15:00']; const dataMap={};
   rows.forEach(r=>{ const key=normalizeTimeRange(r['프로그램시작시간']||'').split('~')[0]; if(!dataMap[key]) dataMap[key]=[]; dataMap[key].push(r); });
@@ -835,28 +950,111 @@ function buildTabletFormatHtml(rows){
 function renderDashboardReportPreview(){
   const wrap=document.getElementById('dashboardReportPreview');
   if(!wrap) return;
+  const current=appState.educationPrograms[appState.educationCurrentIndex];
   wrap.innerHTML = `
-    <div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>파크골프 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('park')">인쇄</button></div><div class="report-format">${buildParkFormatHtml(appState.park)}</div></div>
+    <div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>교육 참석자 명단 미리보기</h2><button class="btn ok no-print" onclick="printEducationAll()">전체 인쇄</button></div><div class="education-pager no-print"><button class="btn ghost" onclick="prevEducationProgram()">◀ 이전</button><div class="education-pager-title">${current ? escapeHtml(current.program+' ('+current.time+')') : '출력할 교육 명단이 없습니다.'}<br><span class="small">${current ? `${appState.educationCurrentIndex+1} / ${appState.educationPrograms.length}` : '-'}</span></div><button class="btn ghost" onclick="nextEducationProgram()">다음 ▶</button></div><div class="education-preview-wrap"><div class="education-print-sheet"><table class="education-table"><colgroup><col style="width:15%"><col style="width:8%"><col style="width:22%"><col style="width:37%"><col style="width:18%"></colgroup><tbody>${current ? buildEducationTableHtml(current) : '<tr><td colspan="5" style="height:120px">교육 예약자 명단을 등록하세요.</td></tr>'}</tbody></table></div></div></div>
     <div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>AI 바둑 오목 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('ai')">인쇄</button></div><div class="report-format">${buildAiFormatHtml(appState.ai)}</div></div>
     <div class="card"><div class="toolbar" style="justify-content:space-between;margin-bottom:10px"><h2>태블릿(OTT) 출력 양식</h2><button class="btn ghost no-print" onclick="printFormattedReport('tablet')">인쇄</button></div><div class="report-format">${buildTabletFormatHtml(appState.tablet)}</div></div>
   `;
 }
 function renderFormattedReports(){
-  document.getElementById('parkFormatWrap').innerHTML=buildParkFormatHtml(appState.park);
   document.getElementById('aiFormatWrap').innerHTML=buildAiFormatHtml(appState.ai);
   document.getElementById('tabletFormatWrap').innerHTML=buildTabletFormatHtml(appState.tablet);
 }
 function printFormattedReport(kind){
   const config={
-    park:{areaId:'parkPrintArea',title:'파크골프 양식 인쇄 창을 열었습니다.',pageSize:'A4 portrait',bodyWidth:'190mm'},
     ai:{areaId:'aiPrintArea',title:'AI 바둑 오목 양식 인쇄 창을 열었습니다.',pageSize:'A4 portrait',bodyWidth:'190mm'},
     tablet:{areaId:'tabletPrintArea',title:'태블릿(OTT) 양식 인쇄 창을 열었습니다. 인쇄 설정에서 방향이 가로(A4 landscape)인지 한 번 더 확인해 주세요.',pageSize:'A4 landscape',bodyWidth:'277mm'}
   }[kind]; if(!config) return;
   const area=document.getElementById(config.areaId); const win=window.open('','_blank','width=1200,height=900'); if(!win){ document.getElementById('statusMessage').textContent='팝업이 차단되어 인쇄 창을 열지 못했습니다.'; return; }
-  const style=`<style>@page{size:${config.pageSize};margin:10mm}html,body{margin:0;padding:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;color:#111827;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:${config.bodyWidth};margin:0 auto}.print-sheet{width:100%;margin:0 auto}table.sheet{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;word-break:keep-all}.sheet th,.sheet td{border:1px solid #444;padding:8px 6px;text-align:center;vertical-align:middle;font-weight:600;line-height:1.4;font-size:${kind==='tablet'?'16px':'19px'}}.sheet .title{background:#dbe5f1;font-size:${kind==='tablet'?'22px':'24px'};font-weight:800;padding:12px 8px}.sheet .meta{background:#eef3f8;text-align:left;font-size:${kind==='tablet'?'14px':'16px'};font-weight:500;padding:10px 12px}.sheet .note{background:#fff;text-align:left;font-size:${kind==='tablet'?'13px':'15px'};font-weight:500;line-height:1.6;padding:12px}.sheet .head{background:#ece4c9}.sheet .time{background:#f3ecd4;white-space:nowrap}.sheet .blank{background:#f8f8f8}.sheet .left{text-align:left}.sheet .big{font-size:18px;font-weight:800;padding:10px 12px}.sheet.park-sheet col.col-time{width:17%}.sheet.park-sheet col.col-name{width:20%}.sheet.park-sheet col.col-phone{width:48%}.sheet.park-sheet col.col-note{width:15%}.sheet.ai-sheet col.col-time{width:12%}.sheet.ai-sheet col.col-name-a{width:12%}.sheet.ai-sheet col.col-phone-a{width:27%}.sheet.ai-sheet col.col-name-b{width:12%}.sheet.ai-sheet col.col-phone-b{width:27%}.sheet.ai-sheet col.col-note{width:10%}.sheet.tablet-sheet col.col-time{width:8%}.sheet.tablet-sheet col.col-name-1,.sheet.tablet-sheet col.col-name-2,.sheet.tablet-sheet col.col-name-3,.sheet.tablet-sheet col.col-name-4,.sheet.tablet-sheet col.col-name-5{width:6%}.sheet.tablet-sheet col.col-phone-1,.sheet.tablet-sheet col.col-phone-2,.sheet.tablet-sheet col.col-phone-3,.sheet.tablet-sheet col.col-phone-4,.sheet.tablet-sheet col.col-phone-5{width:9%}.sheet.tablet-sheet col.col-note{width:12%}</style>`;
+  const style=`<style>@page{size:${config.pageSize};margin:10mm}html,body{margin:0;padding:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",sans-serif;color:#111827;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:${config.bodyWidth};margin:0 auto}.print-sheet{width:100%;margin:0 auto}table.sheet{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;word-break:keep-all}.sheet th,.sheet td{border:1px solid #444;padding:8px 6px;text-align:center;vertical-align:middle;font-weight:600;line-height:1.4;font-size:${kind==='tablet'?'16px':'19px'}}.sheet .title{background:#dbe5f1;font-size:${kind==='tablet'?'22px':'24px'};font-weight:800;padding:12px 8px}.sheet .meta{background:#eef3f8;text-align:left;font-size:${kind==='tablet'?'14px':'16px'};font-weight:500;padding:10px 12px}.sheet .note{background:#fff;text-align:left;font-size:${kind==='tablet'?'13px':'15px'};font-weight:500;line-height:1.6;padding:12px}.sheet .head{background:#ece4c9}.sheet .time{background:#f3ecd4;white-space:nowrap}.sheet .blank{background:#f8f8f8}.sheet .left{text-align:left}.sheet .big{font-size:18px;font-weight:800;padding:10px 12px}.sheet.ai-sheet col.col-time{width:12%}.sheet.ai-sheet col.col-name-a{width:12%}.sheet.ai-sheet col.col-phone-a{width:27%}.sheet.ai-sheet col.col-name-b{width:12%}.sheet.ai-sheet col.col-phone-b{width:27%}.sheet.ai-sheet col.col-note{width:10%}.sheet.tablet-sheet col.col-time{width:8%}.sheet.tablet-sheet col.col-name-1,.sheet.tablet-sheet col.col-name-2,.sheet.tablet-sheet col.col-name-3,.sheet.tablet-sheet col.col-name-4,.sheet.tablet-sheet col.col-name-5{width:6%}.sheet.tablet-sheet col.col-phone-1,.sheet.tablet-sheet col.col-phone-2,.sheet.tablet-sheet col.col-phone-3,.sheet.tablet-sheet col.col-phone-4,.sheet.tablet-sheet col.col-phone-5{width:9%}.sheet.tablet-sheet col.col-note{width:12%}</style>`;
   const printGuide=kind==='tablet'?`<div style="width:${config.bodyWidth};margin:0 auto 8px;padding:8px 10px;border:1px solid #e5e7eb;background:#f8fafc;font-size:12px;line-height:1.5;">인쇄 설정에서 용지 방향이 가로(A4 landscape)로 표시되는지 확인해 주세요.</div>`:'';
   win.document.open(); win.document.write('<!doctype html><html lang="ko"><head><meta charset="UTF-8"><title>출력</title>'+style+'</head><body>'+printGuide+area.outerHTML+'</body></html>'); win.document.close();
   setTimeout(()=>{win.focus();win.print();},150); document.getElementById('statusMessage').textContent=config.title;
+}
+
+
+function buildEducationTableHtml(data){
+  const people=data?.people || [];
+  const onlineRows=Math.min(people.length, EDUCATION_TOTAL_PRINT_ROWS);
+  const waitRows=EDUCATION_TOTAL_PRINT_ROWS - onlineRows;
+  let html = `
+    <tr><td colspan="4" class="education-title">은평센터 교육 참석자 명단</td><td class="education-total-label">총 참석 인원</td></tr>
+    <tr><td colspan="4" class="education-date">${escapeHtml(formatKoreanDate(data?.date))}</td><td class="education-total-blank"></td></tr>
+    <tr><td colspan="5" class="education-program">${escapeHtml(data?.program || '')}${data?.time ? ' ('+escapeHtml(data.time)+')' : ''}</td></tr>
+    <tr class="education-head"><th>예약 구분</th><th>번호</th><th>성명</th><th>연락처 (핸드폰 끝번호 4자리)</th><th>출석</th></tr>`;
+  for(let i=1;i<=EDUCATION_TOTAL_PRINT_ROWS;i++){
+    const person=people[i-1] || {};
+    html += '<tr>';
+    if(onlineRows > 0 && i === 1) html += `<td rowspan="${onlineRows}" class="education-group">온라인<br>예약자</td>`;
+    if(waitRows > 0 && i === onlineRows + 1) html += `<td rowspan="${waitRows}" class="education-group">현장 대기</td>`;
+    html += `<td>${i}</td><td>${escapeHtml(person.예약자명 || '')}</td><td>${escapeHtml(person.연락처 || '')}</td><td></td></tr>`;
+  }
+  html += `<tr><td colspan="5" class="education-note">※ 온라인 예약에서 <span class="red">공석이 생길 시</span>, 공석 수만큼 현장 대기자 선착순 입장 가능</td></tr>`;
+  return html;
+}
+function renderEducation(){
+  const select=document.getElementById('educationProgramSelect');
+  if(select){
+    select.innerHTML='';
+    appState.educationPrograms.forEach((p,i)=>{ const opt=document.createElement('option'); opt.value=String(i); opt.textContent=`${i+1}. ${p.program} (${p.time}) / ${p.people.length}명`; select.appendChild(opt); });
+    if(appState.educationCurrentIndex >= appState.educationPrograms.length) appState.educationCurrentIndex=0;
+    select.value=String(appState.educationCurrentIndex);
+  }
+  const current=appState.educationPrograms[appState.educationCurrentIndex];
+  const body=document.getElementById('educationBody');
+  if(body) body.innerHTML = current ? buildEducationTableHtml(current) : `<tr><td colspan="5" style="height:120px">파일을 등록하거나 샘플 데이터를 불러오세요.</td></tr>`;
+  setText('educationPagerTitle', current ? `${current.program} (${current.time})` : '출력할 교육 명단이 없습니다.');
+  setText('educationTotalCount', appState.educationRows.length.toLocaleString());
+  setText('educationProgramCount', appState.educationPrograms.length.toLocaleString());
+  setText('educationPageNo', current ? `${appState.educationCurrentIndex+1}/${appState.educationPrograms.length}` : '-');
+  setText('educationCurrentCount', current ? current.people.length.toLocaleString() : '0');
+}
+function processEducationFile(){
+  const status=document.getElementById('educationStatus');
+  const file=document.getElementById('educationReservationFile')?.files?.[0];
+  if(!file){ if(status) status.textContent='처리할 교육 예약자 명단 파일을 선택해 주세요.'; return; }
+  sheetToJson(file, (rows,err)=>{
+    try{
+      if(err) throw err;
+      validateEducationColumns(rows);
+      appState.educationRows=sanitizeEducationRows(rows);
+      appState.educationPrograms=buildEducationPrograms(appState.educationRows);
+      appState.educationCurrentIndex=0;
+      renderEducation();
+      renderDashboardReportPreview();
+      if(status) status.textContent=`처리 완료: 정상 예약 ${appState.educationRows.length.toLocaleString()}건, 교육 출력 ${appState.educationPrograms.length.toLocaleString()}개 생성`;
+      setText('statusMessage','교육 예약자 명단이 처리되었습니다.');
+    }catch(e){ if(status) status.textContent=e.message || '교육 예약 파일 처리 중 오류가 발생했습니다.'; }
+  });
+}
+function loadEducationSample(){
+  const rows=(sampleData.education||[]).flatMap(([program,date,start,end,count])=>Array.from({length:count},(_,i)=>({예약일:date,프로그램명:program,'프로그램 시작 시간':start,'프로그램 끝 시간':end,'예약 상태':'정상',예약자명:`샘플${i+1}`,연락처:`0100000${String(1000+i).slice(-4)}`})));
+  appState.educationRows=sanitizeEducationRows(rows);
+  appState.educationPrograms=buildEducationPrograms(appState.educationRows);
+  appState.educationCurrentIndex=0;
+  renderEducation();
+  renderDashboardReportPreview();
+  const status=document.getElementById('educationStatus');
+  if(status) status.textContent='교육 샘플 데이터가 로드되었습니다.';
+}
+function clearEducationData(){
+  appState.educationRows=[]; appState.educationPrograms=[]; appState.educationCurrentIndex=0;
+  const file=document.getElementById('educationReservationFile'); if(file) file.value='';
+  renderEducation(); renderDashboardReportPreview();
+  const status=document.getElementById('educationStatus'); if(status) status.textContent='교육 데이터가 초기화되었습니다.';
+}
+function prevEducationProgram(){ if(!appState.educationPrograms.length) return; appState.educationCurrentIndex=(appState.educationCurrentIndex-1+appState.educationPrograms.length)%appState.educationPrograms.length; renderEducation(); renderDashboardReportPreview(); }
+function nextEducationProgram(){ if(!appState.educationPrograms.length) return; appState.educationCurrentIndex=(appState.educationCurrentIndex+1)%appState.educationPrograms.length; renderEducation(); renderDashboardReportPreview(); }
+function buildEducationSheetHtml(program){
+  return `<div class="education-print-page"><table class="education-table"><colgroup><col style="width:15%"><col style="width:8%"><col style="width:22%"><col style="width:37%"><col style="width:18%"></colgroup><tbody>${buildEducationTableHtml(program)}</tbody></table></div>`;
+}
+function printEducationAll(){
+  if(!appState.educationPrograms.length){ alert('인쇄할 교육 명단이 없습니다.'); return; }
+  const area=document.getElementById('educationAllPrintArea');
+  area.innerHTML=appState.educationPrograms.map(buildEducationSheetHtml).join('');
+  document.body.classList.add('printing-education-all');
+  setTimeout(()=>window.print(),80);
 }
 
 function renderAlarms(){ renderAlarmContainer(document.getElementById('alarmList')); }
@@ -931,7 +1129,7 @@ function processUploads(){
   });
 }
 function loadSample(){
-  const sampleReservationRows=sanitizeReservationRows(sampleData.park.concat(sampleData.ai).concat(sampleData.tablet).map(r=>({예약일:r['예약일'],프로그램명:r['프로그램명'],'프로그램 시작 시간':r['프로그램 시작 시간'],예약자명:r['예약자명'],연락처:r['연락처'],'예약 상태':'정상'})));
+  const sampleReservationRows=sanitizeReservationRows(sampleData.ai.concat(sampleData.tablet).map(r=>({예약일:r['예약일'],프로그램명:r['프로그램명'],'프로그램 시작 시간':r['프로그램 시작 시간'],예약자명:r['예약자명'],연락처:r['연락처'],'예약 상태':'정상'})));
   const sampleEntryRows=[];
   sampleData.hourly.forEach(item=>{
     const count=Number(item.입장인원||0);
@@ -948,9 +1146,12 @@ function loadSample(){
       sampleEntryRows.push({번호:`${item.입장시간}-${i+1}`,방문센터:'은평센터',이름:'샘플',연락처:'0000',입장일자:entry,퇴장일자:exit});
     }
   });
-  appState.entryRows=sampleEntryRows; appState.reservationRows=sampleReservationRows; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='샘플 데이터가 로드되었습니다.';
+  appState.entryRows=sampleEntryRows; appState.reservationRows=sampleReservationRows;
+  const educationRows=(sampleData.education||[]).flatMap(([program,date,start,end,count])=>Array.from({length:count},(_,i)=>({예약일:date,프로그램명:program,'프로그램 시작 시간':start,'프로그램 끝 시간':end,'예약 상태':'정상',예약자명:`샘플${i+1}`,연락처:`0100000${String(1000+i).slice(-4)}`})));
+  appState.educationRows=sanitizeEducationRows(educationRows); appState.educationPrograms=buildEducationPrograms(appState.educationRows); appState.educationCurrentIndex=0;
+  rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='샘플 데이터가 로드되었습니다.';
 }
-function clearDataOnly(){ appState.entryRows=[]; appState.reservationRows=[]; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='처리 데이터가 초기화되었습니다. 알람은 유지됩니다.'; }
+function clearDataOnly(){ appState.entryRows=[]; appState.reservationRows=[]; appState.educationRows=[]; appState.educationPrograms=[]; appState.educationCurrentIndex=0; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='처리 데이터가 초기화되었습니다. 알람은 유지됩니다.'; }
 
 function showTab(id){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id)); document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id)); }
 function scrollToReport(id){ setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}),80); }
@@ -988,15 +1189,83 @@ const lotteryApp = (() => {
   function resultPayload(){ return JSON.stringify({people,winners:WINNERS,nonce:resultNonce,bottomResults,ladderRungs}); }
   async function sealResults(){ resultNonce=createNonce(); resultChecksum=await sha256(resultPayload()); }
   async function verifyResults(){ if(!shuffled || !resultChecksum) return false; const current=await sha256(resultPayload()); return current===resultChecksum; }
+  function normalizeRungs(rungs){ return rungs.sort((a,b)=>a.y-b.y || a.start-b.start); }
+  function getRungCoverage(rungs){
+    const coverage=Array(people).fill(0);
+    rungs.forEach(({start})=>{
+      if(start>=0 && start<people-1){
+        coverage[start]+=1;
+        coverage[start+1]+=1;
+      }
+    });
+    return coverage;
+  }
+  function hasRungConflict(rungs, start, y, minGap){
+    return rungs.some(r=>Math.abs(r.y-y)<minGap && Math.abs(r.start-start)<=1);
+  }
+  function findSafeRungY(rungs, start, usableTop, usableBottom, minGap){
+    const tries=80;
+    for(let i=0;i<tries;i++){
+      const y=usableTop + secureRandomInt(usableBottom-usableTop+1);
+      if(!hasRungConflict(rungs,start,y,minGap)) return y;
+    }
+    let bestY=usableTop;
+    let bestScore=-1;
+    for(let y=usableTop; y<=usableBottom; y+=6){
+      const nearest=rungs.reduce((min,r)=>{
+        if(Math.abs(r.start-start)>1) return min;
+        return Math.min(min, Math.abs(r.y-y));
+      }, 999);
+      if(nearest>bestScore){ bestScore=nearest; bestY=y; }
+    }
+    return bestY;
+  }
+  function chooseCorrectionStart(rungs, col){
+    if(col<=0) return 0;
+    if(col>=people-1) return people-2;
+    const coverage=getRungCoverage(rungs);
+    const left=col-1;
+    const right=col;
+    const leftScore=(coverage[left]||0)+(coverage[left+1]||0);
+    const rightScore=(coverage[right]||0)+(coverage[right+1]||0);
+    if(leftScore===rightScore) return secureRandomInt(2) ? left : right;
+    return leftScore<rightScore ? left : right;
+  }
   function createRungs(){
-    const rungs=[]; const rowCount=Math.max(8, Math.min(14, people+2)); const usableTop=34; const usableBottom=310; const step=(usableBottom-usableTop)/(rowCount-1);
+    const rungs=[];
+    const rowCount=Math.max(9, Math.min(15, people+3));
+    const usableTop=34;
+    const usableBottom=310;
+    const step=(usableBottom-usableTop)/(rowCount-1);
+    const minGap=18;
+
     for(let row=0; row<rowCount; row++){
-      const y=Math.round(usableTop + row*step + secureRandomInt(13)-6); const starts=[...Array(people-1)].map((_,i)=>i); const count=secureRandomInt(people>12 ? 3 : 2) + 1; const chosen=[];
-      while(starts.length && chosen.length<count){ const idx=secureRandomInt(starts.length); const start=starts.splice(idx,1)[0]; if(chosen.some(v=>Math.abs(v-start)<=1)) continue; chosen.push(start); }
+      const y=Math.round(usableTop + row*step + secureRandomInt(13)-6);
+      const starts=[...Array(people-1)].map((_,i)=>i);
+      const count=Math.min(people-1, secureRandomInt(people>12 ? 3 : 2) + (people>12 ? 2 : 2));
+      const chosen=[];
+      while(starts.length && chosen.length<count){
+        const idx=secureRandomInt(starts.length);
+        const start=starts.splice(idx,1)[0];
+        if(chosen.some(v=>Math.abs(v-start)<=1)) continue;
+        if(hasRungConflict(rungs,start,y,minGap)) continue;
+        chosen.push(start);
+      }
       chosen.forEach(start=>rungs.push({start,y}));
     }
-    return rungs.sort((a,b)=>a.y-b.y || a.start-b.start);
+
+    let coverage=getRungCoverage(rungs);
+    for(let col=0; col<people; col++){
+      if(coverage[col]>0) continue;
+      const start=chooseCorrectionStart(rungs,col);
+      const y=findSafeRungY(rungs,start,usableTop,usableBottom,minGap);
+      rungs.push({start,y});
+      coverage=getRungCoverage(rungs);
+    }
+
+    return normalizeRungs(rungs);
   }
+
   function ensureRungs(){ if(!ladderRungs.length) ladderRungs=createRungs(); return ladderRungs; }
   function computePath(topIndex){
     const {gap,side}=getLayout(); const rungs=ensureRungs().slice().sort((a,b)=>a.y-b.y || a.start-b.start); let col=topIndex; let currentY=0; const segments=[];
@@ -1043,6 +1312,9 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideAlarmPopup(); 
 window.addEventListener('pointerdown',()=>{ if(appState.settings.sound) ensureAudio(); },{once:true});
 document.getElementById('soundToggle').addEventListener('change',e=>{ appState.settings.sound=e.target.checked; saveState(); if(e.target.checked) ensureAudio(); });
 document.getElementById('vibrateToggle').addEventListener('change',e=>{ appState.settings.vibrate=e.target.checked; saveState(); });
+const educationProgramSelect=document.getElementById('educationProgramSelect');
+if(educationProgramSelect){ educationProgramSelect.addEventListener('change', e=>{ appState.educationCurrentIndex=Number(e.target.value)||0; renderEducation(); renderDashboardReportPreview(); }); }
+window.addEventListener('afterprint',()=>{ document.body.classList.remove('printing-education-all'); const area=document.getElementById('educationAllPrintArea'); if(area) area.innerHTML=''; });
 document.getElementById('includeEstimatedExitToggle').addEventListener('change', e => {
   appState.includeEstimatedExit = e.target.checked;
   rebuildDerivedData();
