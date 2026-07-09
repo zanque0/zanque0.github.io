@@ -979,7 +979,7 @@ function buildEducationTableHtml(data){
   const onlineRows=Math.min(people.length, EDUCATION_TOTAL_PRINT_ROWS);
   const waitRows=EDUCATION_TOTAL_PRINT_ROWS - onlineRows;
   let html = `
-    <tr><td colspan="4" class="education-title">은평센터 교육 참석자 명단</td><td class="education-total-label">총 참석 인원</td></tr>
+    <tr><td colspan="4" class="education-title">디지털동행플라자 교육 참석자 명단</td><td class="education-total-label">총 참석 인원</td></tr>
     <tr><td colspan="4" class="education-date">${escapeHtml(formatKoreanDate(data?.date))}</td><td class="education-total-blank"></td></tr>
     <tr><td colspan="5" class="education-program">${escapeHtml(data?.program || '')}${data?.time ? ' ('+escapeHtml(data.time)+')' : ''}</td></tr>
     <tr class="education-head"><th>예약 구분</th><th>번호</th><th>성명</th><th>연락처 (핸드폰 끝번호 4자리)</th><th>출석</th></tr>`;
