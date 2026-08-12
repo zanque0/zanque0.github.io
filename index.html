@@ -582,6 +582,8 @@ const DEFAULT_ALARMS = [
   { time: '10:58', label: '현장추첨(오전)', enabled: true },
   { time: '14:58', label: '현장추첨(오후)', enabled: true }
 ];
+// 기준 프로그램명 목록.
+// AI 바둑 뒤의 "(고장)", "(수리...)" 같은 상태 문구는 normalizeProgramKey()에서 제거 후 비교합니다.
 const allowedPrograms = ['AI 바둑 오목','태블릿(OTT) #1','태블릿(OTT) #2','태블릿(OTT) #3','태블릿(OTT) #4','태블릿(OTT) #5'];
 const DEFAULT_TABLET_TIMES = ['09:00~10:30','10:30~12:00','12:00~13:30','13:30~15:00','15:00~16:30'];
 const WEEKDAY_LABELS = ['일','월','화','수','목','금','토'];
@@ -659,7 +661,23 @@ function normalizeTimeRange(v){
   if(single) return normalizeTime(single[1]);
   return compact;
 }
-function normalizeProgramKey(value){ return String(value||'').replace(/\s+/g,' ').replace(/태블릿\s*\(\s*OTT\s*\)/gi,'태블릿(OTT)').replace(/\s*#\s*/g,' #').trim(); }
+function normalizeProgramKey(value){
+  const normalized = String(value||'')
+    .replace(/\s+/g,' ')
+    .replace(/태블릿\s*\(\s*OTT\s*\)/gi,'태블릿(OTT)')
+    .replace(/\s*#\s*/g,' #')
+    .trim();
+
+  // AI 바둑 프로그램 뒤에 상태 문구가 붙어도 동일 프로그램으로 처리
+  // 예: "AI 바둑 오목(고장)", "AI 바둑 오목 (수리8.17~)"
+  if(/^AI\s*바둑\s*오목(?:\s*\(.*\))?$/i.test(normalized)) return 'AI 바둑 오목';
+
+  // 현장에서 "AI 바둑 로봇" 명칭을 사용하는 경우도 기존 출력 양식에 통합
+  // 예: "AI 바둑 로봇", "AI 바둑 로봇(고장)", "AI 바둑 로봇(수리8.17~)"
+  if(/^AI\s*바둑\s*로봇(?:\s*\(.*\))?$/i.test(normalized)) return 'AI 바둑 오목';
+
+  return normalized;
+}
 function parseDateHour(v){ const m=String(v||'').trim().match(/(\d{1,2}):(\d{2})/); return m ? pad2(m[1])+':00' : ''; }
 function normalizeDateString(value){
   const raw=String(value||'').trim(); if(!raw) return '';
@@ -852,11 +870,14 @@ function sanitizeReservationRows(rows){
   const allowedProgramSet=new Set(allowedPrograms.map(normalizeProgramKey));
   return rows.map(r=>({
     ...r,
+    // 상태 문구가 붙은 AI 바둑 프로그램명은 기준 프로그램명으로 통합
     프로그램명:normalizeProgramKey(r['프로그램명']||''),
     연락처:last4(r['연락처']||r['전화번호']||''),
     이메일:'',
     '프로그램 시작 시간':normalizeTimeRange(r['프로그램 시작 시간'])
-  })).filter(r=>String(r['예약 상태']||'').trim()==='정상').filter(r=>allowedProgramSet.has(String(r['프로그램명']||'')));
+  }))
+  .filter(r=>String(r['예약 상태']||'').trim()==='정상')
+  .filter(r=>allowedProgramSet.has(normalizeProgramKey(r['프로그램명']||'')));
 }
 function mapper(r){ return {예약일:r['예약일']||'',프로그램명:r['프로그램명']||'',프로그램시작시간:r['프로그램 시작 시간']||'',예약자명:sanitizePlainText(r['예약자명']||'', 50),연락처:r['연락처']||''}; }
 function analyzeStayRows(rows){
