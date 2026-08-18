@@ -1301,7 +1301,12 @@ function loadSample(){
 }
 function clearDataOnly(){ appState.entryRows=[]; appState.reservationRows=[]; appState.educationRows=[]; appState.educationPrograms=[]; appState.educationCurrentIndex=0; rebuildDerivedData(); renderAll(); document.getElementById('statusMessage').textContent='처리 데이터가 초기화되었습니다. 알람 설정은 그대로 유지됩니다.'; }
 
-function showTab(id){ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id)); document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id)); }
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event: 'tab_view', tab_name: id });
+}
 function scrollToReport(id){ setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'}),80); }
 
 /* Lottery draw / ladder */
