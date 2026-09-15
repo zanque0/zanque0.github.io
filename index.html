@@ -30,8 +30,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>서울디지털동행플라자 운영 포털_zanque</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
+  <script src="./xlsx.full.min.js"></script>
+  <script src="./chart.umd.js"></script>
   <style>
     :root {
       --bg:#fffdf7;
@@ -615,7 +615,9 @@ const sampleData = {
     {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'13:30~15:00',예약자명:'고ㅇ군',연락처:'5229'},
     {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'13:30~15:00',예약자명:'김ㅇ주',연락처:'0989'},
     {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'15:00~16:30',예약자명:'허ㅇ필',연락처:'4479'},
-    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'15:00~16:30',예약자명:'이ㅇ전',연락처:'8349'}
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'15:00~16:30',예약자명:'이ㅇ전',연락처:'8349'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'16:30~18:00',예약자명:'박ㅇ서',연락처:'2201'},
+    {예약일:'2026-01-06',프로그램명:'AI 바둑 오목','프로그램 시작 시간':'16:30~18:00',예약자명:'윤ㅇ아',연락처:'6612'}
   ],
   tablet: [
     {예약일:'2026-01-06',프로그램명:'태블릿(OTT) #1','프로그램 시작 시간':'09:00~10:30',예약자명:'김ㅇ수',연락처:'1101'},
@@ -879,16 +881,30 @@ function sanitizeEntryRows(rows){
 }
 function sanitizeReservationRows(rows){
   const allowedProgramSet=new Set(allowedPrograms.map(normalizeProgramKey));
-  return rows.map(r=>({
+  const mapped = rows.map(r=>({
     ...r,
     // 상태 문구가 붙은 AI 바둑 프로그램명은 기준 프로그램명으로 통합
     프로그램명:normalizeProgramKey(r['프로그램명']||''),
     연락처:last4(r['연락처']||r['전화번호']||''),
     이메일:'',
     '프로그램 시작 시간':normalizeTimeRange(r['프로그램 시작 시간'])
-  }))
-  .filter(r=>String(r['예약 상태']||'').trim()==='정상')
-  .filter(r=>allowedProgramSet.has(normalizeProgramKey(r['프로그램명']||'')));
+  }));
+
+  const afterStatus = mapped.filter(r=>String(r['예약 상태']||'').trim()==='정상');
+  const result = afterStatus.filter(r=>allowedProgramSet.has(normalizeProgramKey(r['프로그램명']||'')));
+
+  // 업로드 처리 결과 가시성 확보용 통계(배열 자체는 그대로, 프로퍼티만 부가)
+  result._stats = {
+    total: rows.length,
+    droppedByStatusCount: mapped.length - afterStatus.length,
+    droppedByProgramCount: afterStatus.length - result.length,
+    unknownProgramNames: [...new Set(
+      afterStatus
+        .filter(r=>!allowedProgramSet.has(normalizeProgramKey(r['프로그램명']||'')))
+        .map(r=>r['프로그램명'])
+    )]
+  };
+  return result;
 }
 function mapper(r){ return {예약일:r['예약일']||'',프로그램명:r['프로그램명']||'',프로그램시작시간:r['프로그램 시작 시간']||'',예약자명:sanitizePlainText(r['예약자명']||'', 50),연락처:r['연락처']||''}; }
 function analyzeStayRows(rows){
@@ -1062,12 +1078,12 @@ function renderDownloads(){ setDownloadLink('downloadEntry',appState.entryRows,'
 function renderAll(){ renderDashboard(); renderReports(); renderEducation(); renderAlarms(); renderDownloads(); }
 
 function buildAiFormatHtml(rows){
-  const date=getProgramDate(rows); const fixedTimes=['09:00','10:30','12:00','13:30','15:00']; const dataMap={};
+  const date=getProgramDate(rows); const fixedTimes=['09:00','10:30','12:00','13:30','15:00','16:30']; const dataMap={};
   rows.forEach(r=>{ const key=normalizeTimeRange(r['프로그램시작시간']||'').split('~')[0]; if(!dataMap[key]) dataMap[key]=[]; dataMap[key].push(r); });
   let html='<div class="print-sheet" id="aiPrintArea"><table class="sheet ai-sheet" id="aiFormattedTable"><colgroup><col class="col-time"><col class="col-name-a"><col class="col-phone-a"><col class="col-name-b"><col class="col-phone-b"><col class="col-note"></colgroup><tbody>';
   html+=`<tr><td colspan="6" class="left big">${escapeHtml(date)}</td></tr>`;
   html+='<tr><td colspan="6" class="title">AI 바둑 온라인 예약 및 신청 명단</td></tr>';
-  html+='<tr><td colspan="6" class="note">- 센터 입장등록(QR입력)을 하지 않으신 분은 현장이용을 신청 하실 수 없습니다.<br>- 기재하신 성명을 지우고 다른 사람의 이름을 기재한 경우 무효처리합니다.<br>- 체험예약으로 게임을 하신 분들은 현장 이용 명단을 기재하지 않습니다.<br>- 이용시간중에 가급적 자리비움을 자제해주시기 바랍니다.<br>- 예약 접수는 <span style="color:#d00">1일 1회로 제한</span>됩니다.</td></tr>';
+  html+='<tr><td colspan="6" class="note">- 센터 입장등록(QR입력)을 하지 않으신 분은 현장이용을 신청 하실 수 없습니다.<br>- 기재하신 성명을 지우고 다른 사람의 이름을 기재한 경우 무효처리합니다.<br>- 체험예약으로 게임을 하신 분들은 현장 이용 명단을 기재하지 않습니다.<br>- 이용시간중에 가급적 자리비움을 자제해주시기 바랍니다.<br>- 예약 접수는 <span style="color:#d00">1일 1회로 제한</span>됩니다.<br>- 마지막 회 운영시간 : 3~10월 16:30~18:00, 11~2월16:30~17:30 이용</td></tr>';
   html+='<tr><th rowspan="2" class="head">구분</th><th colspan="2" class="head">A</th><th colspan="2" class="head">B</th><th rowspan="2" class="head">비고</th></tr>';
   html+='<tr><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th><th class="head">성명</th><th class="head">휴대폰번호 끝 4자리<br>(예 : 1234)</th></tr>';
   fixedTimes.forEach(time=>{ const items=dataMap[time]||[]; const a=items[0]||{}; const b=items[1]||{}; const overflow=items.length>2; html+=`<tr><td class="time">${time}</td><td>${escapeHtml(a['예약자명']||'')}</td><td>${escapeHtml(a['연락처']||'')}</td><td>${escapeHtml(b['예약자명']||'')}</td><td>${escapeHtml(b['연락처']||'')}</td><td class="blank">${overflow?'초과 인원 있음':''}</td></tr>`; });
@@ -1268,10 +1284,22 @@ function processUploads(){
     tasks.push(new Promise((resolve,reject)=>sheetToJson(entryFile, (rows,err)=>{ try{ if(err) throw err; validateEntryColumns(rows); appState.entryRows=sanitizeEntryRows(rows); resolve('입장내역 처리 완료'); }catch(e){ reject(e); } })));
   }
   if(reservationFile){
-    tasks.push(new Promise((resolve,reject)=>sheetToJson(reservationFile, (rows,err)=>{ try{ if(err) throw err; validateReservationColumns(rows); appState.reservationRows=sanitizeReservationRows(rows); resolve('예약자 명단 처리 완료'); }catch(e){ reject(e); } })));
+    tasks.push(new Promise((resolve,reject)=>sheetToJson(reservationFile, (rows,err)=>{
+      try{
+        if(err) throw err;
+        validateReservationColumns(rows);
+        appState.reservationRows = sanitizeReservationRows(rows);
+        const stats = appState.reservationRows._stats; // rebuildDerivedData 실행 전 캡처 (스프레드 시 프로퍼티 소실 방지)
+
+        let msg = `예약자 명단 처리 완료 (원본 ${stats.total}건 → 등록 ${appState.reservationRows.length}건)`;
+        if(stats.droppedByStatusCount) msg += ` / 상태 제외 ${stats.droppedByStatusCount}건`;
+        if(stats.droppedByProgramCount) msg += ` / 미등록 프로그램 제외 ${stats.droppedByProgramCount}건 [${stats.unknownProgramNames.join(', ')}]`;
+        resolve(msg);
+      }catch(e){ reject(e); }
+    })));
   }
   Promise.all(tasks).then(messages=>{
-    rebuildDerivedData(); renderAll(); status.textContent=messages.join(' / ') + '되었습니다.'; showTab('dashboard');
+    rebuildDerivedData(); renderAll(); status.textContent=messages.join(' / '); showTab('dashboard');
   }).catch(err=>{
     status.textContent=(err.message || '파일 처리 중 오류가 발생했습니다.') + ' 파일 형식을 확인한 뒤 다시 시도해 주세요.'; showTab('dashboard');
   });
