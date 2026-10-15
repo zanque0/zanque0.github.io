@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>은평센터 이용 현황</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+/* design.md v1.1 적용 (캡션 대비 AA, 히어로 잉크, 오렌지 규칙)
+   Layout: 크림 바탕 위 흰 카드 12열 그리드 — 요약(히어로+타일) → 추이 → 구성 → 만족도 → 데이터 관리 순 */
+:root{
+  --bg:#FFFDF7; --surface:#FFFFFF; --surface-2:#FBF8EF; --border:#F1EDE2; --grid:#F1EEE6;
+  --text:#2B2B2B; --text-sub:#6B6250; --text-muted:#746A57;
+  --brand:#2AC1BC; --brand-strong:#16928E; --brand-soft:#5FD1CD; --brand-tint:#E6FAF9; --brand-line:#BDEEEC;
+  --hero-ink:#0A3F3D; --hero-num:#FFFFFF; --accent:#FFDE59; --accent-ink:#4A3900; --danger:#E2574A; --danger-tint:#FFD7D3;
+  --t-mint:#E6FAF9; --t-mint-b:#BDEEEC; --t-red:#FFF0EF; --t-red-b:#FFD7D3; --t-green:#EEFAF1; --t-green-b:#C9F0D3;
+  --t-purple:#F7F0FB; --t-purple-b:#E6D3F2; --t-orange:#FFE9D2; --t-orange-b:#F5CDA0;
+  --badge-info-bg:#EEFAF1; --badge-info-fg:#1E7F59; --badge-warn-bg:#FFF1B8; --badge-warn-fg:#6E5200;
+  --sc1:#E2574A; --sc2:#F4A79F; --sc3:#D9D4C7; --sc4:#8FDDD9; --sc5:#2AC1BC;
+  --male:#5B8DEF; --female:#2AC1BC;
+  --radius-card:18px; --radius-tile:14px; --radius-pill:999px;
+  --shadow-card:0 2px 0 #F1EDE2,0 6px 16px rgba(120,100,60,.06);
+  --font-display:'Jua','Noto Sans KR',system-ui,sans-serif;
+  --font-body:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#151918; --surface:#1F2423; --surface-2:#252B2A; --border:#2F3534; --grid:#2A302F;
+    --text:#F2F2F0; --text-sub:#B3AB98; --text-muted:#A39C8E;
+    --brand-strong:#5FD1CD; --brand-soft:#3FA9A5; --brand-tint:#183433; --brand-line:#2B5553;
+    --danger:#F06B5E; --danger-tint:#5A3532;
+    --t-mint:#1B3231; --t-mint-b:#2B5553; --t-red:#352625; --t-red-b:#5A3532; --t-green:#1D3125; --t-green-b:#2E5038;
+    --t-purple:#2C2533; --t-purple-b:#47395A; --t-orange:#382C1F; --t-orange-b:#5C4529;
+    --badge-info-bg:#1D3125; --badge-info-fg:#8FE0B5; --badge-warn-bg:#3A321A; --badge-warn-fg:#F5DA7A;
+    --sc1:#F06B5E; --sc2:#9E5751; --sc3:#4A4F4D; --sc4:#2E7C78; --sc5:#2AC1BC;
+    --male:#7EA6F5; --female:#2AC1BC;
+    --shadow-card:0 1px 0 rgba(0,0,0,.4),0 6px 16px rgba(0,0,0,.25);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151918; --surface:#1F2423; --surface-2:#252B2A; --border:#2F3534; --grid:#2A302F;
+  --text:#F2F2F0; --text-sub:#B3AB98; --text-muted:#A39C8E;
+  --brand-strong:#5FD1CD; --brand-soft:#3FA9A5; --brand-tint:#183433; --brand-line:#2B5553;
+  --danger:#F06B5E; --danger-tint:#5A3532;
+  --t-mint:#1B3231; --t-mint-b:#2B5553; --t-red:#352625; --t-red-b:#5A3532; --t-green:#1D3125; --t-green-b:#2E5038;
+  --t-purple:#2C2533; --t-purple-b:#47395A; --t-orange:#382C1F; --t-orange-b:#5C4529;
+  --badge-info-bg:#1D3125; --badge-info-fg:#8FE0B5; --badge-warn-bg:#3A321A; --badge-warn-fg:#F5DA7A;
+  --sc1:#F06B5E; --sc2:#9E5751; --sc3:#4A4F4D; --sc4:#2E7C78; --sc5:#2AC1BC;
+  --male:#7EA6F5; --female:#2AC1BC;
+  --shadow-card:0 1px 0 rgba(0,0,0,.4),0 6px 16px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.num{font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.top h1{font-family:var(--font-display);font-weight:400;font-size:clamp(22px,3vw,28px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.top p{margin:2px 0 0;color:var(--text-sub);font-size:13px}
+.sync{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sub)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--text-muted)}
+.dot.on{background:var(--brand)}
+.dot.warn{background:var(--danger)}
+
+/* control bar */
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);padding:10px 12px;box-shadow:var(--shadow-card)}
+.ctl-left{display:flex;flex-wrap:wrap;gap:10px;align-items:center;min-width:0}
+.year{font-family:var(--font-display);font-size:18px;padding:0 4px}
+.months{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;padding:2px;max-width:100%}
+.mchip{position:relative;flex:none;height:32px;min-width:44px;padding:0 10px;border-radius:var(--radius-pill);border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:13px;font-weight:600}
+.mchip[disabled]{color:var(--text-muted);background:var(--surface-2);cursor:default}
+.mchip .has{position:absolute;top:4px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--brand)}
+.mchip.part .has{background:var(--accent)}
+.mchip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.mchip[aria-pressed="true"] .has{background:#fff}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:3px}
+.seg button{border:0;background:transparent;height:28px;padding:0 12px;border-radius:var(--radius-pill);font-size:13px;font-weight:600;color:var(--text-sub)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.btn{height:34px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.brand{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.ghost-danger{color:var(--danger);border-color:var(--danger-tint)}
+.btn[disabled]{opacity:.5;cursor:default}
+
+/* notice / upload panel */
+.notice{border-radius:var(--radius-tile);padding:12px 14px;font-size:13px;border:1px solid var(--t-orange-b);background:var(--t-orange)}
+.upload{background:var(--surface);border:2px dashed var(--brand-line);border-radius:var(--radius-card);padding:16px;display:grid;gap:12px}
+.upload h3{margin:0;font-size:16px}
+.upload .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.upload .kv div{background:var(--surface-2);border-radius:10px;padding:8px 10px}
+.upload .kv b{display:block;font-size:18px}
+.upload .kv span{font-size:12px;color:var(--text-sub)}
+.upload .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.upload select{height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:0 8px;font:inherit}
+.warnline{color:var(--danger);font-size:13px;font-weight:600}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.s4{grid-column:span 4}.s5{grid-column:span 5}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:span 12}
+@media (max-width:1000px){.s4{grid-column:span 6}.s5,.s7,.s8{grid-column:span 12}}
+@media (max-width:680px){.s4{grid-column:span 12}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:18px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-h h2{margin:0;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-h .q{display:block;font-size:12px;color:var(--text-sub);font-weight:400;margin-top:2px}
+.tag{font-size:11px;font-weight:700;color:var(--brand-strong);background:var(--brand-tint);border-radius:6px;padding:1px 6px;letter-spacing:.02em}
+.badge{font-size:11px;font-weight:700;border-radius:var(--radius-pill);padding:3px 9px;white-space:nowrap}
+.badge.info{background:var(--badge-info-bg);color:var(--badge-info-fg)}
+.badge.warn{background:var(--badge-warn-bg);color:var(--badge-warn-fg)}
+.foot{font-size:11px;color:var(--text-muted);margin-top:auto;padding-top:4px}
+.chart{position:relative;height:240px}
+.chart.sm{height:190px}
+.chart.tall{height:300px}
+.empty{display:grid;place-items:center;text-align:center;min-height:150px;color:var(--text-sub);font-size:13px;background:var(--surface-2);border-radius:var(--radius-tile);padding:16px}
+
+/* hero + tiles */
+.hero{background:var(--brand);color:var(--hero-ink);border-radius:var(--radius-card);padding:20px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.hero .lbl{font-size:15px;font-weight:700}
+.hero .big{color:var(--hero-num);font-family:var(--font-display);font-size:clamp(44px,6vw,60px);line-height:1}
+.hero .big small{font-size:.45em;margin-left:4px;color:var(--hero-ink)}
+.hero .chips{display:flex;flex-wrap:wrap;gap:6px}
+.hero .chip{background:rgba(255,255,255,.55);border-radius:var(--radius-pill);padding:4px 10px;font-size:13px;font-weight:700}
+.hero .delta{background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;align-self:flex-start}
+.hero .note{font-size:12px;opacity:.85;margin-top:auto}
+.progress{height:8px;border-radius:99px;background:rgba(255,255,255,.45);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--hero-ink);border-radius:99px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{border-radius:var(--radius-tile);border:1px solid var(--border);background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .tl{font-size:12px;color:var(--text-sub)}
+.tile .tv{font-size:clamp(22px,2.6vw,26px);font-weight:800;letter-spacing:-.01em}
+.tile .tv small{font-size:14px;font-weight:700;margin-left:2px}
+.tile .tc{font-size:11px;color:var(--text-muted)}
+.tile.mint{background:var(--t-mint);border-color:var(--t-mint-b)}
+.tile.red{background:var(--t-red);border-color:var(--t-red-b)}
+.tile.green{background:var(--t-green);border-color:var(--t-green-b)}
+.tile.purple{background:var(--t-purple);border-color:var(--t-purple-b)}
+.tile.orange{background:var(--t-orange);border-color:var(--t-orange-b)}
+
+/* bars */
+.split{display:flex;height:40px;border-radius:12px;overflow:hidden;gap:2px}
+.split i{display:flex;align-items:center;padding:0 10px;font-style:normal;font-weight:800;font-size:13px;color:#fff;min-width:0;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--text-sub)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.hbars{display:grid;gap:8px}
+.hbar{display:grid;grid-template-columns:72px minmax(0,1fr) 92px;align-items:center;gap:10px;font-size:13px}
+.hbar .track{height:14px;background:var(--surface-2);border-radius:99px;overflow:hidden}
+.hbar .track i{display:block;height:100%;background:var(--brand-line);border-radius:99px}
+.hbar.max .track i{background:var(--brand)}
+.hbar .v{text-align:right;color:var(--text-sub)}
+.hbar .v b{color:var(--text)}
+.stack{display:flex;height:16px;border-radius:99px;overflow:hidden}
+.stack i{display:block;height:100%}
+.satrow{display:grid;grid-template-columns:minmax(0,170px) minmax(0,1fr) 84px;gap:12px;align-items:center;font-size:13px}
+@media (max-width:560px){.satrow{grid-template-columns:minmax(0,1fr) 72px}.satrow .stack{grid-column:1 / -1;order:3}}
+.satrow .sv{text-align:right}
+.satrow .sv b{font-size:15px}
+.satrow .sv span{display:block;font-size:11px;color:var(--text-muted)}
+.bignum{font-family:var(--font-display);font-size:48px;line-height:1;color:var(--brand-strong)}
+.bignum small{font-size:20px;margin-left:2px}
+.kvlist{display:grid}
+.kvlist div{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13px}
+.kvlist div:last-child{border-bottom:0}
+.kvlist b{font-weight:700}
+.ratio{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ratio>div{border-radius:var(--radius-tile);padding:12px;background:var(--surface-2)}
+.ratio .r{font-size:28px;font-weight:800}
+.ratio .rl{font-size:12px;color:var(--text-sub)}
+.ratio .rc{font-size:11px;color:var(--text-muted)}
+.ratio>.hi{background:var(--t-mint);border:1px solid var(--t-mint-b)}
+
+/* table */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+th{font-size:12px;color:var(--text-sub);font-weight:600}
+#recBody td,#recFoot td{padding:7px 8px}
+.tbl-wrap .btn{height:26px;padding:0 10px;font-size:12px}
+tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--border);background:var(--surface-2)}
+.subn{display:block;font-size:11px;font-weight:400;color:var(--text-muted)}
+td.r,th.r{text-align:right}
+.src{font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px}
+.src.raw{background:var(--badge-info-bg);color:var(--badge-info-fg)}
+.src.summary{background:var(--badge-warn-bg);color:var(--badge-warn-fg)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:700;z-index:10}
+@media (prefers-reduced-motion:no-preference){.card,.hero{transition:background-color .2s}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- 인쇄 ---------- */
+@page{size:A4 portrait;margin:10mm}
+.print-only{display:none}
+@media print{
+  :root{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-scheme:light}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;padding:0!important;font-size:12px}
+  .wrap{max-width:none;gap:10px}
+  .controls,#banner,.seg,.toast{display:none!important}
+  .card,.hero,.tile{box-shadow:none!important}
+  .card,.hero,.grid>section{break-inside:avoid;page-break-inside:avoid}
+  .grid{gap:10px}
+  .s4{grid-column:span 4!important}.s5{grid-column:span 5!important}.s7{grid-column:span 7!important}.s8{grid-column:span 8!important}
+  .tiles{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .chart{height:200px}.chart.tall{height:220px}.chart.sm{height:150px}
+  canvas{max-width:100%!important}
+  .ratio .r{font-size:20px}
+  .print-only{display:block!important}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>은평센터, 이번 달도 잘 돌아가는 중!</h1>
+      <p>서울디지털동행플라자 은평센터 월간 이용 현황 · 매월 집계해 공개합니다</p>
+    </div>
+    <div class="sync" id="sync"><span class="dot" id="syncDot"></span><span id="syncText"></span></div>
+  </header>
+
+  <div class="controls" role="toolbar" aria-label="조회 조건">
+    <div class="ctl-left">
+      <span class="year num" id="yearLabel">2026년</span>
+      <div class="months" id="months" aria-label="월 선택"></div>
+      <div class="seg" id="modeSeg" aria-label="집계 범위">
+        <button type="button" data-mode="month" aria-pressed="true">이번 달</button>
+        <button type="button" data-mode="ytd" aria-pressed="false">올해 누계</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="banner" hidden></div>
+  <div class="print-only foot" id="printInfo"></div>
+
+  <!-- 요약 -->
+  <div class="grid">
+    <div class="hero s4" id="hero"></div>
+    <div class="s8 card" style="padding:14px">
+      <div class="tiles" id="tiles"></div>
+    </div>
+  </div>
+
+  <!-- 1 월별 · 2 요일별 -->
+  <div class="grid">
+    <section class="card s8">
+      <div class="card-h"><h2><span class="tag">1</span>월별 실적<span class="q">한 달에 몇 분이 오셨을까요?</span></h2><span class="badge info" id="b-month">월 합계 · 누계</span></div>
+      <div class="chart"><canvas id="cMonthly" aria-label="월별 이용인원 막대 차트"></canvas></div>
+      <div class="foot" id="f-month">막대는 월 이용인원, 선은 1월부터의 누계입니다.</div>
+    </section>
+    <section class="card s4">
+      <div class="card-h"><h2><span class="tag">2</span>요일별 실적<span class="q">무슨 요일이 제일 붐빌까요?</span></h2><span class="badge info" id="b-week">요일 평균</span></div>
+      <div id="weekBody"><div class="chart"><canvas id="cWeek" aria-label="요일별 평균 이용인원"></canvas></div></div>
+      <div class="foot">요일 평균 = 요일 합계 ÷ 해당 요일 운영일수(5명 이상 방문일).</div>
+    </section>
+  </div>
+
+  <!-- 3 시간대별 · 10 체류시간 -->
+  <div class="grid">
+    <section class="card s8">
+      <div class="card-h">
+        <h2><span class="tag">3</span>시간대별 실적<span class="q">몇 시에 들어오고 몇 시에 나가실까요?</span></h2>
+        <div class="seg" id="hourSeg" aria-label="요일 구분">
+          <button type="button" data-h="all" aria-pressed="true">통합</button>
+          <button type="button" data-h="wd" aria-pressed="false">주중</button>
+          <button type="button" data-h="we" aria-pressed="false">주말</button>
+        </div>
+      </div>
+      <div id="hourBody"><div class="chart tall"><canvas id="cHour" aria-label="시간대별 입장·퇴장 일평균"></canvas></div></div>
+      <div class="foot" id="f-hour">운영일 1일 평균 인원(입장 기준 전체, 퇴장 기준 유효데이터) · 09~19시 정시 단위.</div>
+    </section>
+    <section class="card s4">
+      <div class="card-h"><h2><span class="tag">10</span>체류시간<span class="q">얼마나 머물다 가셨을까요?</span></h2><span class="badge warn">유효데이터</span></div>
+      <div id="stayBody"></div>
+      <div class="foot">유효데이터: 체류시간 0분 초과, 자동퇴장(21:00) 제외.</div>
+    </section>
+  </div>
+
+  <!-- 5 성별 · 6 연령대 · 7 거주지 -->
+  <div class="grid">
+    <section class="card s4">
+      <div class="card-h"><h2><span class="tag">5</span>성별</h2></div>
+      <div id="genderBody"></div>
+      <div class="foot">성별 미기재는 비율 계산에서 제외합니다.</div>
+    </section>
+    <section class="card s4">
+      <div class="card-h"><h2><span class="tag">6</span>연령대</h2><span class="badge info" id="b-age"></span></div>
+      <div id="ageBody"></div>
+      <div class="foot" id="f-age">연령대 값이 2~3자리 정수가 아니면 집계에서 빠지고 이상치로 표시됩니다.</div>
+    </section>
+    <section class="card s4">
+      <div class="card-h"><h2><span class="tag">7</span>거주지 구분</h2></div>
+      <div id="resBody"></div>
+      <div class="foot">은평구 / 서울 타 자치구 / 서울 외(경기·인천 등).</div>
+    </section>
+  </div>
+
+  <!-- 4 종합 만족도 · 9 항목별 만족도 -->
+  <div class="grid">
+    <section class="card s4">
+      <div class="card-h"><h2><span class="tag">4</span>만족도<span class="q">오신 분들, 만족하셨을까요?</span></h2></div>
+      <div id="satTotalBody"></div>
+      <div class="foot">4개 항목 평균(5점 척도)을 100점으로 환산.</div>
+    </section>
+    <section class="card s8">
+      <div class="card-h"><h2><span class="tag">9</span>항목별 만족도</h2>
+        <div class="legend" id="satLegend"></div></div>
+      <div id="satBody"></div>
+      <div class="foot">매우 그렇다 5점 ~ 매우 아니다 1점, 무응답 제외.</div>
+    </section>
+  </div>
+
+  <!-- 8 첫방문 · 데이터 관리 -->
+  <div class="grid">
+    <section class="card s4">
+      <div class="card-h"><h2><span class="tag">8</span>첫방문 비율<span class="q">새로 오신 분은 얼마나 될까요?</span></h2></div>
+      <div id="firstBody"></div>
+      <div class="foot">유효데이터 = 방문횟수 설문 응답자(무응답 제외).</div>
+    </section>
+    <section class="card s8">
+      <div class="card-h"><h2>월별 이용 기록<span class="q">연인원·순인원과 누계</span></h2><span class="badge info" id="b-rec"></span></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>월</th><th class="r">연인원</th><th class="r">순인원</th><th class="r">1인당 방문</th><th class="r">연인원 누계</th><th class="r">운영일</th></tr></thead>
+        <tbody id="recBody"></tbody>
+        <tfoot id="recFoot"></tfoot>
+      </table></div>
+      <div class="foot" id="f-rec">연인원: 입장 기록 전체(재입장 포함) · 순인원: 익명 처리된 이름·연락처 끝 4자리·성별·연령이 모두 같을 때만 동일인(하나라도 다르면 다른 사람으로 계산) · 1인당 방문 = 연인원 ÷ 순인원. 이름·연락처는 저장하지 않습니다.</div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script type="application/json" id="stats-data">{"meta":{"center":"서울디지털동행플라자 은평센터","generatedAt":"2026-10-15"},"yearTotals":{"2024":40468,"2025":47111},"yearUnique":{"y2026":{"year":2026,"months":[1,2,3,4,5,6,7,8,9],"unique":3283,"visits":39913}},"months":[{"age":[79,58,262,1114,1916,602],"ageAnomaly":0,"gender":{"f":2562,"m":1469},"hourly":{"wd":{"days":22,"in":[920,451,258,424,523,424,230,106,34,2,1],"out":[39,105,341,174,280,187,494,386,416,2,0]},"we":{"days":5,"in":[199,140,62,50,84,73,26,15,7,0,0],"out":[3,21,95,50,89,50,73,56,78,0,0]}},"month":1,"opDays":27,"residence":{"eunpyeong":3607,"outside":29,"seoul":395,"top":[["은평구",3607],["마포구",128],["서대문구",95],["성동구",40],["영등포구",38],["관악구",27],["강서구",16],["인천광역시",14]],"unknown":0},"sat":{"dev":[7,7,90,347,2394],"oper":[7,8,95,333,2402],"prog":[7,13,94,330,2401],"rev":[8,12,85,338,2402]},"stay":{"buckets":[594,589,913,394,449],"median":136,"minutes":440898,"valid":2939},"total":4031,"updatedAt":"2026-10-15T03:34:35.681Z","visitors":{"unique":751,"visits":4031},"visits":{"first":401,"five":2164,"resp":2845,"three":148,"two":132},"weekday":{"count":[1,646,605,660,778,685,656],"days":[0,4,4,4,5,5,5]},"year":2026,"ym":"2026-01"},{"age":[65,45,252,981,1508,532],"ageAnomaly":0,"gender":{"f":2249,"m":1134},"hourly":{"wd":{"days":19,"in":[757,382,238,366,446,371,164,85,40,0,0],"out":[61,61,296,168,223,248,304,324,345,1,0]},"we":{"days":4,"in":[165,118,44,37,48,68,25,19,9,0,0],"out":[5,11,86,47,51,36,44,21,72,0,0]}},"month":2,"opDays":23,"residence":{"eunpyeong":3109,"outside":26,"seoul":248,"top":[["은평구",3109],["마포구",72],["서대문구",55],["성동구",33],["영등포구",20],["강서구",17],["인천광역시",14],["관악구",14]],"unknown":0},"sat":{"dev":[8,2,79,334,2265],"oper":[29,9,76,305,2269],"prog":[11,3,84,308,2282],"rev":[6,6,75,329,2272]},"stay":{"buckets":[482,566,782,250,324],"median":130,"minutes":346673,"valid":2404},"total":3383,"updatedAt":"2026-10-15T03:34:57.128Z","visitors":{"unique":678,"visits":3383},"visits":{"first":417,"five":2062,"resp":2688,"three":101,"two":108},"weekday":{"count":[0,574,519,527,654,576,533],"days":[0,4,3,4,4,4,4]},"year":2026,"ym":"2026-02"},{"age":[70,71,271,1248,1867,613],"ageAnomaly":0,"gender":{"f":2712,"m":1428},"hourly":{"wd":{"days":22,"in":[1025,470,243,385,554,484,254,115,41,1,0],"out":[79,91,427,182,254,262,305,551,470,33,0]},"we":{"days":4,"in":[184,107,51,42,59,61,38,24,0,2,0],"out":[9,22,69,49,47,74,40,41,68,9,0]}},"month":3,"opDays":26,"residence":{"eunpyeong":3826,"outside":40,"seoul":274,"top":[["은평구",3826],["마포구",92],["서대문구",56],["성동구",43],["강서구",20],["경기도",20],["인천광역시",19],["영등포구",18]],"unknown":0},"sat":{"dev":[12,5,99,403,2774],"oper":[33,8,117,364,2771],"prog":[8,9,111,378,2787],"rev":[10,7,114,373,2789]},"stay":{"buckets":[721,694,836,334,497],"median":128,"minutes":457560,"valid":3082},"total":4140,"updatedAt":"2026-10-15T03:35:14.267Z","visitors":{"unique":753,"visits":4140},"visits":{"first":506,"five":2480,"resp":3293,"three":147,"two":160},"weekday":{"count":[1,778,794,674,684,642,567],"days":[0,5,5,4,4,4,4]},"year":2026,"ym":"2026-03"},{"age":[75,77,346,1363,1731,613],"ageAnomaly":0,"gender":{"f":2765,"m":1440},"hourly":{"wd":{"days":22,"in":[1067,386,258,475,510,491,247,136,62,8,0],"out":[99,109,358,172,246,225,472,373,436,76,0]},"we":{"days":4,"in":[205,94,47,37,59,63,22,20,11,5,0],"out":[14,21,53,95,42,12,42,37,53,17,0]}},"month":4,"opDays":26,"residence":{"eunpyeong":3899,"outside":36,"seoul":270,"top":[["은평구",3899],["마포구",69],["서대문구",54],["성동구",50],["강서구",19],["경기도",19],["인천광역시",17],["관악구",14]],"unknown":0},"sat":{"dev":[10,7,164,439,2720],"oper":[33,11,169,411,2716],"prog":[13,13,163,430,2721],"rev":[10,4,152,446,2728]},"stay":{"buckets":[699,674,817,306,457],"median":126,"minutes":426536,"valid":2953},"total":4205,"updatedAt":"2026-10-15T03:35:27.279Z","visitors":{"unique":752,"visits":4205},"visits":{"first":441,"five":2540,"resp":3340,"three":154,"two":205},"weekday":{"count":[1,673,636,868,851,613,563],"days":[0,4,4,5,5,4,4]},"year":2026,"ym":"2026-04"},{"age":[83,48,281,1206,1748,608],"ageAnomaly":0,"gender":{"f":2657,"m":1317},"hourly":{"wd":{"days":21,"in":[928,365,208,432,509,428,222,112,57,23,0],"out":[81,139,354,132,213,162,420,288,377,75,2]},"we":{"days":5,"in":[270,104,50,46,67,77,42,21,13,0,0],"out":[11,27,79,120,55,31,56,39,74,14,0]}},"month":5,"opDays":26,"residence":{"eunpyeong":3659,"outside":32,"seoul":283,"top":[["은평구",3659],["마포구",70],["서대문구",64],["성동구",44],["인천광역시",20],["강서구",19],["관악구",17],["용산구",16]],"unknown":0},"sat":{"dev":[13,12,145,437,2633],"oper":[38,18,130,438,2616],"prog":[17,10,149,447,2617],"rev":[12,6,138,419,2665]},"stay":{"buckets":[647,589,824,307,382],"median":129,"minutes":389338,"valid":2749},"total":3974,"updatedAt":"2026-10-15T03:35:40.721Z","visitors":{"unique":713,"visits":3974},"visits":{"first":406,"five":2507,"resp":3240,"three":160,"two":167},"weekday":{"count":[0,601,601,710,641,731,690],"days":[0,4,4,4,4,5,5]},"year":2026,"ym":"2026-05"},{"age":[100,139,427,1449,1952,690],"ageAnomaly":0,"gender":{"f":3150,"m":1607},"hourly":{"wd":{"days":22,"in":[1159,459,295,535,684,523,267,161,67,19,0],"out":[89,152,361,180,283,258,535,460,472,58,0]},"we":{"days":4,"in":[208,97,38,49,72,68,24,19,8,5,0],"out":[11,22,57,78,48,25,36,39,70,12,0]}},"month":6,"opDays":26,"residence":{"eunpyeong":4313,"outside":35,"seoul":409,"top":[["은평구",4313],["서대문구",116],["마포구",104],["성동구",43],["용산구",35],["영등포구",23],["관악구",22],["인천광역시",20]],"unknown":0},"sat":{"dev":[11,16,158,518,3216],"oper":[26,20,140,508,3225],"prog":[17,20,182,494,3206],"rev":[10,13,155,518,3223]},"stay":{"buckets":[781,743,875,339,508],"median":125,"minutes":464622,"valid":3246},"total":4757,"updatedAt":"2026-10-15T03:36:12.129Z","visitors":{"unique":868,"visits":4757},"visits":{"first":630,"five":2882,"resp":3919,"three":179,"two":228},"weekday":{"count":[0,1033,942,756,734,704,588],"days":[0,5,5,4,4,4,4]},"year":2026,"ym":"2026-06"},{"age":[122,153,460,1545,2265,758],"ageAnomaly":0,"gender":{"f":3504,"m":1799},"hourly":{"wd":{"days":23,"in":[1313,581,353,634,800,483,230,141,78,20,0],"out":[113,140,389,190,338,356,341,635,481,91,0]},"we":{"days":4,"in":[243,92,59,73,73,74,24,22,9,1,0],"out":[11,13,77,44,46,95,47,29,77,24,0]}},"month":7,"opDays":27,"residence":{"eunpyeong":4895,"outside":17,"seoul":391,"top":[["은평구",4895],["마포구",115],["서대문구",77],["성동구",40],["강서구",28],["영등포구",24],["관악구",19],["송파구",14]],"unknown":0},"sat":{"dev":[23,14,163,585,3548],"oper":[28,30,175,578,3522],"prog":[29,23,166,571,3544],"rev":[15,19,167,570,3562]},"stay":{"buckets":[828,725,856,423,705],"median":131,"minutes":546861,"valid":3537},"total":5303,"updatedAt":"2026-10-15T03:36:00.748Z","visitors":{"unique":861,"visits":5303},"visits":{"first":691,"five":3219,"resp":4333,"three":208,"two":215},"weekday":{"count":[0,856,793,1090,973,921,670],"days":[0,4,4,5,5,5,4]},"year":2026,"ym":"2026-07"},{"age":[120,124,482,1556,2287,817],"ageAnomaly":0,"gender":{"f":3590,"m":1796},"hourly":{"wd":{"days":21,"in":[1216,572,375,628,684,479,222,178,79,27,1],"out":[94,148,337,233,321,272,343,564,472,187,1]},"we":{"days":5,"in":[323,166,87,77,102,89,41,24,16,0,0],"out":[29,21,91,57,58,103,51,59,115,28,1]}},"month":8,"opDays":26,"residence":{"eunpyeong":4937,"outside":25,"seoul":424,"top":[["은평구",4937],["마포구",99],["서대문구",98],["영등포구",42],["성동구",41],["관악구",19],["강서구",16],["인천광역시",16]],"unknown":0},"sat":{"dev":[16,25,159,748,3634],"oper":[23,37,182,689,3651],"prog":[28,31,154,706,3663],"rev":[18,17,152,711,3684]},"stay":{"buckets":[853,700,829,430,773],"median":133,"minutes":574829,"valid":3585},"total":5386,"updatedAt":"2026-10-15T03:36:37.826Z","visitors":{"unique":896,"visits":5386},"visits":{"first":697,"five":3457,"resp":4582,"three":209,"two":219},"weekday":{"count":[0,1055,839,885,874,808,925],"days":[0,5,4,4,4,4,5]},"year":2026,"ym":"2026-08"},{"age":[110,151,459,1440,1903,671],"ageAnomaly":0,"gender":{"f":3130,"m":1604},"hourly":{"wd":{"days":21,"in":[1127,492,322,562,642,489,231,150,67,12,0],"out":[86,91,350,178,347,287,273,522,415,107,0]},"we":{"days":4,"in":[217,119,49,54,87,70,16,16,9,2,0],"out":[9,18,58,41,47,79,35,47,62,15,0]}},"month":9,"opDays":25,"residence":{"eunpyeong":4340,"outside":36,"seoul":358,"top":[["은평구",4340],["마포구",98],["서대문구",64],["성동구",44],["영등포구",29],["경기도",28],["강서구",23],["관악구",19]],"unknown":0},"sat":{"dev":[20,20,130,640,3154],"oper":[21,37,130,608,3168],"prog":[29,26,137,608,3164],"rev":[12,15,123,624,3190]},"stay":{"buckets":[731,678,766,346,546],"median":128,"minutes":459454,"valid":3067},"total":4734,"visitors":{"unique":824,"visits":4734},"visits":{"first":602,"five":2988,"resp":3964,"three":191,"two":183},"weekday":{"count":[0,866,989,1014,716,510,639],"days":[0,4,5,5,4,3,4]},"year":2026,"ym":"2026-09"}]}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+'use strict';
+var S = { months:{}, years:{}, uniq:{}, year:2026, sel:null, mode:'month', hour:'all', db:null, canWrite:null, pending:null, confirmDel:null, connected:false };
+var charts = {};
+var $ = function(id){ return document.getElementById(id); };
+var fmt = function(n){ return (n==null||isNaN(n)) ? '–' : Math.round(n).toLocaleString('ko-KR'); };
+var pct = function(a,b,d){ if(!b) return '–'; return (a/b*100).toFixed(d==null?1:d); };
+var DOW = ['일','월','화','수','목','금','토'];
+var HOURS = []; for (var h=9; h<=19; h++) HOURS.push((h<10?'0':'')+h+':00');
+var esc = function(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function ymOf(y,m){ return y+'-'+(m<10?'0':'')+m; }
+function toast(msg){ var t=$('toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){t.hidden=true;},2600); }
+function minsLabel(m){ if(!m) return '–'; m=Math.round(m); var h=Math.floor(m/60), r=m%60; return (h?h+'시간 ':'')+(r?r+'분':(h?'':'0분')); }
+
+/* ---------- 집계 ---------- */
+function addArr(a,b){ for(var i=0;i<b.length;i++) a[i]=(a[i]||0)+(b[i]||0); return a; }
+function combine(list){
+  var o={ total:0, gender:{m:0,f:0}, age:[0,0,0,0,0,0], ageAnomaly:0, visits:{first:0,resp:0,two:0,three:0,five:0,detail:0},
+    stay:{valid:0,minutes:0,buckets:[0,0,0,0,0],bucketN:0,median:null,medianOne:null}, weekday:null, hourly:null, sat:null, residence:null,
+    opDays:0, opN:0, opTotal:0, n:list.length, rawN:0 };
+  list.forEach(function(d){
+    o.total+=d.total||0; o.gender.m+=d.gender.m; o.gender.f+=d.gender.f; addArr(o.age,d.age); o.ageAnomaly+=d.ageAnomaly||0;
+    o.visits.first+=d.visits.first; o.visits.resp+=d.visits.resp;
+    if(d.visits.five!=null){ o.visits.two+=d.visits.two; o.visits.three+=d.visits.three; o.visits.five+=d.visits.five; o.visits.detail++; }
+    o.stay.valid+=d.stay.valid; o.stay.minutes+=d.stay.minutes;
+    if(d.stay.buckets){ addArr(o.stay.buckets,d.stay.buckets); o.stay.bucketN++; o.stay.medianOne=d.stay.median; }
+    if(d.source==='raw') o.rawN++;
+    if(d.weekday){ o.weekday=o.weekday||{count:[0,0,0,0,0,0,0],days:[0,0,0,0,0,0,0]}; addArr(o.weekday.count,d.weekday.count); addArr(o.weekday.days,d.weekday.days); }
+    if(d.hourly){ o.hourly=o.hourly||{wd:{'in':[],out:[],days:0},we:{'in':[],out:[],days:0}};
+      ['wd','we'].forEach(function(k){ addArr(o.hourly[k]['in'],d.hourly[k]['in']); addArr(o.hourly[k].out,d.hourly[k].out); o.hourly[k].days+=d.hourly[k].days; }); }
+    if(d.sat){ o.sat=o.sat||{prog:[0,0,0,0,0],oper:[0,0,0,0,0],dev:[0,0,0,0,0],rev:[0,0,0,0,0]}; ['prog','oper','dev','rev'].forEach(function(k){ addArr(o.sat[k],d.sat[k]); }); }
+    if(d.residence){ o.residence=o.residence||{eunpyeong:0,seoul:0,outside:0,unknown:0,top:{}};
+      ['eunpyeong','seoul','outside','unknown'].forEach(function(k){ o.residence[k]+=d.residence[k]||0; });
+      (d.residence.top||[]).forEach(function(p){ o.residence.top[p[0]]=(o.residence.top[p[0]]||0)+p[1]; }); }
+    if(d.opDays!=null){ o.opDays+=d.opDays; o.opN++; o.opTotal+=d.total||0; }
+  });
+  if(o.stay.bucketN===1 && list.length===1) o.stay.median=o.stay.medianOne;
+  if(o.residence){ var t=o.residence.top; o.residence.top=Object.keys(t).map(function(k){return [k,t[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,6); }
+  return o;
+}
+function satAvg(arr){ var n=0,s=0; for(var i=0;i<5;i++){ n+=arr[i]; s+=arr[i]*(i+1);} return n? s/n : null; }
+function scope(){
+  if(!S.sel) return null;
+  var y=+S.sel.slice(0,4), m=+S.sel.slice(5,7), list=[];
+  if(S.mode==='month'){ if(S.months[S.sel]) list.push(S.months[S.sel]); }
+  else { for(var i=1;i<=m;i++){ var d=S.months[ymOf(y,i)]; if(d) list.push(d); } }
+  return list.length ? { agg:combine(list), list:list, y:y, m:m } : { agg:null, list:[], y:y, m:m };
+}
+function cover(sc, field){
+  var n=sc.list.filter(function(d){ return field(d); }).length;
+  if(S.mode==='month') return '';
+  return n===sc.list.length ? sc.list.length+'개월' : n+'/'+sc.list.length+'개월 상세';
+}
+
+/* ---------- 렌더 ---------- */
+function renderMonths(){
+  var box=$('months'); box.innerHTML='';
+  for(var m=1;m<=12;m++){
+    var ym=ymOf(S.year,m), d=S.months[ym], b=document.createElement('button');
+    b.type='button'; b.className='mchip num'+(d&&d.source!=='raw'?' part':''); b.textContent=m+'월';
+    b.setAttribute('aria-pressed', String(ym===S.sel)); b.dataset.ym=ym;
+    if(!d){ b.disabled=true; b.title='데이터 없음'; } else { var dot=document.createElement('span'); dot.className='has'; b.appendChild(dot); b.title=d.source==='raw'?'상세 데이터':'요약 데이터'; }
+    box.appendChild(b);
+  }
+  var cur=box.querySelector('[aria-pressed="true"]'); if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'nearest',inline:'center'});
+  $('yearLabel').textContent=S.year+'년';
+}
+function emptyBox(msg){ return '<div class="empty">'+msg+'</div>'; }
+var NO_DETAIL='이 기간은 요약 데이터만 있어요.';
+
+function renderHero(sc){
+  var h=$('hero');
+  if(!sc||!sc.agg){
+    h.innerHTML='<div class="lbl">공개된 데이터가 없어요</div><div class="big">0<small>명</small></div>'+
+      '';
+    return;
+  }
+  var a=sc.agg, html='';
+  if(S.mode==='month'){
+    var prev=S.months[ymOf(sc.y,sc.m-1)], d=S.months[S.sel];
+    html+='<div class="lbl">'+sc.m+'월 이용인원</div><div class="big num">'+fmt(a.total)+'<small>명</small></div><div class="chips">';
+    if(d.opDays) html+='<span class="chip num">운영 '+d.opDays+'일</span>';
+    html+='</div>';
+    if(prev){ var diff=a.total-prev.total; html+='<div class="delta num">전월보다 '+fmt(Math.abs(diff))+'명 '+(diff>=0?'늘었어요 ▲':'줄었어요 ▼')+' ('+(diff>=0?'+':'')+pct(diff,prev.total)+'%)</div>'; }
+  } else {
+    var last=S.years[String(sc.y-1)];
+    html+='<div class="lbl">'+sc.y+'년 1~'+sc.m+'월 누계</div><div class="big num">'+fmt(a.total)+'<small>명</small></div>';
+    html+='<div class="chips"><span class="chip num">월평균 '+fmt(a.total/a.n)+'명</span><span class="chip num">'+a.n+'개월 반영</span></div>';
+    if(last){ var p=Math.min(100,a.total/last*100); html+='<div style="display:grid;gap:6px"><div style="font-size:13px;font-weight:700" class="num">'+(sc.y-1)+'년 연간 '+fmt(last)+'명의 '+p.toFixed(1)+'%</div><div class="progress"><i style="width:'+p+'%"></i></div></div>'; }
+  }
+  html+='<div class="note">'+(S.mode==='month'?'선택한 달 기준':'1월부터 선택한 달까지 합산')+' · 입장 기록 1건 = 1명</div>';
+  h.innerHTML=html;
+}
+function tileMetrics(d){
+  var m={};
+  m.stay = d.stay&&d.stay.valid ? d.stay.minutes/d.stay.valid : null;
+  if(d.sat){ m.sat = ['prog','oper','dev','rev'].map(function(k){return satAvg(d.sat[k]);}).reduce(function(x,y){return x+y;},0)/4*20; } else m.sat=null;
+  m.first = d.total ? d.visits.first/d.total*100 : null;
+  m.revisit = d.visits.resp ? (d.visits.resp-d.visits.first)/d.visits.resp*100 : null;
+  var rt = d.residence ? d.residence.eunpyeong+d.residence.seoul+d.residence.outside : 0;
+  m.local = rt ? d.residence.eunpyeong/rt*100 : null;
+  var opT = d.opTotal!=null ? d.opTotal : d.total;
+  m.daily = d.opDays ? opT/d.opDays : null;
+  return m;
+}
+var TILE_UNIT={stay:'분',sat:'점',first:'%p',revisit:'%p',local:'%p',daily:'명'};
+function renderTiles(sc){
+  var t=$('tiles');
+  if(!sc||!sc.agg){ t.innerHTML=['평균 체류시간','종합 만족도','첫방문 비율','재방문율','은평구민 비율','일평균 방문자'].map(function(l){return '<div class="tile"><span class="tl">'+l+'</span><span class="tv">–</span><span class="tc">데이터 없음</span></div>';}).join(''); return; }
+  var a=sc.agg, cur=tileMetrics(a);
+  var rt=a.residence? a.residence.eunpyeong+a.residence.seoul+a.residence.outside : 0;
+  var dailyCap = !cur.daily ? '운영일수 데이터 없음' : (S.mode==='ytd' && a.opN<sc.list.length) ? '운영 '+a.opDays+'일 기준 · '+a.opN+'/'+sc.list.length+'개월' : '운영 '+a.opDays+'일 기준 (5명 이상 방문일)';
+  var items=[
+    {k:'stay',c:'mint',l:'평균 체류시간',v:cur.stay? Math.floor(cur.stay/60)+'<small>시간</small> '+Math.round(cur.stay%60)+'<small>분</small>':'–',cap:'유효 '+fmt(a.stay.valid)+'건 기준'},
+    {k:'sat',c:'green',l:'종합 만족도',v:cur.sat? cur.sat.toFixed(1)+'<small>점</small>':'–',cap:cur.sat? '100점 환산'+(S.mode==='ytd'?' · '+cover(sc,function(d){return d.sat;}):'') : '상세 데이터 필요'},
+    {k:'first',c:'purple',l:'첫방문 비율',v:pct(a.visits.first,a.total)+'<small>%</small>',cap:'전체 '+fmt(a.total)+'명 대비 '+fmt(a.visits.first)+'명'},
+    {k:'revisit',c:'mint',l:'재방문율',v:pct(a.visits.resp-a.visits.first,a.visits.resp)+'<small>%</small>',cap:'응답자 '+fmt(a.visits.resp)+'명 중'},
+    {k:'local',c:'',l:'은평구민 비율',v:rt? pct(a.residence.eunpyeong,rt)+'<small>%</small>':'–',cap:rt? fmt(a.residence.eunpyeong)+'명'+(S.mode==='ytd'?' · '+cover(sc,function(d){return d.residence;}):'') : '상세 데이터 필요'},
+    {k:'daily',c:'',l:'일평균 방문자',v:cur.daily? fmt(cur.daily)+'<small>명</small>':'–',cap:dailyCap}
+  ];
+  /* 오렌지 하이라이트 규칙: 이번 달 모드에서 전월 대비 변동률이 가장 큰 지표 1개만 */
+  if(S.mode==='month'){
+    var prevDoc=S.months[ymOf(sc.y,sc.m-1)];
+    if(prevDoc){
+      var prev=tileMetrics(prevDoc), best=null;
+      items.forEach(function(it){
+        var c=cur[it.k], p=prev[it.k]; if(c==null||p==null||!p) return;
+        var rel=Math.abs(c-p)/Math.abs(p);
+        if(!best||rel>best.rel) best={it:it,rel:rel,diff:c-p};
+      });
+      if(best && best.rel>=0.02){
+        best.it.c='orange';
+        var dv=best.it.k==='stay'? Math.round(Math.abs(best.diff)) : Math.abs(best.diff).toFixed(1);
+        best.it.cap='전월 대비 최대 변동 '+(best.diff>=0?'▲ ':'▼ ')+dv+TILE_UNIT[best.it.k];
+      }
+    }
+  }
+  t.innerHTML=items.map(function(i){return '<div class="tile '+i.c+'"><span class="tl">'+i.l+'</span><span class="tv num">'+i.v+'</span><span class="tc num">'+i.cap+'</span></div>';}).join('');
+}
+
+function baseOpts(){
+  var sub=css('--text-sub'), grid=css('--grid');
+  if(typeof Chart!=='undefined'){ Chart.defaults.font.family=css('--font-body'); Chart.defaults.font.size=11; Chart.defaults.color=sub; }
+  return { responsive:true, maintainAspectRatio:false, animation:{duration:matchMedia('(prefers-reduced-motion: reduce)').matches?0:400},
+    interaction:{mode:'index',intersect:false},
+    plugins:{ legend:{position:'top',align:'end',labels:{boxWidth:10,boxHeight:10,usePointStyle:true,pointStyle:'rectRounded',color:sub}},
+      tooltip:{backgroundColor:css('--surface'),titleColor:css('--text'),bodyColor:css('--text'),borderColor:css('--border'),borderWidth:1,padding:10,cornerRadius:10,
+        callbacks:{}} },
+    scales:{ x:{grid:{display:false},border:{color:grid},ticks:{color:sub}}, y:{beginAtZero:true,grid:{color:grid},border:{display:false},ticks:{color:sub,precision:0}} } };
+}
+function mkChart(id,cfg){ if(typeof Chart==='undefined') return; if(charts[id]) charts[id].destroy(); var el=$(id); if(!el) return; charts[id]=new Chart(el,cfg); }
+
+function renderMonthly(sc){
+  if(typeof Chart==='undefined') return;
+  var labels=[],bars=[],cum=[],run=0,colors=[], brand=css('--brand'), line=css('--brand-line'), selM=sc?sc.m:0;
+  for(var m=1;m<=12;m++){ labels.push(m+'월'); var d=S.months[ymOf(S.year,m)];
+    if(d){ run+=d.total; bars.push(d.total); cum.push(run);} else { bars.push(null); cum.push(m<=lastMonth()?run:null); }
+    colors.push(S.mode==='month'? (m===selM?brand:line) : (m<=selM?brand:line)); }
+  var o=baseOpts();
+  o.scales.y.title={display:true,text:'월 인원(명)',color:css('--text-muted')};
+  o.scales.y2={position:'right',beginAtZero:true,grid:{display:false},border:{display:false},ticks:{color:css('--text-sub'),callback:function(v){return (v/10000).toFixed(v%10000?1:0)+'만';}}};
+  o.plugins.tooltip.callbacks.label=function(c){ return c.dataset.label+': '+fmt(c.raw)+'명'; };
+  mkChart('cMonthly',{data:{labels:labels,datasets:[
+    {type:'bar',label:'월 이용인원',data:bars,backgroundColor:colors,borderRadius:8,maxBarThickness:36,order:2},
+    {type:'line',label:'누계',data:cum,yAxisID:'y2',borderColor:css('--text-sub'),backgroundColor:css('--text-sub'),borderWidth:2,borderDash:[4,4],pointRadius:3,tension:.3,order:1}
+  ]},options:o});
+  var tot=run, last=S.years[String(S.year-1)];
+  $('f-month').textContent='막대는 월 이용인원, 점선은 1월부터의 누계('+fmt(tot)+'명)'+(last?' · '+(S.year-1)+'년 연간 '+fmt(last)+'명':'')+'.';
+}
+function lastMonth(){ var l=0; for(var m=1;m<=12;m++) if(S.months[ymOf(S.year,m)]) l=m; return l; }
+
+function renderWeek(sc){
+  var body=$('weekBody');
+  if(!sc||!sc.agg||!sc.agg.weekday){ if(charts.cWeek){charts.cWeek.destroy();delete charts.cWeek;} body.innerHTML=emptyBox(sc&&sc.agg?NO_DETAIL:'데이터가 없어요'); $('b-week').textContent='요일 평균'; return; }
+  if(!$('cWeek')) body.innerHTML='<div class="chart"><canvas id="cWeek" aria-label="요일별 평균 이용인원"></canvas></div>';
+  var w=sc.agg.weekday, order=[1,2,3,4,5,6,0], avg=order.map(function(i){return w.days[i]? w.count[i]/w.days[i] : 0;});
+  var mx=Math.max.apply(null,avg), brand=css('--brand'), line=css('--brand-line');
+  var o=baseOpts(); o.plugins.legend.display=false;
+  o.plugins.tooltip.callbacks.label=function(c){ var i=order[c.dataIndex]; return w.days[i]? '평균 '+fmt(c.raw)+'명 · 합계 '+fmt(w.count[i])+'명 · 운영 '+w.days[i]+'일' : '휴관'; };
+  mkChart('cWeek',{type:'bar',data:{labels:order.map(function(i){return DOW[i];}),datasets:[{label:'요일 평균',data:avg,backgroundColor:avg.map(function(v){return v===mx?brand:line;}),borderRadius:8,maxBarThickness:30}]},options:o});
+  $('b-week').textContent=S.mode==='month'?'요일 평균':cover(sc,function(d){return d.weekday;});
+}
+
+function renderHour(sc){
+  var body=$('hourBody');
+  if(!sc||!sc.agg||!sc.agg.hourly){ if(charts.cHour){charts.cHour.destroy();delete charts.cHour;} body.innerHTML=emptyBox(sc&&sc.agg?NO_DETAIL:'데이터가 없어요'); return; }
+  if(!$('cHour')) body.innerHTML='<div class="chart tall"><canvas id="cHour" aria-label="시간대별 입장·퇴장 일평균"></canvas></div>';
+  var hr=sc.agg.hourly, inA=[],outA=[],days;
+  var keys=S.hour==='all'?['wd','we']:[S.hour];
+  days=keys.reduce(function(s,k){return s+hr[k].days;},0);
+  for(var i=0;i<11;i++){ var a=0,b=0; keys.forEach(function(k){a+=hr[k]['in'][i]||0;b+=hr[k].out[i]||0;}); inA.push(days?+(a/days).toFixed(1):0); outA.push(days?+(b/days).toFixed(1):0); }
+  var o=baseOpts(); o.scales.y.title={display:true,text:'1일 평균(명)',color:css('--text-muted')}; o.scales.y.ticks.precision=undefined;
+  o.plugins.tooltip.callbacks.label=function(c){ return c.dataset.label+': 일평균 '+c.raw+'명'; };
+  mkChart('cHour',{type:'line',data:{labels:HOURS,datasets:[
+    {label:'입장',data:inA,borderColor:css('--brand'),backgroundColor:css('--brand-tint'),fill:true,borderWidth:2.5,pointRadius:3,tension:.4},
+    {label:'퇴장',data:outA,borderColor:css('--danger'),backgroundColor:css('--danger'),borderWidth:2.5,pointRadius:3,tension:.4}
+  ]},options:o});
+  var pi=inA.indexOf(Math.max.apply(null,inA)), po=outA.indexOf(Math.max.apply(null,outA));
+  $('f-hour').textContent=({all:'통합',wd:'주중',we:'주말'})[S.hour]+' 운영일 '+days+'일 기준 1일 평균 · 입장 피크 '+HOURS[pi]+'('+inA[pi]+'명), 퇴장 피크 '+HOURS[po]+'('+outA[po]+'명) · 퇴장은 유효데이터만.';
+}
+
+function renderStay(sc){
+  var body=$('stayBody');
+  if(!sc||!sc.agg){ if(charts.cStay){charts.cStay.destroy();delete charts.cStay;} body.innerHTML=emptyBox('데이터가 없어요'); return; }
+  var a=sc.agg, avg=a.stay.valid? a.stay.minutes/a.stay.valid : 0;
+  var html='<div class="ratio"><div class="hi"><div class="rl">평균</div><div class="r num">'+minsLabel(avg)+'</div><div class="rc num">유효 '+fmt(a.stay.valid)+'건</div></div>'+
+    '<div><div class="rl">'+(a.stay.median!=null?'중앙값':'유효데이터 비율')+'</div><div class="r num">'+(a.stay.median!=null?minsLabel(a.stay.median):pct(a.stay.valid,a.total)+'%')+'</div><div class="rc num">'+(a.stay.median!=null?'유효 비율 '+pct(a.stay.valid,a.total)+'%':'전체 '+fmt(a.total)+'건 중')+'</div></div></div>';
+  if(a.stay.bucketN){ html+='<div class="chart sm"><canvas id="cStay" aria-label="체류시간 분포"></canvas></div>'; }
+  else html+=emptyBox(NO_DETAIL);
+  if(charts.cStay){charts.cStay.destroy();delete charts.cStay;}
+  body.innerHTML=html;
+  if(a.stay.bucketN && typeof Chart!=='undefined'){
+    var bk=a.stay.buckets, tot=bk.reduce(function(x,y){return x+y;},0), mx=Math.max.apply(null,bk);
+    var o=baseOpts(); o.plugins.legend.display=false;
+    o.plugins.tooltip.callbacks.label=function(c){ return fmt(c.raw)+'건 ('+pct(c.raw,tot)+'%)'; };
+    mkChart('cStay',{type:'bar',data:{labels:['1시간 미만','1~2시간','2~3시간','3~4시간','4시간 이상'],datasets:[{data:bk,backgroundColor:bk.map(function(v){return v===mx?css('--brand'):css('--brand-line');}),borderRadius:8,maxBarThickness:34}]},options:o});
+  }
+}
+
+function renderGender(sc){
+  var b=$('genderBody'); if(!sc||!sc.agg){ b.innerHTML=emptyBox('데이터가 없어요'); return; }
+  var g=sc.agg.gender, t=g.m+g.f, pm=g.m/t*100, pf=100-pm;
+  b.innerHTML='<div class="split"><i style="width:'+pm+'%;background:var(--male)">남 '+pm.toFixed(1)+'%</i><i style="width:'+pf+'%;background:var(--female)">여 '+pf.toFixed(1)+'%</i></div>'+
+    '<div class="kvlist"><div><span>남성</span><b class="num">'+fmt(g.m)+'명</b></div><div><span>여성</span><b class="num">'+fmt(g.f)+'명</b></div><div><span>여성 : 남성</span><b class="num">'+(g.m?(g.f/g.m).toFixed(2):'–')+' : 1</b></div></div>';
+}
+function renderAge(sc){
+  var b=$('ageBody'); if(!sc||!sc.agg){ b.innerHTML=emptyBox('데이터가 없어요'); $('b-age').textContent=''; return; }
+  var ag=sc.agg.age, t=ag.reduce(function(x,y){return x+y;},0), mx=Math.max.apply(null,ag), L=['40대 미만','40대','50대','60대','70대','80대 이상'];
+  b.innerHTML='<div class="hbars">'+ag.map(function(v,i){ return '<div class="hbar'+(v===mx?' max':'')+'"><span>'+L[i]+'</span><span class="track"><i style="width:'+(mx?v/mx*100:0)+'%"></i></span><span class="v num"><b>'+pct(v,t)+'%</b> '+fmt(v)+'</span></div>'; }).join('')+'</div>';
+  $('b-age').textContent='60대 이상 '+pct(ag[3]+ag[4]+ag[5],t)+'%';
+  $('f-age').textContent=sc.agg.ageAnomaly? '연령대 이상치 '+sc.agg.ageAnomaly+'건은 집계에서 제외했어요. 원본 파일에서 확인해 주세요.' : '연령대 값이 2~3자리 정수가 아니면 집계에서 빠지고 이상치로 표시됩니다.';
+}
+function renderRes(sc){
+  var b=$('resBody'); if(!sc||!sc.agg){ b.innerHTML=emptyBox('데이터가 없어요'); return; }
+  var r=sc.agg.residence; if(!r){ b.innerHTML=emptyBox(NO_DETAIL); return; }
+  var t=r.eunpyeong+r.seoul+r.outside, P=function(v){return v/t*100;};
+  var html='<div class="split" style="height:28px"><i style="width:'+P(r.eunpyeong)+'%;background:var(--brand)">'+(P(r.eunpyeong)>18?'은평 '+P(r.eunpyeong).toFixed(1)+'%':'')+'</i><i style="width:'+P(r.seoul)+'%;background:var(--sc4)"></i><i style="width:'+P(r.outside)+'%;background:var(--sc2)"></i></div>'+
+    '<div class="legend"><span><i style="background:var(--brand)"></i>은평구 '+fmt(r.eunpyeong)+'</span><span><i style="background:var(--sc4)"></i>서울 타구 '+fmt(r.seoul)+' ('+pct(r.seoul,t)+'%)</span><span><i style="background:var(--sc2)"></i>서울 외 '+fmt(r.outside)+' ('+pct(r.outside,t)+'%)</span></div>';
+  var top=r.top.filter(function(p){return p[0]!=='은평구';}).slice(0,5);
+  html+='<div class="kvlist">'+top.map(function(p,i){return '<div><span>'+(i+1)+'. '+esc(p[0])+'</span><b class="num">'+fmt(p[1])+'명</b></div>';}).join('')+'</div>';
+  b.innerHTML=html;
+}
+var SATK=[['prog','프로그램 만족도'],['oper','운영 만족도'],['dev','향후 디지털기기 사용 도움'],['rev','재방문 의향']];
+var SCL=['매우 아니다','아니다','보통이다','그렇다','매우 그렇다'];
+function stackHtml(arr){ var t=arr.reduce(function(x,y){return x+y;},0); return '<div class="stack" role="img" aria-label="'+SCL.map(function(l,i){return l+' '+pct(arr[i],t)+'%';}).join(', ')+'">'+arr.map(function(v,i){return '<i style="width:'+(t?v/t*100:0)+'%;background:var(--sc'+(i+1)+')" title="'+SCL[i]+' '+fmt(v)+'명 ('+pct(v,t)+'%)"></i>';}).join('')+'</div>'; }
+function renderSat(sc){
+  $('satLegend').innerHTML=SCL.slice().reverse().map(function(l,i){return '<span><i style="background:var(--sc'+(5-i)+')"></i>'+l+'</span>';}).join('');
+  var b=$('satBody'), tb=$('satTotalBody');
+  if(!sc||!sc.agg){ b.innerHTML=emptyBox('데이터가 없어요'); tb.innerHTML=emptyBox('데이터가 없어요'); return; }
+  var s=sc.agg.sat; if(!s){ b.innerHTML=emptyBox(NO_DETAIL); tb.innerHTML=emptyBox(NO_DETAIL); return; }
+  b.innerHTML='<div style="display:grid;gap:14px">'+SATK.map(function(k){ var av=satAvg(s[k[0]]); return '<div class="satrow"><span>'+k[1]+'</span>'+stackHtml(s[k[0]])+'<span class="sv num"><b>'+av.toFixed(2)+'</b> / 5<span>'+(av*20).toFixed(1)+'점</span></span></div>'; }).join('')+'</div>';
+  var all=[0,0,0,0,0]; SATK.forEach(function(k){addArr(all,s[k[0]]);});
+  var avg=SATK.map(function(k){return satAvg(s[k[0]]);}).reduce(function(x,y){return x+y;},0)/4;
+  var t=all.reduce(function(x,y){return x+y;},0), pos=all[3]+all[4], respN=s.prog.reduce(function(x,y){return x+y;},0);
+  var detailTotal=sc.list.filter(function(d){return d.sat;}).reduce(function(x,d){return x+d.total;},0);
+  tb.innerHTML='<div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap"><div class="bignum num">'+(avg*20).toFixed(1)+'<small>점</small></div><span class="badge info" style="margin-bottom:6px">5점 만점 '+avg.toFixed(2)+'</span></div>'+
+    stackHtml(all)+
+    '<div class="kvlist"><div><span>긍정 응답 (그렇다 이상)</span><b class="num">'+pct(pos,t)+'%</b></div><div><span>부정 응답 (아니다 이하)</span><b class="num">'+pct(all[0]+all[1],t)+'%</b></div><div><span>설문 응답률</span><b class="num">'+pct(respN,detailTotal)+'% ('+fmt(respN)+'명)</b></div></div>';
+}
+function renderFirst(sc){
+  var b=$('firstBody'); if(!sc||!sc.agg){ b.innerHTML=emptyBox('데이터가 없어요'); return; }
+  var v=sc.agg.visits, t=sc.agg.total, none=t-v.resp;
+  var html='<div class="ratio"><div class="hi"><div class="rl">전체 인원 대비</div><div class="r num">'+pct(v.first,t)+'%</div><div class="rc num">'+fmt(v.first)+' / '+fmt(t)+'명</div></div>'+
+    '<div><div class="rl">유효데이터 대비</div><div class="r num">'+pct(v.first,v.resp)+'%</div><div class="rc num">'+fmt(v.first)+' / '+fmt(v.resp)+'명</div></div></div>';
+  var seg, lg;
+  if(v.detail===sc.list.length){
+    seg=[[v.first,'var(--accent)','첫 방문'],[v.two,'var(--sc4)','2회 이상'],[v.three,'var(--brand-soft)','3회 이상'],[v.five,'var(--brand)','5회 이상'],[none,'var(--sc3)','무응답']];
+  } else {
+    seg=[[v.first,'var(--accent)','첫 방문'],[v.resp-v.first,'var(--brand)','재방문'],[none,'var(--sc3)','무응답']];
+  }
+  html+='<div class="stack" style="height:20px">'+seg.map(function(s){return '<i style="width:'+(s[0]/t*100)+'%;background:'+s[1]+'" title="'+s[2]+' '+fmt(s[0])+'명"></i>';}).join('')+'</div>';
+  html+='<div class="legend">'+seg.map(function(s){return '<span><i style="background:'+s[1]+'"></i>'+s[2]+' '+pct(s[0],t)+'%</span>';}).join('')+'</div>';
+  b.innerHTML=html;
+}
+function vis(d){ return d && d.visitors ? d.visitors : null; }
+function renderRecords(){
+  var rows=[], run=0, cnt=0, tb=$('recBody');
+  for(var m=1;m<=12;m++){ var d=S.months[ymOf(S.year,m)]; if(!d) continue; run+=d.total; cnt++; var v=d.visitors||null;
+    rows.push('<tr><td>'+m+'월</td><td class="r num">'+fmt(d.total)+'</td><td class="r num"><b>'+(v?fmt(v.unique):'–')+'</b></td><td class="r num">'+(v&&v.unique?(d.total/v.unique).toFixed(1)+'회':'–')+'</td><td class="r num">'+fmt(run)+'</td><td class="r num">'+(d.opDays?d.opDays+'일':'–')+'</td></tr>'); }
+  tb.innerHTML=rows.length? rows.join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-sub);padding:24px">공개된 달이 없어요.</td></tr>';
+  var yu=S.uniq && S.uniq['y'+S.year], foot='';
+  if(rows.length){
+    var uTxt = yu ? fmt(yu.unique)+'<span class="subn">'+yu.months[0]+'~'+yu.months[yu.months.length-1]+'월 기준</span>' : '–';
+    foot='<tr><td>'+S.year+'년</td><td class="r num">'+fmt(run)+'</td><td class="r num">'+uTxt+'</td><td class="r num">'+(yu&&yu.unique?(yu.visits/yu.unique).toFixed(1)+'회':'–')+'</td><td class="r num">'+fmt(run)+'</td><td></td></tr>';
+  }
+  $('recFoot').innerHTML=foot;
+  $('b-rec').textContent=S.year+'년 '+cnt+'개월 · 연인원 '+fmt(run)+'명'+(yu?' · 순인원 '+fmt(yu.unique)+'명':'');
+}
+function renderAll(){
+  var sc=scope();
+  renderMonths(); renderHero(sc); renderTiles(sc); renderMonthly(sc); renderWeek(sc); renderHour(sc); renderStay(sc);
+  renderGender(sc); renderAge(sc); renderRes(sc); renderSat(sc); renderFirst(sc); renderRecords();
+  document.querySelectorAll('#modeSeg button').forEach(function(b){ b.setAttribute('aria-pressed',String(b.dataset.mode===S.mode)); });
+  document.querySelectorAll('#hourSeg button').forEach(function(b){ b.setAttribute('aria-pressed',String(b.dataset.h===S.hour)); });
+}
+document.addEventListener('click',function(e){
+  var t=e.target.closest('button'); if(!t) return;
+  if(t.dataset.ym){ S.sel=t.dataset.ym; renderAll(); return; }
+  if(t.dataset.mode){ S.mode=t.dataset.mode; renderAll(); return; }
+  if(t.dataset.h){ S.hour=t.dataset.h; renderAll(); return; }
+});
+function latest(){ var ks=Object.keys(S.months).sort(); return ks.length? ks[ks.length-1] : null; }
+
+/* ---------- 내장 데이터 로드 (외부 파일 없음) ---------- */
+(function(){
+  var j=null; try{ j=JSON.parse(document.getElementById('stats-data').textContent); }catch(e){}
+  if(!j){ $('syncDot').className='dot warn'; $('syncText').textContent='데이터를 읽지 못했어요'; renderAll(); return; }
+  S.years=j.yearTotals||{}; S.uniq=j.yearUnique||{};
+  (j.months||[]).forEach(function(d){ d.year=+d.ym.slice(0,4); d.month=+d.ym.slice(5,7); d.source='raw'; S.months[d.ym]=d; });
+  S.sel=latest(); if(S.sel) S.year=+S.sel.slice(0,4);
+  $('syncDot').className='dot on'; $('syncText').textContent='데이터 기준일 '+((j.meta&&j.meta.generatedAt)||'').replace(/-/g,'.')+'.';
+  renderAll();
+})();
+
+/* 인쇄 전후 차트 크기 재계산 */
+function resizeCharts(){ Object.keys(charts).forEach(function(k){ try{ charts[k].resize(); }catch(e){} }); }
+window.addEventListener('beforeprint',function(){
+  var sc=scope(), pi=$('printInfo');
+  if(pi&&sc) pi.textContent='출력 기준: '+sc.y+'년 '+(S.mode==='month'? sc.m+'월' : '1~'+sc.m+'월 누계')+' · 시간대 '+({all:'통합',wd:'주중',we:'주말'})[S.hour]+' · 출력일 '+new Date().toLocaleDateString('ko-KR');
+  resizeCharts();
+});
+window.addEventListener('afterprint',resizeCharts);
+try{ matchMedia('print').addEventListener('change',resizeCharts); }catch(e){}
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderAll); }catch(e){}
+})();
+</script>
+</body>
+</html>
