@@ -17,6 +17,7 @@
 	Open Source Software
 	- SheetJS Community Edition (Apache License 2.0)
 	- Chart.js (MIT License)
+	- BM JUA (Jua) font, Woowa Brothers Corp. (SIL Open Font License 1.1)
 
 	The copyrights for third-party software remain with their respective owners.
     -->
@@ -793,7 +794,7 @@ function makeDefaultAlarms(){ return DEFAULT_ALARMS.map(a=>({ id:uid(), ...a, so
 function restoreDefaultAlarms(){ appState.alarms = makeDefaultAlarms(); saveState(); renderAlarms(); renderNextAlarm(); }
 
 function sheetToJson(file, callback){
-  if(typeof XLSX==='undefined'){ callback(null, new Error(XLSX_MISSING_MSG)); return; }
+  if(typeof XLSX==='undefined'){ const libErr=new Error(XLSX_MISSING_MSG); libErr.isLibraryError=true; callback(null, libErr); return; }
   if(file && file.size > MAX_UPLOAD_SIZE){ callback(null, new Error(`파일 크기는 최대 ${(MAX_UPLOAD_SIZE / 1024 / 1024).toLocaleString()}MB까지 처리합니다.`)); return; }
   const reader=new FileReader();
   reader.onload=e=>{
@@ -1300,6 +1301,7 @@ function processUploads(){
   const status=document.getElementById('statusMessage'); const entryFile=document.getElementById('entryFile').files[0]; const reservationFile=document.getElementById('reservationFile').files[0];
   if(!entryFile && !reservationFile){ status.textContent='처리할 입장내역 또는 예약자 명단 파일을 업로드해 주세요.'; return; }
   const tasks=[];
+  let eduStatusText=''; // 교육 탭 상태: 전체 처리 성공 후에만 표시
   if(entryFile){
     tasks.push(new Promise((resolve,reject)=>sheetToJson(entryFile, (rows,err)=>{ try{ if(err) throw err; validateEntryColumns(rows); appState.entryRows=sanitizeEntryRows(rows); appState.sampleFlags.entry=false; resolve('입장내역 처리 완료'); }catch(e){ reject(e); } })));
   }
@@ -1322,7 +1324,7 @@ function processUploads(){
         try{
           const edu = processEducationRows(rows);
           msg += ` / 교육 ${edu.total.toLocaleString()}건(${edu.programs.toLocaleString()}개 과정)`;
-          setText('educationStatus', `처리 완료(예약자 명단 등록 탭): 정상 예약 ${edu.total.toLocaleString()}건, 교육 출력 ${edu.programs.toLocaleString()}개 생성`);
+          eduStatusText = `처리 완료(예약자 명단 등록 탭): 정상 예약 ${edu.total.toLocaleString()}건, 교육 출력 ${edu.programs.toLocaleString()}개 생성`;
         }catch(eduErr){
           msg += ` / 교육 명단 미처리(${eduErr.message})`;
         }
@@ -1331,9 +1333,9 @@ function processUploads(){
     })));
   }
   Promise.all(tasks).then(messages=>{
-    rebuildDerivedData(); renderAll(); status.textContent=messages.join(' / '); showTab('dashboard');
+    rebuildDerivedData(); renderAll(); status.textContent=messages.join(' / '); if(eduStatusText) setText('educationStatus', eduStatusText); showTab('dashboard');
   }).catch(err=>{
-    status.textContent=(err.message || '파일 처리 중 오류가 발생했습니다.') + ' 파일 형식을 확인한 뒤 다시 시도해 주세요.'; showTab('dashboard');
+    status.textContent=(err.message || '파일 처리 중 오류가 발생했습니다.') + (err.isLibraryError ? '' : ' 파일 형식을 확인한 뒤 다시 시도해 주세요.'); showTab('dashboard');
   });
 }
 function loadSample(){
